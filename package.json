@@ -1,0 +1,20 @@
+{
+  "name": "sockhop",
+  "version": "1.0.0",
+  "description": "Sockets with messages, pings, etc",
+  "main": "example.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "bitbucket.org/novadynamics/sockhop.git"
+  },
+  "author": "c0d3",
+  "license": "SEE LICENSE IN README.md",
+  "dependencies": {
+    "bluebird": "^3.4.7",
+    "mocha": "^3.2.0",
+    "uuid": "^3.0.1"
+  }
+}

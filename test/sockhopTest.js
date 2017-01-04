@@ -1,4 +1,4 @@
-var Sockhop=require("../sockhop.js");
+var Sockhop=require("../index.js");
 var assert=require("assert");
 
 var c,s,m;

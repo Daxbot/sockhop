@@ -294,7 +294,7 @@ class SockhopServer extends EventEmitter {
 						return;
 					}
 
-					_self.emit("receive", o.data, {type:o.type});
+					_self.emit("receive", o.data, {type:o.type, socket: sock });
 
 				});
 

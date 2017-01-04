@@ -1,6 +1,33 @@
 ## Sockhop
 Extra cool sockets for node.js
 
+#### Example
+```javascript
+
+	// Client
+	var c=new Sockhop.client();
+	c.on("receive", (msg, metadata)=>{
+
+		// We have data
+	});
+
+	// Server
+	var s=new Sockhop.server();
+	s
+		.listen()
+		.then(()=>{
+
+			return c.connect();
+		})
+		.then(()=>{
+
+			s.sendall("This goes to all clients");
+
+		});
+
+
+```
+
 #### Intro
 Sockhop wraps node sockets and gives you:
 

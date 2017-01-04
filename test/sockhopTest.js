@@ -39,10 +39,9 @@ describe("Client-server", function(){
 
 	it("client.send()", function(done){
 
-		s.on("receive", (msg)=>{
+		s.once("receive", (msg)=>{
 
 			assert.equal(msg, "data goes in");
-			s.removeAllListeners("receive");
 			done();
 		});
 
@@ -52,10 +51,9 @@ describe("Client-server", function(){
 
 	it("server.sendall()", function(done){
 
-		c.on("receive", (msg)=>{
+		c.once("receive", (msg)=>{
 
 			assert.equal(msg, "data goeth in");
-			c.removeAllListeners("receive");
 			done();
 		});
 
@@ -68,9 +66,8 @@ describe("Events", function(){
 
 	it("server.on('disconnect')", function(done){
 
-		s.on("disconnect",()=>{
+		s.once("disconnect",()=>{
 
-			s.removeAllListeners("disconnect");
 			done();
 		});
 
@@ -80,9 +77,8 @@ describe("Events", function(){
 
 	it("client.on('disconnect')", function(done){
 
-		c.on("disconnect",()=>{
+		c.once("disconnect",()=>{
 
-			c.removeAllListeners("disconnect");
 			done();
 		});
 
@@ -97,11 +93,12 @@ describe("Events", function(){
 
 describe("Server ping", function(){
 
+	this.slow(3000);
+
 	it("Server disconnects paused client (should be slow)", function(done){
 
-		s.on("disconnect",()=>{
+		s.once("disconnect",()=>{
 
-			s.removeAllListeners("disconnect");
 			s.ping(0);
 			done();
 		});
@@ -116,8 +113,9 @@ describe("Server ping", function(){
 	it("Client disconnects paused server (should be slow)", function(done){
 
 		c=new Sockhop.client();
-		c.on("disconnect",()=>{
+		c.once("disconnect",()=>{
 
+			s.disconnect();
 			done();
 		})
 		c.connect().then(()=>{
@@ -128,6 +126,52 @@ describe("Server ping", function(){
 
 
 	});
+
+	this.slow(10000);
+
+	it("Client reconnects on disconnect (should be slow)", function(done){
+
+		s=new Sockhop.server({port: 50001});
+		s2=new Sockhop.server({port: 50002});
+
+		c=new Sockhop.client({port: 50001});
+		// Set up disconnect event to reconnect
+		c.once("disconnect",()=>{
+
+			// We now set up an event handler so we are done when we reconnect (to a different server, actually, so we can do it fast)
+			c.port=50002;
+			c.once("connect",()=>{
+
+				done();
+			});
+
+			// // Attempt to reconnect client in 500ms (allow socket to release)
+			// setTimeout(()=>{
+
+			c.connect();				
+			// },3500);
+		});
+
+		s.listen()
+			.then(()=>{
+				
+				return s2.listen();
+			})
+			.then(()=>{
+
+				return c.connect();
+			})
+			.then(()=>{
+
+				// Ping from client while pausing server (causes disconnect)
+				c.ping(200, true);
+				s.sockets.map((s)=>s.pause());
+
+			});
+
+
+	});
+
 
 });
 

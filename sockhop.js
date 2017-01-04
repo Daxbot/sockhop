@@ -71,9 +71,19 @@ class SockhopClient extends EventEmitter{
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this.interval_timer=null;
-		this.pings=[];
+		this.socket=new net.Socket();
+	}
 
-		this._socket=new net.Socket();
+	/**
+	 * Socket setter
+	 *
+	 * @param a new socket to set up
+	 */
+	set socket(s) {
+
+		var _self=this;
+		this.pings=[];
+		this._socket=s;
 		this._socket
 			.on("end",()=>{
 
@@ -126,7 +136,12 @@ class SockhopClient extends EventEmitter{
 	 */
 	connect(){
 
-		return this._socket.connectAsync(this.port,this.address);	
+		var _self=this;
+		return this._socket.connectAsync(this.port,this.address).then(()=>{
+
+			_self.emit("connect", _self._socket);
+			return Promise.resolve(_self._socket);			
+		});	
 	}
 
 
@@ -162,7 +177,8 @@ class SockhopClient extends EventEmitter{
 	/** 
 	 * Ping
 	 * 
-	 * Send ping, detect timeouts
+	 * Send ping, detect timeouts.  If we have 4 timeouts in a row, we stop pinging, kill the connection and emit a 'disconnect' event.
+	 * You can then call .connect() again to reconnect.  Don't forget to re-enable pings.
 	 * @param delay ms (0 disables ping)
 	 * @return
 	 */
@@ -173,7 +189,6 @@ class SockhopClient extends EventEmitter{
  			clearInterval(this.interval_timer);
  			this.interval_timer=null;
  		}
-
 
 	 	// Set up new timer
 	 	if(delay!=0){
@@ -193,9 +208,16 @@ class SockhopClient extends EventEmitter{
 	 			let unanswered=this.pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
 	 			if(this.pings.length>3 && this.pings.length==unanswered){
 
+	 				// Kill timer
+		 			clearInterval(this.interval_timer);
+		 			this.interval_timer=null;
+
 	 				this._socket.end();
 	 				this._socket.destroy();
 	 				this._socket.emit("end");
+
+	 				this.socket=new net.Socket();
+	 				return;
 	 			}
 		 		this.send(p);
 
@@ -236,6 +258,9 @@ class SockhopServer extends EventEmitter {
 
 			// Setup empty pings map
 			_self.pings.set(sock,[]);
+
+			// Emit event
+			_self.emit("connect", sock);
 
 			// Setup the socket events
 			sock

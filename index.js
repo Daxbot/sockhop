@@ -5,7 +5,11 @@ var EventEmitter=require("events").EventEmitter;
 var inherits = require("util").inherits;
 var uuid=require("uuid");
 
-
+/** 
+ * TCP Ping
+ *
+ * Used internally when .ping() is called
+ */
 class SockhopPing {
 
 	constructor(o={}){
@@ -20,7 +24,7 @@ class SockhopPing {
 	 * Unanswered
 	 *
 	 * Is this ping Unanswered?
-	 * @return boolean
+	 * @return {boolean}
 	 */
 	unanswered(){
 
@@ -31,8 +35,7 @@ class SockhopPing {
 	 * Conclude a ping 
 	 *
 	 * Sets the returned, finished values
-	 * @param SockhopPong
-	 * @return
+	 * @param {SockhopPong} the pong (ping reply) that is finishing this ping
 	 */
 	conclude_with_pong(p){
 
@@ -45,6 +48,11 @@ class SockhopPing {
 	}
 }
 
+/** 
+ * TCP Ping reply
+ *
+ * Used internally when .ping() is replied
+ */
 class SockhopPong {
 
 	constructor(o={}){
@@ -61,7 +69,10 @@ class SockhopPong {
 	}
 }
 
-
+/** 
+ * Wrapped TCP client
+ * @extends EventEmitter
+ */
 class SockhopClient extends EventEmitter{
 
 	constructor(opts={}){
@@ -77,7 +88,7 @@ class SockhopClient extends EventEmitter{
 	/**
 	 * Socket setter
 	 *
-	 * @param a new socket to set up
+	 * @param {net.socket} a new socket to set up
 	 */
 	set socket(s) {
 
@@ -121,7 +132,7 @@ class SockhopClient extends EventEmitter{
 	/**
 	 * Socket getter
 	 *
-	 * @return underlying socket object
+	 * @return {net.socket} underlying socket object
 	 */
 	get socket (){
 
@@ -132,23 +143,38 @@ class SockhopClient extends EventEmitter{
 	 * Connect
 	 *
 	 * Connect to the server
-	 * @return Promise
+	 * @return {Promise}
 	 */
 	connect(){
 
 		var _self=this;
-		return this._socket.connectAsync(this.port,this.address).then(()=>{
+		return new Promise((resolve, reject)=>{
 
 			_self.emit("connect", _self._socket);
-			return Promise.resolve(_self._socket);			
-		});	
+
+			_self.socket.once("error", (e)=>{
+
+				reject(e);
+			});
+			_self.socket.once("connect", ()=>{
+
+				resolve();
+			});
+
+			_self.socket.connect(this.port, this.address);
+		});
+		// return this._socket.connectAsync(this.port,this.address).then(()=>{
+
+		// 	_self.emit("connect", _self._socket);
+		// 	return Promise.resolve(_self._socket);			
+		// });	
 	}
 
 
 	/**
 	 * Get bound address
 	 *
-	 * @return string the IP address we are bound to 
+	 * @return {string} the IP address we are bound to 
 	 */
 	get_bound_address(){
 
@@ -159,8 +185,8 @@ class SockhopClient extends EventEmitter{
 	 * Send
 	 *
 	 * Send an object to the server
-	 * @param object to send
-	 * @return Promise, which will have a false value if unsuccessful
+	 * @param {object} to be sent over the wire
+	 * @return {Promise} 
 	 */
 	send(o){
 
@@ -171,7 +197,7 @@ class SockhopClient extends EventEmitter{
 			data	:	o
 		});		
 
-		return (this._socket.destroyed)?Promise.resolve(false):this._socket.writeAsync(m);	
+		return (this._socket.destroyed)?Promise.reject(new Error("Socket has been destroyed")):this._socket.writeAsync(m);	
 	}	
 
 	/** 
@@ -179,8 +205,7 @@ class SockhopClient extends EventEmitter{
 	 * 
 	 * Send ping, detect timeouts.  If we have 4 timeouts in a row, we stop pinging, kill the connection and emit a 'disconnect' event.
 	 * You can then call .connect() again to reconnect.  Don't forget to re-enable pings.
-	 * @param delay ms (0 disables ping)
-	 * @return
+	 * @param {number} delay in ms (0 disables ping)
 	 */
 	 ping(delay=0){
 
@@ -230,7 +255,7 @@ class SockhopClient extends EventEmitter{
 	/**
 	 * disconnect
 	 *
-	 * @return
+	 * Disconnect the socket (send FIN)
 	 */
 	disconnect(){
 
@@ -242,6 +267,10 @@ class SockhopClient extends EventEmitter{
 
 
 
+/** 
+ * Wrapped TCP server
+ * @extends EventEmitter
+ */
 class SockhopServer extends EventEmitter {
 
 	constructor(opts={}){
@@ -305,7 +334,7 @@ class SockhopServer extends EventEmitter {
 	/**
 	 * Socket getter
 	 *
-	 * @return array of underlying socket objects
+	 * @return {array} the underlying socket objects for our clients
 	 */
 	 get sockets(){
 
@@ -316,8 +345,7 @@ class SockhopServer extends EventEmitter {
 	 * Ping
 	 * 
 	 * Ping all clients, detect timeouts
-	 * @param delay ms (0 disables ping)
-	 * @return
+	 * @param {number} delay in ms (0 disables ping)
 	 */
 	 ping(delay=0){
 
@@ -363,7 +391,7 @@ class SockhopServer extends EventEmitter {
 	 * Listen
 	 * 
 	 * Bind and wait for incoming connections
-	 * @return Promise
+	 * @return {Promise}
 	 */
 	listen(){
 
@@ -373,7 +401,7 @@ class SockhopServer extends EventEmitter {
 	/**
 	 * Get bound address
 	 *
-	 * @return string the IP address we are bound to 
+	 * @return {string} the IP address we are bound to 
 	 */
 	get_bound_address(){
 
@@ -384,9 +412,9 @@ class SockhopServer extends EventEmitter {
 	 * Send
 	 *
 	 * Send an object to one clients
-	 * @param socket on which to send it
-	 * @param object to send
-	 * @return Promise
+	 * @param {net.socket} the socket on which to send it
+	 * @param {object} the object that we want to send
+	 * @return {Promise}
 	 */
 	send(sock,o){
 
@@ -414,8 +442,8 @@ class SockhopServer extends EventEmitter {
 	 * Sendall
 	 *
 	 * Send an object to all clients
-	 * @param object to send
-	 * @return Promise
+	 * @param {object} the object to send to all connected clients
+	 * @return {Promise}
 	 */
 	sendall(o){
 
@@ -436,7 +464,7 @@ class SockhopServer extends EventEmitter {
 	 *
 	 * Disconnect all clients
 	 * Does not close the server - use close() for that
-	 * @return Promise
+	 * @return {Promise}
 	 */
 	 disconnect(){
 

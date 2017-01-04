@@ -69,7 +69,7 @@ Used internally when .ping() is called
 
 * [SockhopPing](#SockhopPing)
     * [.unanswered()](#SockhopPing+unanswered) ⇒ <code>boolean</code>
-    * [.conclude_with_pong(the)](#SockhopPing+conclude_with_pong)
+    * [.conclude_with_pong(pong)](#SockhopPing+conclude_with_pong)
 
 <a name="SockhopPing+unanswered"></a>
 
@@ -81,7 +81,7 @@ Is this ping Unanswered?
 **Kind**: instance method of <code>[SockhopPing](#SockhopPing)</code>  
 <a name="SockhopPing+conclude_with_pong"></a>
 
-### sockhopPing.conclude_with_pong(the)
+### sockhopPing.conclude_with_pong(pong)
 Conclude a ping 
 
 Sets the returned, finished values
@@ -90,7 +90,7 @@ Sets the returned, finished values
 
 | Param | Type | Description |
 | --- | --- | --- |
-| the | <code>[SockhopPong](#SockhopPong)</code> | pong (ping reply) that is finishing this ping |
+| pong | <code>[SockhopPong](#SockhopPong)</code> | the pong (ping reply) that is finishing this ping |
 
 <a name="SockhopPong"></a>
 
@@ -113,7 +113,7 @@ Wrapped TCP client
     * [.socket](#SockhopClient+socket) ⇒ <code>net.socket</code>
     * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
-    * [.send(to)](#SockhopClient+send) ⇒ <code>Promise</code>
+    * [.send(object)](#SockhopClient+send) ⇒ <code>Promise</code>
     * [.ping(delay)](#SockhopClient+ping)
     * [.disconnect()](#SockhopClient+disconnect)
 
@@ -126,7 +126,7 @@ Socket setter
 
 | Param | Type | Description |
 | --- | --- | --- |
-| a | <code>net.socket</code> | new socket to set up |
+| socket | <code>net.socket</code> | a new socket to set up |
 
 <a name="SockhopClient+socket"></a>
 
@@ -152,7 +152,7 @@ Get bound address
 **Returns**: <code>string</code> - the IP address we are bound to  
 <a name="SockhopClient+send"></a>
 
-### sockhopClient.send(to) ⇒ <code>Promise</code>
+### sockhopClient.send(object) ⇒ <code>Promise</code>
 Send
 
 Send an object to the server
@@ -161,7 +161,7 @@ Send an object to the server
 
 | Param | Type | Description |
 | --- | --- | --- |
-| to | <code>object</code> | be sent over the wire |
+| object | <code>object</code> | to be sent over the wire |
 
 <a name="SockhopClient+ping"></a>
 
@@ -198,8 +198,8 @@ Wrapped TCP server
     * [.ping(delay)](#SockhopServer+ping)
     * [.listen()](#SockhopServer+listen) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopServer+get_bound_address) ⇒ <code>string</code>
-    * [.send(the, the)](#SockhopServer+send) ⇒ <code>Promise</code>
-    * [.sendall(the)](#SockhopServer+sendall) ⇒ <code>Promise</code>
+    * [.send(socket, object)](#SockhopServer+send) ⇒ <code>Promise</code>
+    * [.sendall(object)](#SockhopServer+sendall) ⇒ <code>Promise</code>
     * [.disconnect()](#SockhopServer+disconnect) ⇒ <code>Promise</code>
 
 <a name="SockhopServer+sockets"></a>
@@ -239,7 +239,7 @@ Get bound address
 **Returns**: <code>string</code> - the IP address we are bound to  
 <a name="SockhopServer+send"></a>
 
-### sockhopServer.send(the, the) ⇒ <code>Promise</code>
+### sockhopServer.send(socket, object) ⇒ <code>Promise</code>
 Send
 
 Send an object to one clients
@@ -248,12 +248,12 @@ Send an object to one clients
 
 | Param | Type | Description |
 | --- | --- | --- |
-| the | <code>net.socket</code> | socket on which to send it |
-| the | <code>object</code> | object that we want to send |
+| socket | <code>net.socket</code> | on which to send it |
+| object | <code>object</code> | that we want to send |
 
 <a name="SockhopServer+sendall"></a>
 
-### sockhopServer.sendall(the) ⇒ <code>Promise</code>
+### sockhopServer.sendall(object) ⇒ <code>Promise</code>
 Sendall
 
 Send an object to all clients
@@ -262,7 +262,7 @@ Send an object to all clients
 
 | Param | Type | Description |
 | --- | --- | --- |
-| the | <code>object</code> | object to send to all connected clients |
+| object | <code>object</code> | to send to all connected clients |
 
 <a name="SockhopServer+disconnect"></a>
 

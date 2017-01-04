@@ -1,6 +1,5 @@
-"use strict";
-var Promise=require("bluebird");
-var net=Promise.promisifyAll(require("net"));
+var Bluebird=require("bluebird");
+var net=Bluebird.promisifyAll(require("net"));
 var EventEmitter=require("events").EventEmitter;
 var inherits = require("util").inherits;
 var uuid=require("uuid");
@@ -28,7 +27,7 @@ class SockhopPing {
 	 */
 	unanswered(){
 
-		return (this._finished==null)?true:false;
+		return (this._finished===null)?true:false;
 	}
 
 	/**
@@ -216,7 +215,7 @@ class SockhopClient extends EventEmitter{
  		}
 
 	 	// Set up new timer
-	 	if(delay!=0){
+	 	if(delay!==0){
 
 		 	// Set up a new ping timer
 		 	this.interval_timer=setInterval(()=>{
@@ -357,7 +356,7 @@ class SockhopServer extends EventEmitter {
 
 
 	 	// Set up new timer
-	 	if(delay!=0){
+	 	if(delay!==0){
 
 		 	// Set up a new ping timer
 		 	this.interval_timer=setInterval(()=>{
@@ -456,7 +455,7 @@ class SockhopServer extends EventEmitter {
 		});		
 
 		// Check each socket in case it was destroyed (unclean death).  Remove bad.  Send data to good.
-		return Promise.all(this._sockets.map((s)=>{if(s.destroyed) s.emit("end"); else return s.writeAsync(m)}));
+		return Promise.all(this._sockets.map((s)=>{if(s.destroyed) s.emit("end"); else return s.writeAsync(m);}));
 	}
 
 	/**

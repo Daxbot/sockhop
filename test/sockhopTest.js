@@ -33,6 +33,18 @@ describe("Client",()=>{
 		assert.equal(c.get_bound_address(),"127.0.0.1");
 	});
 
+	it("Handle ECONNREFUSED",(done)=>{
+
+		let cc=new Sockhop.client({port: 49999});
+		cc.connect().catch((e)=>{
+
+			assert(e.errno.match(/ECONNREFUSED/));
+			done();
+		});
+
+
+	});
+
 });
 
 describe("Client-server", function(){

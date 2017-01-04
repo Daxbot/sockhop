@@ -40,7 +40,7 @@ class SockhopPing {
 
 			this._returned=p._returned;
 			this._finished=new Date();
-			console.log("finished: "+JSON.stringify(this));
+			//console.log("finished: "+JSON.stringify(this));
 		}
 	}
 }

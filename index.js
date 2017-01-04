@@ -35,7 +35,7 @@ class SockhopPing {
 	 * Conclude a ping 
 	 *
 	 * Sets the returned, finished values
-	 * @param {SockhopPong} the pong (ping reply) that is finishing this ping
+	 * @param {SockhopPong} pong the pong (ping reply) that is finishing this ping
 	 */
 	conclude_with_pong(p){
 
@@ -88,7 +88,7 @@ class SockhopClient extends EventEmitter{
 	/**
 	 * Socket setter
 	 *
-	 * @param {net.socket} a new socket to set up
+	 * @param {net.socket} socket a new socket to set up
 	 */
 	set socket(s) {
 
@@ -185,7 +185,7 @@ class SockhopClient extends EventEmitter{
 	 * Send
 	 *
 	 * Send an object to the server
-	 * @param {object} to be sent over the wire
+	 * @param {object} object to be sent over the wire
 	 * @return {Promise} 
 	 */
 	send(o){
@@ -412,8 +412,8 @@ class SockhopServer extends EventEmitter {
 	 * Send
 	 *
 	 * Send an object to one clients
-	 * @param {net.socket} the socket on which to send it
-	 * @param {object} the object that we want to send
+	 * @param {net.socket} socket on which to send it
+	 * @param {object} object that we want to send
 	 * @return {Promise}
 	 */
 	send(sock,o){
@@ -442,7 +442,7 @@ class SockhopServer extends EventEmitter {
 	 * Sendall
 	 *
 	 * Send an object to all clients
-	 * @param {object} the object to send to all connected clients
+	 * @param {object} object to send to all connected clients
 	 * @return {Promise}
 	 */
 	sendall(o){

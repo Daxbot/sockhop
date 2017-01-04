@@ -16,5 +16,8 @@
     "bluebird": "^3.4.7",
     "mocha": "^3.2.0",
     "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1"
   }
 }

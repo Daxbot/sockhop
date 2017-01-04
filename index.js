@@ -279,7 +279,7 @@ class SockhopServer extends EventEmitter {
 					if(o.type=="SockhopPing"){
 
 						var p=new SockhopPong(o.data);
-						_self.send(p);
+						_self.send(sock,p);
 						return;
 					}
 
@@ -381,6 +381,36 @@ class SockhopServer extends EventEmitter {
 	}
 
 	/** 
+	 * Send
+	 *
+	 * Send an object to one clients
+	 * @param socket on which to send it
+	 * @param object to send
+	 * @return Promise
+	 */
+	send(sock,o){
+
+		let _self=this;
+
+		// Create a message
+		var m=JSON.stringify({
+			"type"	:	o.constructor.name,
+			data	:	o
+		});		
+
+		if(sock.destroyed){
+
+			sock.emit("end");
+			return Promise.reject(new Error("Socket was destroyed"));
+
+		} else {
+
+			return sock.writeAsync(m);
+		}
+	}
+
+
+	/** 
 	 * Sendall
 	 *
 	 * Send an object to all clients
@@ -399,7 +429,6 @@ class SockhopServer extends EventEmitter {
 
 		// Check each socket in case it was destroyed (unclean death).  Remove bad.  Send data to good.
 		return Promise.all(this._sockets.map((s)=>{if(s.destroyed) s.emit("end"); else return s.writeAsync(m)}));
-
 	}
 
 	/**

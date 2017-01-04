@@ -91,9 +91,30 @@ describe("Events", function(){
 
 });
 
-describe("Server ping", function(){
+describe("Ping", function(){
 
 	this.slow(3000);
+
+	it("Client pings server successfully for 1000ms", function(done){
+
+		s.once("disconnect",()=>{
+
+			c.ping(0);
+			assert(0);
+		});
+
+		c.connect().then(()=>{
+			c.ping(200);
+
+			setTimeout(()=>{
+
+				c.disconnect();
+				s.removeAllListeners("disconnect");
+				done();
+			}, 1000);
+		});
+
+	});
 
 	it("Server disconnects paused client (should be slow)", function(done){
 
@@ -103,7 +124,9 @@ describe("Server ping", function(){
 			done();
 		});
 
+		c=new Sockhop.client();
 		c.connect().then(()=>{
+
 			s.ping(200);
 			c.socket.pause();
 		});

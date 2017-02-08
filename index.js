@@ -81,7 +81,7 @@ class SockhopClient extends EventEmitter{
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this.interval_timer=null;
-		this.socket=new net.Socket();
+		this.socket=new net.Socket({objectMode: true});
 	}
 
 	/**
@@ -109,7 +109,8 @@ class SockhopClient extends EventEmitter{
 				if(o.type=="SockhopPing"){
 
 					var p=new SockhopPong(o.data);
-					_self.send(p);
+					_self.send(p)
+						.catch((e)=>{});	// Ignore any sending problems, there is nothing further we need to do
 					return;
 				}
 
@@ -149,7 +150,6 @@ class SockhopClient extends EventEmitter{
 		var _self=this;
 		return new Promise((resolve, reject)=>{
 
-			_self.emit("connect", _self._socket);
 
 			_self.socket.once("error", (e)=>{
 
@@ -157,6 +157,7 @@ class SockhopClient extends EventEmitter{
 			});
 			_self.socket.once("connect", ()=>{
 
+				_self.emit("connect", _self._socket);
 				resolve();
 			});
 
@@ -196,7 +197,13 @@ class SockhopClient extends EventEmitter{
 			data	:	o
 		});		
 
-		return (this._socket.destroyed)?Promise.reject(new Error("Socket has been destroyed")):this._socket.writeAsync(m);	
+		if(this._socket.destroyed){
+
+			this._socket.emit("end");
+			return Promise.reject(new Error("Client unable to send() - socket has been destroyed"));
+		}
+
+		return this._socket.writeAsync(m);
 	}	
 
 	/** 
@@ -233,17 +240,21 @@ class SockhopClient extends EventEmitter{
 	 			if(this.pings.length>3 && this.pings.length==unanswered){
 
 	 				// Kill timer
-		 			clearInterval(this.interval_timer);
-		 			this.interval_timer=null;
+		 			this.ping(0);
 
+		 			// Shutdown the socket
 	 				this._socket.end();
 	 				this._socket.destroy();
 	 				this._socket.emit("end");
 
-	 				this.socket=new net.Socket();
+	 				this.socket=new net.Socket({objectMode: true});
 	 				return;
 	 			}
-		 		this.send(p);
+	 			var _self=this;
+		 		this.send(p).catch((e)=>{
+
+		 			_self.ping(0);	// Socket has already been shut down etc
+		 		});
 
 		 	}, delay);
 		 }
@@ -258,6 +269,8 @@ class SockhopClient extends EventEmitter{
 	 */
 	disconnect(){
 
+		// Stop any pinging
+		this.ping(0);
 		this.socket.end();
 	}
 }
@@ -280,7 +293,7 @@ class SockhopServer extends EventEmitter {
 		this.port=opts.port||50000;
 		this._sockets=[];
 		this.pings=new Map();
-		this.server=net.createServer();
+		this.server=net.createServer({objectMode: true});
 		this.interval_timer=null;
 		this.server.on('connection', function(sock){
 
@@ -467,6 +480,7 @@ class SockhopServer extends EventEmitter {
 	 */
 	 disconnect(){
 
+	 	this.ping(0);	// Stop all pinging
 		return Promise.all(this._sockets.map((s)=>s.end()));	 	
 	 }	
 

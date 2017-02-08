@@ -111,22 +111,23 @@ describe("Ping", function(){
 
 		s.once("disconnect",()=>{
 
-			c.ping(0);
-			assert(0);
+			throw new Error("Server has disconnected unexpectedly");
 		});
 
 		c.connect().then(()=>{
-			c.ping(200);
+			c.ping(200);		// Ping at 200ms intervals
 
-			setTimeout(()=>{
+			setTimeout(()=>{	// Let it ping for 1000ms, then cleanly disconnect
 
-				c.disconnect();
 				s.removeAllListeners("disconnect");
+				c.disconnect();
 				done();
 			}, 1000);
+
 		});
 
 	});
+
 
 	it("Server disconnects paused client (should be slow)", function(done){
 

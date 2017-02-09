@@ -81,7 +81,7 @@ class SockhopClient extends EventEmitter{
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this.interval_timer=null;
-		this.socket=new net.Socket({objectMode: true});
+		this.socket=new net.Socket();
 	}
 
 	/**
@@ -94,6 +94,7 @@ class SockhopClient extends EventEmitter{
 		var _self=this;
 		this.pings=[];
 		this._socket=s;
+		//this._socket.setEncoding('utf8');
 		this._socket
 			.on("end",()=>{
 
@@ -103,7 +104,14 @@ class SockhopClient extends EventEmitter{
 			})
 			.on("data", (data)=>{
 
-				var o=JSON.parse(data);
+				try {
+
+					var o=JSON.parse(data);
+
+				} catch(e) {
+
+					_self.emit("error", new Error("Invalid JSON received from server"));
+				}
 
 				// Handle SockhopPing requests with silent SockhopPong
 				if(o.type=="SockhopPing"){
@@ -314,7 +322,13 @@ class SockhopServer extends EventEmitter {
 				})
 				.on('data',function(data){
 					
-					var o=JSON.parse(data);
+					try {
+
+						var o=JSON.parse(data);
+					} catch(e) {
+
+						_self.emit("error", new Error("Invalid JSON received from client"), sock);
+					}
 	
 					// Handle SockhopPing requests with SockhopPong
 					if(o.type=="SockhopPing"){

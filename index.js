@@ -111,6 +111,7 @@ class SockhopClient extends EventEmitter{
 				} catch(e) {
 
 					_self.emit("error", new Error("Invalid JSON received from server"));
+					return;
 				}
 
 				// Handle SockhopPing requests with silent SockhopPong
@@ -255,7 +256,7 @@ class SockhopClient extends EventEmitter{
 	 				this._socket.destroy();
 	 				this._socket.emit("end");
 
-	 				this.socket=new net.Socket({objectMode: true});
+	 				this.socket=new net.Socket();
 	 				return;
 	 			}
 	 			var _self=this;
@@ -301,7 +302,7 @@ class SockhopServer extends EventEmitter {
 		this.port=opts.port||50000;
 		this._sockets=[];
 		this.pings=new Map();
-		this.server=net.createServer({objectMode: true});
+		this.server=net.createServer();
 		this.interval_timer=null;
 		this.server.on('connection', function(sock){
 
@@ -328,6 +329,7 @@ class SockhopServer extends EventEmitter {
 					} catch(e) {
 
 						_self.emit("error", new Error("Invalid JSON received from client"), sock);
+						return;
 					}
 	
 					// Handle SockhopPing requests with SockhopPong

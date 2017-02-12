@@ -3,7 +3,7 @@ var net=Bluebird.promisifyAll(require("net"));
 var EventEmitter=require("events").EventEmitter;
 var inherits = require("util").inherits;
 var uuid=require("uuid");
-
+var ObjectBuffer=require("./lib/ObjectBuffer.js");
 /** 
  * TCP Ping
  *
@@ -81,7 +81,11 @@ class SockhopClient extends EventEmitter{
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this.interval_timer=null;
-		this.socket=new net.Socket();
+		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
+
+		// Create ObjectBuffer and pass along any errors
+		this._objectbuffer=new ObjectBuffer();
+		this._objectbuffer.on("error",(e)=>{throw e;});
 	}
 
 	/**
@@ -94,7 +98,6 @@ class SockhopClient extends EventEmitter{
 		var _self=this;
 		this.pings=[];
 		this._socket=s;
-		//this._socket.setEncoding('utf8');
 		this._socket
 			.on("end",()=>{
 
@@ -102,38 +105,33 @@ class SockhopClient extends EventEmitter{
 				_self.ping(0);
 				_self.emit("disconnect", _self._socket);
 			})
-			.on("data", (data)=>{
+			.on("data", (buf)=>{
 
-				try {
+				this._objectbuffer.buf2obj(buf).forEach((o)=>{
 
-					var o=JSON.parse(data);
+					// Handle SockhopPing requests with silent SockhopPong
+					if(o.type=="SockhopPing"){
 
-				} catch(e) {
-
-					_self.emit("error", new Error("Invalid JSON received from server"));
-					return;
-				}
-
-				// Handle SockhopPing requests with silent SockhopPong
-				if(o.type=="SockhopPing"){
-
-					var p=new SockhopPong(o.data);
-					_self.send(p)
-						.catch((e)=>{});	// Ignore any sending problems, there is nothing further we need to do
-					return;
-				}
-
-				// Handle SockhopPong 
-				if(o.type=="SockhopPong"){
-
-					for(let p of _self.pings){
-
-						p.conclude_with_pong(o.data);
+						var p=new SockhopPong(o.data);
+						_self.send(p)
+							.catch((e)=>{});	// Ignore any sending problems, there is nothing further we need to do
+						return;
 					}
-					return;
-				}
 
-				this.emit("receive", o.data,{type:o.type});
+					// Handle SockhopPong 
+					if(o.type=="SockhopPong"){
+
+						for(let p of _self.pings){
+
+							p.conclude_with_pong(o.data);
+						}
+						return;
+					}
+
+					_self.emit("receive", o.data,{type:o.type});
+
+				});
+
 			});
 
 	}
@@ -201,10 +199,10 @@ class SockhopClient extends EventEmitter{
 
 
 		// Create a message
-		var m=JSON.stringify({
+		var m={
 			"type"	:	o.constructor.name,
 			data	:	o
-		});		
+		};		
 
 		if(this._socket.destroyed){
 
@@ -212,7 +210,7 @@ class SockhopClient extends EventEmitter{
 			return Promise.reject(new Error("Client unable to send() - socket has been destroyed"));
 		}
 
-		return this._socket.writeAsync(m);
+		return this._socket.writeAsync(this._objectbuffer.obj2buf(m));
 	}	
 
 	/** 
@@ -275,12 +273,17 @@ class SockhopClient extends EventEmitter{
 	 * disconnect
 	 *
 	 * Disconnect the socket (send FIN)
+	 * @return Promise
 	 */
 	disconnect(){
 
 		// Stop any pinging
 		this.ping(0);
-		this.socket.end();
+		this._socket.end();
+		this._socket.destroy();
+		this._socket.emit("end");
+		this.socket=new net.Socket();
+		return Promise.resolve();
 	}
 }
 
@@ -304,6 +307,12 @@ class SockhopServer extends EventEmitter {
 		this.pings=new Map();
 		this.server=net.createServer();
 		this.interval_timer=null;
+
+		// Create ObjectBuffer and pass along any errors
+		this._objectbuffer=new ObjectBuffer();
+		this._objectbuffer.on("error",(e)=>{throw e;});
+
+		// Setup server
 		this.server.on('connection', function(sock){
 
 			// Setup empty pings map
@@ -314,44 +323,37 @@ class SockhopServer extends EventEmitter {
 
 			// Setup the socket events
 			sock
-				.setEncoding('utf8')
 				.on("end",()=>{
 
 					_self.emit("disconnect", sock);
 					_self._sockets.splice(_self._sockets.indexOf(sock), 1);
 					_self.pings.delete(sock);
 				})
-				.on('data',function(data){
-					
-					try {
+				.on('data',function(buf){
 
-						var o=JSON.parse(data);
-					} catch(e) {
+					_self._objectbuffer.buf2obj(buf).forEach((o)=>{
 
-						_self.emit("error", new Error("Invalid JSON received from client"), sock);
-						return;
-					}
-	
-					// Handle SockhopPing requests with SockhopPong
-					if(o.type=="SockhopPing"){
+						// Handle SockhopPing requests with SockhopPong
+						if(o.type=="SockhopPing"){
 
-						var p=new SockhopPong(o.data);
-						_self.send(sock,p);
-						return;
-					}
-
-					// Handle SockhopPong 
-					if(o.type=="SockhopPong"){
-
-						var pings=_self.pings.get(sock);
-						for(let p of pings){
-
-							p.conclude_with_pong(o.data);
+							var p=new SockhopPong(o.data);
+							_self.send(sock,p);
+							return;
 						}
-						return;
-					}
 
-					_self.emit("receive", o.data, {type:o.type, socket: sock });
+						// Handle SockhopPong 
+						if(o.type=="SockhopPong"){
+
+							var pings=_self.pings.get(sock);
+							for(let p of pings){
+
+								p.conclude_with_pong(o.data);
+							}
+							return;
+						}
+
+						_self.emit("receive", o.data, {type:o.type, socket: sock });
+					});	
 
 				});
 
@@ -449,10 +451,10 @@ class SockhopServer extends EventEmitter {
 		let _self=this;
 
 		// Create a message
-		var m=JSON.stringify({
+		var m={
 			"type"	:	o.constructor.name,
 			data	:	o
-		});		
+		};		
 
 		if(sock.destroyed){
 
@@ -461,7 +463,7 @@ class SockhopServer extends EventEmitter {
 
 		} else {
 
-			return sock.writeAsync(m);
+			return sock.writeAsync(this._objectbuffer.obj2buf(m));
 		}
 	}
 
@@ -477,28 +479,39 @@ class SockhopServer extends EventEmitter {
 
 		let _self=this;
 
-		// Create a message
-		var m=JSON.stringify({
-			"type"	:	o.constructor.name,
-			data	:	o
-		});		
-
 		// Check each socket in case it was destroyed (unclean death).  Remove bad.  Send data to good.
-		return Promise.all(this._sockets.map((s)=>{if(s.destroyed) s.emit("end"); else return s.writeAsync(m);}));
+		return Promise.all(this._sockets.map((s)=>{if(s.destroyed) s.emit("end"); else return this.send(s,o);}));
 	}
 
 	/**
 	 * Disconnect
 	 *
 	 * Disconnect all clients
-	 * Does not close the server - use close() for that
+	 * Does not close the server - use close() for that 
 	 * @return {Promise}
 	 */
 	 disconnect(){
 
 	 	this.ping(0);	// Stop all pinging
-		return Promise.all(this._sockets.map((s)=>s.end()));	 	
+		return Promise.all(this._sockets.map((s)=>s.endAsync()));	 	
 	 }	
+
+	 /**
+	  * Close
+	  *
+	  * Disconnects any clients and closes the server
+	  * @return Promise
+	  */
+	  close(){
+
+	  	return Promise.all([this.disconnect(), this.server.closeAsync()])
+	  			.then(()=>{
+
+	  				// Replace the server object (may not be necessary, but seems cleaner)
+					this.server=net.createServer();	  				
+					return Promise.resolve();
+	  			});
+	  }
 
 }
 

@@ -32,7 +32,8 @@ Extra cool sockets for node.js
 Sockhop wraps node sockets and gives you:
 
 - Easy control and events for things that can be tricky ("is my client still connected?")
-- Easy passing of arbitrary objects
+- Easy passing of arbitrary objects, including type metadata so you can reconstitute them at the remote end
+- Safe binary encoding of objects across streams
 - Ping across connections
 
 
@@ -115,7 +116,7 @@ Wrapped TCP client
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
     * [.send(object)](#SockhopClient+send) ⇒ <code>Promise</code>
     * [.ping(delay)](#SockhopClient+ping)
-    * [.disconnect()](#SockhopClient+disconnect)
+    * [.disconnect()](#SockhopClient+disconnect) ⇒
 
 <a name="SockhopClient+socket"></a>
 
@@ -179,12 +180,13 @@ You can then call .connect() again to reconnect.  Don't forget to re-enable ping
 
 <a name="SockhopClient+disconnect"></a>
 
-### sockhopClient.disconnect()
+### sockhopClient.disconnect() ⇒
 disconnect
 
 Disconnect the socket (send FIN)
 
 **Kind**: instance method of <code>[SockhopClient](#SockhopClient)</code>  
+**Returns**: Promise  
 <a name="SockhopServer"></a>
 
 ## SockhopServer ⇐ <code>EventEmitter</code>
@@ -201,6 +203,7 @@ Wrapped TCP server
     * [.send(socket, object)](#SockhopServer+send) ⇒ <code>Promise</code>
     * [.sendall(object)](#SockhopServer+sendall) ⇒ <code>Promise</code>
     * [.disconnect()](#SockhopServer+disconnect) ⇒ <code>Promise</code>
+    * [.close()](#SockhopServer+close) ⇒
 
 <a name="SockhopServer+sockets"></a>
 
@@ -273,6 +276,15 @@ Disconnect all clients
 Does not close the server - use close() for that
 
 **Kind**: instance method of <code>[SockhopServer](#SockhopServer)</code>  
+<a name="SockhopServer+close"></a>
+
+### sockhopServer.close() ⇒
+Close
+
+Disconnects any clients and closes the server
+
+**Kind**: instance method of <code>[SockhopServer](#SockhopServer)</code>  
+**Returns**: Promise  
 
 ## License
 MIT

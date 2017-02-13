@@ -1,40 +1,41 @@
 # Sockhop
-Extra cool sockets for node.js
+
+Node.js socket server and client with all the painful stuff taken out.  
+
+- Easy wrappers over the tricky parts of net.socket
+- Auto reconnect  
+- Pass objects directly across the socket
+- Ping with auto disconnect/reconnect
 
 ## Example
 ```javascript
 
 	// Client
-	var c=new Sockhop.client();
-	c.on("receive", (msg, metadata)=>{
-
-		// We have data
-	});
+	var c=new Sockhop.client({auto_reconnect: true});
+	c.on("connect",()=>c.ping(1000)); 	// Ping server every 1000ms, detect problems
+	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));
 
 	// Server
 	var s=new Sockhop.server();
-	s
-		.listen()
-		.then(()=>{
 
-			return c.connect();
-		})
-		.then(()=>{
+	// Connect
+	s.listen()
+	.then(()=>c.connect())
+	.then(()=>{
 
-			s.sendall("This goes to all clients");
+		// Send everyone a Widget
+		s.sendall(new Widget());
 
+		// Send everyone something else
+		s.sendall({
+			"name" : "Joe",
+			"age"  : 105
 		});
+
+	});
 
 
 ```
-
-## Intro
-Sockhop wraps node sockets and gives you:
-
-- Easy control and events for things that can be tricky ("is my client still connected?")
-- Easy passing of arbitrary objects, including type metadata so you can reconstitute them at the remote end
-- Safe binary encoding of objects across streams
-- Ping across connections
 
 
 ## Notes
@@ -110,13 +111,42 @@ Wrapped TCP client
 **Extends:** <code>EventEmitter</code>  
 
 * [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
+    * [.connected](#SockhopClient+connected) ⇒ <code>boolean</code>
+    * [.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>
+    * [.auto_reconnect](#SockhopClient+auto_reconnect)
     * [.socket](#SockhopClient+socket)
     * [.socket](#SockhopClient+socket) ⇒ <code>net.socket</code>
+    * [._perform_auto_reconnect()](#SockhopClient+_perform_auto_reconnect)
     * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
     * [.send(object)](#SockhopClient+send) ⇒ <code>Promise</code>
     * [.ping(delay)](#SockhopClient+ping)
     * [.disconnect()](#SockhopClient+disconnect) ⇒
+
+<a name="SockhopClient+connected"></a>
+
+### sockhopClient.connected ⇒ <code>boolean</code>
+connected
+
+**Kind**: instance property of <code>[SockhopClient](#SockhopClient)</code>  
+**Returns**: <code>boolean</code> - connected whether or not we are currently connected  
+<a name="SockhopClient+auto_reconnect"></a>
+
+### sockhopClient.auto_reconnect ⇒ <code>boolean</code>
+auto_reconnect getter
+
+**Kind**: instance property of <code>[SockhopClient](#SockhopClient)</code>  
+**Returns**: <code>boolean</code> - auto_reconnect the current auto_reconnect setting  
+<a name="SockhopClient+auto_reconnect"></a>
+
+### sockhopClient.auto_reconnect
+auto_reconnect setter
+
+**Kind**: instance property of <code>[SockhopClient](#SockhopClient)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auto_reconnect | <code>boolean</code> | the desired auto_reconnect setting |
 
 <a name="SockhopClient+socket"></a>
 
@@ -136,6 +166,15 @@ Socket getter
 
 **Kind**: instance property of <code>[SockhopClient](#SockhopClient)</code>  
 **Returns**: <code>net.socket</code> - underlying socket object  
+<a name="SockhopClient+_perform_auto_reconnect"></a>
+
+### sockhopClient._perform_auto_reconnect()
+Perform an auto reconnet (internal)
+
+We have determined that an auto reconnect is necessary.
+We will initiate it, and manage the fallout.
+
+**Kind**: instance method of <code>[SockhopClient](#SockhopClient)</code>  
 <a name="SockhopClient+connect"></a>
 
 ### sockhopClient.connect() ⇒ <code>Promise</code>

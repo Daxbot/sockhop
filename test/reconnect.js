@@ -11,40 +11,79 @@ describe("client.auto_reconnect", function(){
 
 	it("Will cause connect", function(done){
 
-		// We are done once we connect
-		c.once("connect",()=>done());
+		// We are done once we connect and pass data
+		c.once("connect",()=>{
+
+			s.once("receive", (msg)=>{
+				assert.equal(msg, "Here, have some data");
+				done();
+			});
+
+			c.send("Here, have some data");
+		});
 
 		s.listen()
 		.then(()=>c.auto_reconnect=true);
 
 	});
 
-	it("Reconnects automatically when client disconnects", function(done){
+	it("Reconnects automatically when client disconnects due to ping (slow)", function(done){
 
-		// We are done once we connect
-		c.once("connect",()=>done());
+		this.slow(3000);
 
-		c.disconnect();
+		// We are done once we connect and xfer data
+		c.once("connect",()=>{
+
+			s.once("receive", (msg)=>{
+				assert.equal(msg, "data goes in");
+				done();
+			});
+
+			c.send("data goes in");
+		});
+		c.ping(200);
+		c.socket.pause();	// Drop the wrench into the engine
 
 	});
 
-	it("Reconnects automatically when server disconnects (slow)", function(done){
+
+
+	it("Reconnects on server death, only bubble single disconnect event", function(done){
 	
 		this.slow(3000);
 
-		// We are done once we connect
-		c.once("connect",()=>done());
+		// Count disconnect events
+		var disconnect_event_counter=0;
+		c.on("disconnect",()=>{
 
-		s.close()
+			disconnect_event_counter++;
+		});
+
+		// We are done once we connect
+		c.once("connect",()=>{
+
+			assert.equal(disconnect_event_counter,1);
+			done();
+		});
+
+		Promise.resolve()
+		.then(()=>s.close())
 		.then(()=>{
 
-			setTimeout(()=>{
+				delete s;	// jshint ignore:line
+		})
+		.then(()=>{
 
+
+			// 1s later, create a new server
+			setTimeout(()=>{
+				s=new Sockhop.server({port: 50007});
 				s.listen();
-			},500);
+			},1000);
 		});
 
 	});
+
 
 });
 

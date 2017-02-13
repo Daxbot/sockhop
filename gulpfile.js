@@ -4,7 +4,7 @@ var gulp=require("gulp");
 gulp.task("lint", ()=>{
 
 
-	return gulp.src("index.js")
+	return gulp.src(["index.js","test/*.js"])
 		.pipe(jshint())
 		.pipe(jshint.reporter("default"))	// Linter reporter
 		.pipe(jshint.reporter("fail"));		// Fail task when linter fails

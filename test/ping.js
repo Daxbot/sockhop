@@ -81,7 +81,7 @@ describe("Ping", function(){
 
 			s.disconnect();
 			done();
-		})
+		});
 		c.connect().then(()=>{
 
 			c.ping(200);

@@ -35,7 +35,7 @@ describe("ObjectBuffer", function(){
 
 				let fragment=Buffer.allocUnsafe(1);
 				b.copy(fragment, 0, n, n+1);
-				ob.buf2obj(fragment).forEach((o)=>out.push(o));
+				ob.buf2obj(fragment).forEach((o)=>out.push(o)); // jshint ignore:line
 			}
 		});
 

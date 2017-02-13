@@ -83,6 +83,7 @@ class SockhopClient extends EventEmitter{
 		this.interval_timer=null;
 		this._auto_reconnect=(typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
 		this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;	//ms
+		this._auto_reconnect_timer=null;
 		this._connected=false;
 		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
@@ -133,12 +134,26 @@ class SockhopClient extends EventEmitter{
 		// If we are already connected or connecting, we can disregard
 		if(this.connected || this._socket.connecting) return;
 
+		// If auto reconnect has been disabled, we can disregard
+		if(!this.auto_reconnect) return;
+
+		// If we already have a reconnect timer running, disregard
+		if(this._auto_reconnect_timer) return;
+
 		var _self=this;
 		this.connect()
 			.catch((e)=>{
 
 				// Reconnect failed.  We don't care why.  Try again
-				setTimeout(()=>_self._perform_auto_reconnect(), _self._auto_reconnect_interval);
+				_self._auto_reconnect_timer=setTimeout(()=>{
+
+					// Signify that we have no timer (it just ended)
+					_self._auto_reconnect_timer=null;
+
+					// Call ourself
+					_self._perform_auto_reconnect();
+
+				}, _self._auto_reconnect_interval);
 			});
 	}
 
@@ -155,11 +170,15 @@ class SockhopClient extends EventEmitter{
 		this._socket
 			.on("end",()=>{
 
-				// Stop pinging, emit disconnect
+				// Stop pinging change state of _connected 
+				let was_connected=_self._connected;
 				_self._connected=false;
 				_self.ping(0);
-				_self.emit("disconnect", _self._socket);
 
+				// Emit 'disconnected' if we just transitioned state
+				if(was_connected) _self.emit("disconnect", _self._socket);
+
+				// If we are set to auto reconnect, fire that now
 				if(_self._auto_reconnect) _self._perform_auto_reconnect();
 			})
 			.on("data", (buf)=>{
@@ -189,6 +208,16 @@ class SockhopClient extends EventEmitter{
 
 				});
 
+			})
+			.on("error",(e)=>{
+
+				// We had an error... assume socket will get an 'end' event and trigger any reconnection
+
+				// If we are the only one listening for a socket error, bubble it up through the client
+				if(_self._socket.listenerCount("error")==1){
+
+					_self.emit("error",e);
+				}
 			});
 
 	}
@@ -323,9 +352,12 @@ class SockhopClient extends EventEmitter{
 		 			// Shutdown the socket
 	 				this._socket.end();
 	 				this._socket.destroy();
-	 				this._socket.emit("end");
 
+	 				// Replace socket before emitting end so reconnect is on new socket
+	 				let old_socket=this._socket;
 	 				this.socket=new net.Socket();
+	 				old_socket.emit("end");
+
 	 				return;
 	 			}
 	 			var _self=this;
@@ -350,6 +382,10 @@ class SockhopClient extends EventEmitter{
 
 		// Stop any pinging
 		this.ping(0);
+
+		// Disable auto reconnect (else we will just connect again)
+		this.auto_reconnect=false;
+
 		this._socket.end();
 		this._socket.destroy();
 		this._socket.emit("end");
@@ -579,7 +615,7 @@ class SockhopServer extends EventEmitter {
 	  			.then(()=>{
 
 	  				// Replace the server object (may not be necessary, but seems cleaner)
-					this.server=net.createServer();	  				
+					this.server=net.createServer();
 					return Promise.resolve();
 	  			});
 	  }

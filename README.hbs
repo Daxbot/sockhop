@@ -1,40 +1,41 @@
 # Sockhop
-Extra cool sockets for node.js
+
+Node.js socket server and client with all the painful stuff taken out.  
+
+- Easy wrappers over the tricky parts of net.socket
+- Auto reconnect  
+- Pass objects directly across the socket
+- Ping with auto disconnect/reconnect
 
 ## Example
 ```javascript
 
 	// Client
-	var c=new Sockhop.client();
-	c.on("receive", (msg, metadata)=>{
-
-		// We have data
-	});
+	var c=new Sockhop.client({auto_reconnect: true});
+	c.on("connect",()=>c.ping(1000)); 	// Ping server every 1000ms, detect problems
+	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));
 
 	// Server
 	var s=new Sockhop.server();
-	s
-		.listen()
-		.then(()=>{
 
-			return c.connect();
-		})
-		.then(()=>{
+	// Connect
+	s.listen()
+	.then(()=>c.connect())
+	.then(()=>{
 
-			s.sendall("This goes to all clients");
+		// Send everyone a Widget
+		s.sendall(new Widget());
 
+		// Send everyone something else
+		s.sendall({
+			"name" : "Joe",
+			"age"  : 105
 		});
+
+	});
 
 
 ```
-
-## Intro
-Sockhop wraps node sockets and gives you:
-
-- Easy control and events for things that can be tricky ("is my client still connected?")
-- Easy passing of arbitrary objects, including type metadata so you can reconstitute them at the remote end
-- Safe binary encoding of objects across streams
-- Ping across connections
 
 
 ## Notes

@@ -81,11 +81,65 @@ class SockhopClient extends EventEmitter{
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this.interval_timer=null;
+		this._auto_reconnect=(typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
+		this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;	//ms
+		this._connected=false;
 		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
 		// Create ObjectBuffer and pass along any errors
 		this._objectbuffer=new ObjectBuffer();
 		this._objectbuffer.on("error",(e)=>{throw e;});
+	}
+
+	/**
+	 * connected
+	 *
+	 * @return {boolean} connected whether or not we are currently connected
+	 */
+	get connected(){
+
+		return this._connected;
+	}
+
+	/**
+	 * auto_reconnect getter
+	 *
+	 * @return {boolean} auto_reconnect the current auto_reconnect setting
+	 */
+	get auto_reconnect(){
+
+		return this._auto_reconnect;
+	}
+
+	/**
+	 * auto_reconnect setter
+	 *
+	 * @param {boolean} auto_reconnect the desired auto_reconnect setting
+	 */
+	set auto_reconnect(b){
+
+		this._auto_reconnect=b;
+		if(this._auto_reconnect && !this.connected && !this._socket.connecting) this._perform_auto_reconnect();
+	}
+
+	/**
+	 * Perform an auto reconnet (internal)
+	 *
+	 * We have determined that an auto reconnect is necessary.
+	 * We will initiate it, and manage the fallout.
+	 */
+	_perform_auto_reconnect(){
+
+		// If we are already connected or connecting, we can disregard
+		if(this.connected || this._socket.connecting) return;
+
+		var _self=this;
+		this.connect()
+			.catch((e)=>{
+
+				// Reconnect failed.  We don't care why.  Try again
+				setTimeout(()=>_self._perform_auto_reconnect(), _self._auto_reconnect_interval);
+			});
 	}
 
 	/**
@@ -102,8 +156,11 @@ class SockhopClient extends EventEmitter{
 			.on("end",()=>{
 
 				// Stop pinging, emit disconnect
+				_self._connected=false;
 				_self.ping(0);
 				_self.emit("disconnect", _self._socket);
+
+				if(_self._auto_reconnect) _self._perform_auto_reconnect();
 			})
 			.on("data", (buf)=>{
 
@@ -157,16 +214,30 @@ class SockhopClient extends EventEmitter{
 		var _self=this;
 		return new Promise((resolve, reject)=>{
 
+			// Create two events handlers
+			let on_error=(e)=>{
 
-			_self.socket.once("error", (e)=>{
-
+				remove_both_listeners();
 				reject(e);
-			});
-			_self.socket.once("connect", ()=>{
+			};
 
+			let on_connect=()=>{
+
+				_self._connected=true;
+				remove_both_listeners();
 				_self.emit("connect", _self._socket);
 				resolve();
-			});
+			};
+
+			let remove_both_listeners=()=>{
+
+				_self.socket.removeListener("error", on_error);
+				_self.socket.removeListener("connect", on_connect);
+			};
+
+			// Connect the listeners
+			_self.socket.on("error", on_error);
+			_self.socket.on("connect", on_connect);
 
 			_self.socket.connect(this.port, this.address);
 		});

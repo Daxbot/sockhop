@@ -462,8 +462,12 @@ class SockhopServer extends EventEmitter {
 						_self.emit("receive", o.data, {type:o.type, socket: sock });
 					});	
 
-				});
+				})
+				.on("error",(e)=>{
 
+						// Bubble socket errors
+						_self.emit("error",e);
+				});
 			_self._sockets.push(sock);
 		});
 	}

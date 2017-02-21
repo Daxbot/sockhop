@@ -31,5 +31,14 @@ describe("Server",()=>{
 			});
 	});
 
+
+	it("Server slam open/close does not throw uncaught errors", function(done){
+	
+		let x=new Sockhop.server({port: 50008});
+
+		x.listen();
+		x.close().then(()=>done());
+	});
+
 });
 

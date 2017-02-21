@@ -1,5 +1,7 @@
 var Sockhop=require("../index.js");
 var assert=require("assert");
+var spawn=require("child_process").spawn;
+
 
 var c,s,m;
 
@@ -9,7 +11,7 @@ describe("client.auto_reconnect", function(){
 	s=new Sockhop.server({port: 50007});
 	c=new Sockhop.client({port: 50007, auto_reconnect_interval: 200});
 
-	it("Will cause connect", function(done){
+	it("Will cause connect when set", function(done){
 
 		// We are done once we connect and pass data
 		c.once("connect",()=>{
@@ -26,6 +28,7 @@ describe("client.auto_reconnect", function(){
 		.then(()=>c.auto_reconnect=true);
 
 	});
+
 
 	it("Reconnects automatically when client disconnects due to ping (slow)", function(done){
 
@@ -59,10 +62,14 @@ describe("client.auto_reconnect", function(){
 			disconnect_event_counter++;
 		});
 
-		// We are done once we connect
+		// We are done shortly after we connect
 		c.once("connect",()=>{
 
 			assert.equal(disconnect_event_counter,1);
+			c.disconnect();
+			s.close();
+			delete c;
+			delete s;
 			done();
 		});
 
@@ -84,6 +91,120 @@ describe("client.auto_reconnect", function(){
 
 	});
 
+
+	it("Attempts connect until server appears, then bubbles SINGLE connect event (slow)", function(done){
+	
+		this.slow(4000);
+		this.timeout(3000);
+
+		c=new Sockhop.client({port: 50009, auto_reconnect_interval: 200});
+
+		// Count connect events
+		let connect_event_counter=0;
+
+		// Name the counter function so we can remove it later
+		let connect_counter_fn=function(){
+
+			connect_event_counter++;
+		};
+
+		c.on("connect",connect_counter_fn);
+
+		// We are done shortly after we connect
+		c.once("connect",()=>{
+			setTimeout(()=>{
+
+				// Make sure we only got one event
+				assert.equal(connect_event_counter,1);
+
+				// Clean up connect events
+				c.removeListener("connect", connect_counter_fn);
+
+				// Disconnect, and we are done
+				c.disconnect().then(()=>done());
+			},500);
+		});
+
+		// Start trying to connect
+		c.auto_reconnect=true;
+
+		Promise.resolve()
+		.then(()=>{
+
+			// After 1s pause, create a new server
+			setTimeout(()=>{
+
+				s=new Sockhop.server({port: 50009});
+				s.listen();
+
+			},1000);
+
+		});
+
+	});
+
+
+	it("Server violent death, client reconnects and bubbles SINGLE connect event (slow)", function(done){
+	
+		this.slow(9000);
+		this.timeout(9000);
+
+		// Create a fresh client
+		c=new Sockhop.client({port: 50010, auto_reconnect_interval: 200});		
+
+		// Count connect events
+		let connect_event_counter=0;
+
+		// Name the counter function so we can remove it later
+		let connect_counter_fn=function(){
+
+			connect_event_counter++;
+		};
+
+		// Start the server
+		let slambang=spawn("node", ["./slambang.js"]);
+		// slambang.stdout.on("data",(data)=>console.log("data:"+data));
+		// slambang.stderr.on("data",(data)=>console.log("err:"+data));
+
+		// Connect the client
+		c.auto_reconnect=true;
+
+		// Ignore any connection errors
+		c.on("error",(e)=>{});	
+
+		// We are done shortly after we connect, then disconnect, then reconnect again
+		c.once("connect", () =>{
+			c.once("disconnect", ()=>{
+
+				// We have disconnected.  Wait 500ms, then restart server
+				// setTimeout(()=>{
+
+					let slambang=spawn("node", ["./slambang.js"]);
+				// },500);
+
+				// Start recording connect events
+				c.on("connect",connect_counter_fn);
+
+				c.once("connect", ()=>{
+
+					setTimeout(()=>{
+
+						// Make sure we only got one event
+						assert.equal(connect_event_counter,1);
+
+						// Clean up connect events
+						c.removeListener("connect", connect_counter_fn);
+
+						// Done
+						done();
+					},500);
+
+				})
+			});
+		});
+
+
+	});
 
 });
 

@@ -81,10 +81,11 @@ class SockhopClient extends EventEmitter{
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this.interval_timer=null;
-		this._auto_reconnect=(typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
+		this._auto_reconnect=false; // Call setter please!  Was: (typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
 		this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;	//ms
 		this._auto_reconnect_timer=null;
 		this._connected=false;
+		this._connecting=false;
 		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
 		// Create ObjectBuffer and pass along any errors
@@ -135,7 +136,7 @@ class SockhopClient extends EventEmitter{
 		if(this.connected || this._socket.connecting) return;
 
 		// If auto reconnect has been disabled, we can disregard
-		if(!this.auto_reconnect) return;
+		if(!this._auto_reconnect) return;
 
 		// If we already have a reconnect timer running, disregard
 		if(this._auto_reconnect_timer) return;
@@ -143,6 +144,9 @@ class SockhopClient extends EventEmitter{
 		var _self=this;
 		this.connect()
 			.catch((e)=>{
+
+				// If we already have a reconnect timer running, disregard
+				if(this._auto_reconnect_timer) return;
 
 				// Reconnect failed.  We don't care why.  Try again
 				_self._auto_reconnect_timer=setTimeout(()=>{
@@ -178,8 +182,18 @@ class SockhopClient extends EventEmitter{
 				// Emit 'disconnected' if we just transitioned state
 				if(was_connected) _self.emit("disconnect", _self._socket);
 
-				// If we are set to auto reconnect, fire that now
-				if(_self._auto_reconnect) _self._perform_auto_reconnect();
+				// Create a new socket.  Let everything be clean again!
+				_self.socket=new net.Socket();
+
+				// If we are set to auto reconnect, fire that in 100ms (without the delay, we seem to be connect()ing on the old socket, which
+				// causes us to get a connect event and then an immediate disconnect event)
+				if(_self._auto_reconnect) {
+
+					setTimeout(()=>{
+						_self._perform_auto_reconnect();
+
+					}, 100);
+				}
 			})
 			.on("data", (buf)=>{
 
@@ -207,11 +221,15 @@ class SockhopClient extends EventEmitter{
 					_self.emit("receive", o.data,{type:o.type});
 
 				});
-
 			})
 			.on("error",(e)=>{
 
-				// We had an error... assume socket will get an 'end' event and trigger any reconnection
+				// If we are still connected but got an ECONNRESET, kill the connection.  This will also trigger "end" on the socket
+				if(_self._connected && e.toString().match(/ECONNRESET/)){
+
+					console.log("we got a spontaneous ECONNRESET");
+					_self.disconnect();
+				} 
 
 				// If we are the only one listening for a socket error, bubble it up through the client
 				if(_self._socket.listenerCount("error")==1){
@@ -236,45 +254,60 @@ class SockhopClient extends EventEmitter{
 	 * Connect
 	 *
 	 * Connect to the server
+	 * If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.  
+	 * Calling this directly will get you a Promise rejection if you are not able to connect the first time.
+	 * N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
+	 *
 	 * @return {Promise}
 	 */
 	connect(){
 
-		var _self=this;
+		var self=this;
+		var sock=this._socket;
+
+		// If we are connected, we can return immediately
+		if(this._connected) return Promise.resolve();
+
+		// Only allow ourself to be called once per actual connect
+		if(this._connecting) return Promise.reject(new Error("You have already called connect() once. Still trying to connect!"));
+
 		return new Promise((resolve, reject)=>{
 
-			// Create two events handlers
-			let on_error=(e)=>{
 
+			// Create two event handlers.  We don't want (e.g.) our 'reject' function called whenever the socket throws an error.
+			let on_error, on_connect, remove_both_listeners;
+
+			on_error=(e)=>{
+				self._connecting=false;
 				remove_both_listeners();
+				// sock.removeAllListeners("connect");
 				reject(e);
 			};
 
-			let on_connect=()=>{
+			on_connect=()=>{
 
-				_self._connected=true;
+				self._connecting=false;
+				self._connected=true;
 				remove_both_listeners();
-				_self.emit("connect", _self._socket);
+				// sock.removeAllListeners("connect");
+				self.emit("connect", sock);
 				resolve();
 			};
 
-			let remove_both_listeners=()=>{
+			remove_both_listeners=()=>{
 
-				_self.socket.removeListener("error", on_error);
-				_self.socket.removeListener("connect", on_connect);
+				sock.removeListener("error", on_error);
+				sock.removeListener("connect", on_connect);
 			};
 
 			// Connect the listeners
-			_self.socket.on("error", on_error);
-			_self.socket.on("connect", on_connect);
+			sock.on("error", on_error);
+			sock.on("connect", on_connect);
 
-			_self.socket.connect(this.port, this.address);
+			self._connecting=true;
+			sock.connect(this.port, this.address);
+
 		});
-		// return this._socket.connectAsync(this.port,this.address).then(()=>{
-
-		// 	_self.emit("connect", _self._socket);
-		// 	return Promise.resolve(_self._socket);			
-		// });	
 	}
 
 
@@ -353,10 +386,8 @@ class SockhopClient extends EventEmitter{
 	 				this._socket.end();
 	 				this._socket.destroy();
 
-	 				// Replace socket before emitting end so reconnect is on new socket
-	 				let old_socket=this._socket;
-	 				this.socket=new net.Socket();
-	 				old_socket.emit("end");
+	 				// Old socket is dead
+					this._socket.emit("end");
 
 	 				return;
 	 			}
@@ -380,16 +411,14 @@ class SockhopClient extends EventEmitter{
 	 */
 	disconnect(){
 
-		// Stop any pinging
-		this.ping(0);
-
 		// Disable auto reconnect (else we will just connect again)
-		this.auto_reconnect=false;
+		this._auto_reconnect=false;
 
 		this._socket.end();
 		this._socket.destroy();
+
+		// Old socket is dead
 		this._socket.emit("end");
-		this.socket=new net.Socket();
 		return Promise.resolve();
 	}
 }
@@ -621,7 +650,17 @@ class SockhopServer extends EventEmitter {
 	  				// Replace the server object (may not be necessary, but seems cleaner)
 					this.server=net.createServer();
 					return Promise.resolve();
+	  			})
+	  			.catch((e)=>{
+
+	  				// Ignore "not running" (means we just shut down the server quickly)
+	  				if(e.toString().match(/not running/)){
+
+						this.server=net.createServer();
+						return Promise.resolve();
+	  				}
 	  			});
+
 	  }
 
 }

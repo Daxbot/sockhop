@@ -584,11 +584,16 @@ class SockhopServer extends EventEmitter {
 	 * Send an object to one clients
 	 * @param {net.socket} socket on which to send it
 	 * @param {object} object that we want to send
+	 * @throw Error
 	 * @return {Promise}
 	 */
 	send(sock,o){
 
 		let _self=this;
+
+		// Sanity checks
+		if(!sock) throw new Error("send() called on server without socket");
+		if(typeof(o)=="undefined") throw new error("send() called with undefined data");
 
 		// Create a message
 		var m={

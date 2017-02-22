@@ -181,6 +181,9 @@ We will initiate it, and manage the fallout.
 Connect
 
 Connect to the server
+If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.  
+Calling this directly will get you a Promise rejection if you are not able to connect the first time.
+N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
 
 **Kind**: instance method of <code>[SockhopClient](#SockhopClient)</code>  
 <a name="SockhopClient+get_bound_address"></a>
@@ -287,6 +290,7 @@ Send
 Send an object to one clients
 
 **Kind**: instance method of <code>[SockhopServer](#SockhopServer)</code>  
+**Throw**: Error  
 
 | Param | Type | Description |
 | --- | --- | --- |

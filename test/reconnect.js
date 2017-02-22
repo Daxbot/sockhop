@@ -68,8 +68,8 @@ describe("client.auto_reconnect", function(){
 			assert.equal(disconnect_event_counter,1);
 			c.disconnect();
 			s.close();
-			delete c;
-			delete s;
+			delete c;	// jshint ignore:line
+			delete s;	// jshint ignore:line
 			done();
 		});
 
@@ -199,7 +199,7 @@ describe("client.auto_reconnect", function(){
 						done();
 					},500);
 
-				})
+				});
 			});
 		});
 

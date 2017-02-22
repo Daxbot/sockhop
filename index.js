@@ -592,8 +592,8 @@ class SockhopServer extends EventEmitter {
 		let _self=this;
 
 		// Sanity checks
-		if(!sock) throw new Error("send() called on server without socket");
-		if(typeof(o)=="undefined") throw new error("send() called with undefined data");
+		if(!sock) throw new Error("send() called on SockhopServer  without socket");
+		if(typeof(o)=="undefined") throw new Error("SockhopServer send() called with undefined data");
 
 		// Create a message
 		var m={

@@ -89,7 +89,7 @@ class SockhopClient extends EventEmitter{
 		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
 		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer();
+		this._objectbuffer=new ObjectBuffer(opts.terminator||"\n");
 		this._objectbuffer.on("error",(e)=>{throw e;});
 	}
 
@@ -444,7 +444,7 @@ class SockhopServer extends EventEmitter {
 		this.interval_timer=null;
 
 		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer();
+		this._objectbuffer=new ObjectBuffer(opts.terminator||"\n");
 		this._objectbuffer.on("error",(e)=>{throw e;});
 
 		// Setup server

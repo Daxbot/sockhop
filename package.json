@@ -1,6 +1,6 @@
 {
   "name": "sockhop",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Sockets with messages, pings, etc",
   "main": "index.js",
   "scripts": {

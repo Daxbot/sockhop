@@ -227,7 +227,6 @@ class SockhopClient extends EventEmitter{
 				// If we are still connected but got an ECONNRESET, kill the connection.  This will also trigger "end" on the socket
 				if(_self._connected && e.toString().match(/ECONNRESET/)){
 
-					console.log("we got a spontaneous ECONNRESET");
 					_self.disconnect();
 				} 
 
@@ -592,8 +591,7 @@ class SockhopServer extends EventEmitter {
 		let _self=this;
 
 		// Sanity checks
-		if(!sock) throw new Error("send() called on SockhopServer  without socket");
-		if(typeof(o)=="undefined") throw new Error("SockhopServer send() called with undefined data");
+		if(!sock || !o || typeof(o)=="undefined") throw new Error("SockhopServer send() requires a socket and data");
 
 		// Create a message
 		var m={

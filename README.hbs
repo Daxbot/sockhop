@@ -2,10 +2,14 @@
 
 Node.js socket server and client with all the painful stuff taken out.  
 
+
 - Easy wrappers over the tricky parts of net.socket
+- Object centric - put a string, object, Widget, whatever into one end and it comes out the other
 - Auto reconnect  
 - Pass objects directly across the socket
 - Ping with auto disconnect/reconnect
+- Manages binary Buffers across the wire, reconstructs fragmented JSON Buffers
+- Server options for talking to (non Sockhop) other clients
 
 ## Example
 ```javascript
@@ -37,9 +41,8 @@ Node.js socket server and client with all the painful stuff taken out.
 
 ```
 
-
 ## Notes
-Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes autp ping functionality.
+Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes auto ping functionality.
 
 {{>main}}
 

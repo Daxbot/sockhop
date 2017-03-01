@@ -89,7 +89,7 @@ class SockhopClient extends EventEmitter{
 		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
 		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer(opts.terminator||"\n");
+		this._objectbuffer=new ObjectBuffer({terminator: opts.terminator||"\n"});
 		this._objectbuffer.on("error",(e)=>{throw e;});
 	}
 
@@ -423,14 +423,67 @@ class SockhopClient extends EventEmitter{
 }
 
 
+/**
+ * connect event
+ *
+ * @event SockhopServer#connect
+ * @param {net.Socket} sock the socket that just connected
+ */
 
+/**
+ * data event
+ *
+ * We have successfully received an object from the client
+ *
+ * @event SockhopServer#data
+ * @param {object} object the received object
+ * @param {object} meta metadata
+ * @param {string} meta.type the received object type ("object", "string", etc. or prototype name - e.g. "Widget")
+ * @param {net.Socket} meta.socket the socket that sent us this object
+ */
+
+/**
+ * disconnect event
+ *
+ * @event SockhopServer#disconnect
+ * @param {net.Socket} sock the socket that just disconnected
+ */
 
 
 /** 
  * Wrapped TCP server
+ *
+ * When data is received by the server, the received Buffer is concatenated with previously
+ * received Buffers until a delimiter (usually "\n") is received.  The composite Buffer is then treated
+ * like a JSON string and converted to an object, which is triggers a "receive" event.
+ * If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type - 
+ * this allows you to pass custom objects (prototypes) across the wire, and the other end will know
+ * it has received your Widget, or Foo, or whatever.  Plain objects, strings, etc. are also similarly labelled.
+ * The resulting receive event has a "meta" parameter; meta.type will list the object type.
+ *
+ * Of course, if your client is not a SockhopClient, you don't want this wrapping/unwrapping behavior
+ * and you might want a different delimiter for JSON.  Both these parameters are configurable in the 
+ * constructor options.
+ *
  * @extends EventEmitter
+ * @fires SockhopServer#connect
+ * @fires SockhopServer#disconnect
+ * @fires SockhopServer#data
+ * @fires Error
  */
 class SockhopServer extends EventEmitter {
+
+	/**
+	 * new()
+	 *
+	 * Constructs a new SockhopServer
+	 *
+	 * @param {object} opts an object containing optional configuration options
+	 * @param {string} opts.address the IP address to bind to, defaults to "127.0.0.1"
+	 * @param {number} opts.port the TCP port to use, defaults to 50000
+	 * @param {string} opts.client_type the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
+	 * @param {string} opts.terminator the JSON object delimiter.  Defaults to "\n"
+	 */
 
 	constructor(opts={}){
 
@@ -438,13 +491,14 @@ class SockhopServer extends EventEmitter {
 		var _self=this;
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
+		this._client_type=(opts.client_type!="json")?"SockhopClient":"json";
 		this._sockets=[];
 		this.pings=new Map();
 		this.server=net.createServer();
 		this.interval_timer=null;
 
 		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer(opts.terminator||"\n");
+		this._objectbuffer=new ObjectBuffer({terminator: opts.terminator||"\n"});
 		this._objectbuffer.on("error",(e)=>{throw e;});
 
 		// Setup server
@@ -487,7 +541,14 @@ class SockhopServer extends EventEmitter {
 							return;
 						}
 
-						_self.emit("receive", o.data, {type:o.type, socket: sock });
+						if(this._client_type=="SockhopClient") {
+	
+							_self.emit("receive", o.data, {type:o.type, socket: sock });
+
+						} else {
+
+							_self.emit("receive", o, {type:"object", socket: sock });
+						}
 					});	
 
 				})

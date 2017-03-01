@@ -2,10 +2,14 @@
 
 Node.js socket server and client with all the painful stuff taken out.  
 
+
 - Easy wrappers over the tricky parts of net.socket
+- Object centric - put a string, object, Widget, whatever into one end and it comes out the other
 - Auto reconnect  
 - Pass objects directly across the socket
 - Ping with auto disconnect/reconnect
+- Manages binary Buffers across the wire, reconstructs fragmented JSON Buffers
+- Server options for talking to (non Sockhop) other clients
 
 ## Example
 ```javascript
@@ -37,9 +41,8 @@ Node.js socket server and client with all the painful stuff taken out.
 
 ```
 
-
 ## Notes
-Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes autp ping functionality.
+Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes auto ping functionality.
 
 ## Classes
 
@@ -57,6 +60,16 @@ Sockhop easily passes objects across the wire.  If you pack/transcode JS in a wa
 </dd>
 <dt><a href="#SockhopServer">SockhopServer</a> ⇐ <code>EventEmitter</code></dt>
 <dd><p>Wrapped TCP server</p>
+<p>When data is received by the server, the received Buffer is concatenated with previously
+received Buffers until a delimiter (usually &quot;\n&quot;) is received.  The composite Buffer is then treated
+like a JSON string and converted to an object, which is triggers a &quot;receive&quot; event.
+If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type - 
+this allows you to pass custom objects (prototypes) across the wire, and the other end will know
+it has received your Widget, or Foo, or whatever.  Plain objects, strings, etc. are also similarly labelled.
+The resulting receive event has a &quot;meta&quot; parameter; meta.type will list the object type.</p>
+<p>Of course, if your client is not a SockhopClient, you don&#39;t want this wrapping/unwrapping behavior
+and you might want a different delimiter for JSON.  Both these parameters are configurable in the 
+constructor options.</p>
 </dd>
 </dl>
 
@@ -234,10 +247,24 @@ Disconnect the socket (send FIN)
 ## SockhopServer ⇐ <code>EventEmitter</code>
 Wrapped TCP server
 
+When data is received by the server, the received Buffer is concatenated with previously
+received Buffers until a delimiter (usually "\n") is received.  The composite Buffer is then treated
+like a JSON string and converted to an object, which is triggers a "receive" event.
+If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type - 
+this allows you to pass custom objects (prototypes) across the wire, and the other end will know
+it has received your Widget, or Foo, or whatever.  Plain objects, strings, etc. are also similarly labelled.
+The resulting receive event has a "meta" parameter; meta.type will list the object type.
+
+Of course, if your client is not a SockhopClient, you don't want this wrapping/unwrapping behavior
+and you might want a different delimiter for JSON.  Both these parameters are configurable in the 
+constructor options.
+
 **Kind**: global class  
 **Extends:** <code>EventEmitter</code>  
+**Emits**: <code>[connect](#SockhopServer+event_connect)</code>, <code>[disconnect](#SockhopServer+event_disconnect)</code>, <code>[data](#SockhopServer+event_data)</code>, <code>event:Error</code>  
 
 * [SockhopServer](#SockhopServer) ⇐ <code>EventEmitter</code>
+    * [new SockhopServer(opts)](#new_SockhopServer_new)
     * [.sockets](#SockhopServer+sockets) ⇒ <code>array</code>
     * [.ping(delay)](#SockhopServer+ping)
     * [.listen()](#SockhopServer+listen) ⇒ <code>Promise</code>
@@ -246,6 +273,25 @@ Wrapped TCP server
     * [.sendall(object)](#SockhopServer+sendall) ⇒ <code>Promise</code>
     * [.disconnect()](#SockhopServer+disconnect) ⇒ <code>Promise</code>
     * [.close()](#SockhopServer+close) ⇒
+    * ["connect" (sock)](#SockhopServer+event_connect)
+    * ["data" (object, meta)](#SockhopServer+event_data)
+    * ["disconnect" (sock)](#SockhopServer+event_disconnect)
+
+<a name="new_SockhopServer_new"></a>
+
+### new SockhopServer(opts)
+new()
+
+Constructs a new SockhopServer
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| opts | <code>object</code> | an object containing optional configuration options |
+| opts.address | <code>string</code> | the IP address to bind to, defaults to "127.0.0.1" |
+| opts.port | <code>number</code> | the TCP port to use, defaults to 50000 |
+| opts.client_type | <code>string</code> | the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
+| opts.terminator | <code>string</code> | the JSON object delimiter.  Defaults to "\n" |
 
 <a name="SockhopServer+sockets"></a>
 
@@ -328,6 +374,44 @@ Disconnects any clients and closes the server
 
 **Kind**: instance method of <code>[SockhopServer](#SockhopServer)</code>  
 **Returns**: Promise  
+<a name="SockhopServer+event_connect"></a>
+
+### "connect" (sock)
+connect event
+
+**Kind**: event emitted by <code>[SockhopServer](#SockhopServer)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sock | <code>net.Socket</code> | the socket that just connected |
+
+<a name="SockhopServer+event_data"></a>
+
+### "data" (object, meta)
+data event
+
+We have successfully received an object from the client
+
+**Kind**: event emitted by <code>[SockhopServer](#SockhopServer)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the received object |
+| meta | <code>object</code> | metadata |
+| meta.type | <code>string</code> | the received object type ("object", "string", etc. or prototype name - e.g. "Widget") |
+| meta.socket | <code>net.Socket</code> | the socket that sent us this object |
+
+<a name="SockhopServer+event_disconnect"></a>
+
+### "disconnect" (sock)
+disconnect event
+
+**Kind**: event emitted by <code>[SockhopServer](#SockhopServer)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sock | <code>net.Socket</code> | the socket that just disconnected |
+
 
 ## License
 MIT

@@ -55,7 +55,7 @@ Sockhop easily passes objects across the wire.  If you pack/transcode JS in a wa
 <dd><p>TCP Ping reply</p>
 <p>Used internally when .ping() is replied</p>
 </dd>
-<dt><a href="#SockhopClient">SockhopClient</a> ⇐ <code>EventEmitter</code></dt>
+<dt><a href="#SockhopClient">SockhopClient</a></dt>
 <dd><p>Wrapped TCP client</p>
 </dd>
 <dt><a href="#SockhopServer">SockhopServer</a> ⇐ <code>EventEmitter</code></dt>
@@ -117,13 +117,14 @@ Used internally when .ping() is replied
 **Kind**: global class  
 <a name="SockhopClient"></a>
 
-## SockhopClient ⇐ <code>EventEmitter</code>
+## SockhopClient
 Wrapped TCP client
 
 **Kind**: global class  
-**Extends:** <code>EventEmitter</code>  
+**Emits**: <code>[connect](#SockhopClient+event_connect)</code>, <code>[disconnect](#SockhopClient+event_disconnect)</code>, <code>[receive](#SockhopClient+event_receive)</code>, <code>event:Error \* @extends EventEmitter</code>  
 
-* [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
+* [SockhopClient](#SockhopClient)
+    * [new SockhopClient(opts)](#new_SockhopClient_new)
     * [.connected](#SockhopClient+connected) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect)
@@ -135,6 +136,23 @@ Wrapped TCP client
     * [.send(object)](#SockhopClient+send) ⇒ <code>Promise</code>
     * [.ping(delay)](#SockhopClient+ping)
     * [.disconnect()](#SockhopClient+disconnect) ⇒
+    * ["connect" (sock)](#SockhopClient+event_connect)
+    * ["receive" (object, meta)](#SockhopClient+event_receive)
+    * ["disconnect" (sock)](#SockhopClient+event_disconnect)
+
+<a name="new_SockhopClient_new"></a>
+
+### new SockhopClient(opts)
+Constructs a new SockhopClient
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| opts | <code>object</code> | an object containing optional configuration options |
+| opts.address | <code>string</code> | the IP address to bind to, defaults to "127.0.0.1" |
+| opts.port | <code>number</code> | the TCP port to use, defaults to 50000 |
+| opts.auto_reconnect_interval | <code>number</code> | the auto reconnection interval, in ms.  Defaults to 2000 (2s) |
+| opts.terminator | <code>string</code> | the JSON object delimiter.  Defaults to "\n" |
 
 <a name="SockhopClient+connected"></a>
 
@@ -242,6 +260,43 @@ Disconnect the socket (send FIN)
 
 **Kind**: instance method of <code>[SockhopClient](#SockhopClient)</code>  
 **Returns**: Promise  
+<a name="SockhopClient+event_connect"></a>
+
+### "connect" (sock)
+connect event
+
+**Kind**: event emitted by <code>[SockhopClient](#SockhopClient)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sock | <code>net.Socket</code> | the socket that just connected |
+
+<a name="SockhopClient+event_receive"></a>
+
+### "receive" (object, meta)
+receive event
+
+We have successfully received an object from the server
+
+**Kind**: event emitted by <code>[SockhopClient](#SockhopClient)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the received object |
+| meta | <code>object</code> | metadata |
+| meta.type | <code>string</code> | the received object type ("object", "string", etc. or prototype name - e.g. "Widget") |
+
+<a name="SockhopClient+event_disconnect"></a>
+
+### "disconnect" (sock)
+disconnect event
+
+**Kind**: event emitted by <code>[SockhopClient](#SockhopClient)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sock | <code>net.Socket</code> | the socket that just disconnected |
+
 <a name="SockhopServer"></a>
 
 ## SockhopServer ⇐ <code>EventEmitter</code>
@@ -261,7 +316,7 @@ constructor options.
 
 **Kind**: global class  
 **Extends:** <code>EventEmitter</code>  
-**Emits**: <code>[connect](#SockhopServer+event_connect)</code>, <code>[disconnect](#SockhopServer+event_disconnect)</code>, <code>[data](#SockhopServer+event_data)</code>, <code>event:Error</code>  
+**Emits**: <code>[connect](#SockhopServer+event_connect)</code>, <code>[disconnect](#SockhopServer+event_disconnect)</code>, <code>[receive](#SockhopServer+event_receive)</code>, <code>event:Error</code>  
 
 * [SockhopServer](#SockhopServer) ⇐ <code>EventEmitter</code>
     * [new SockhopServer(opts)](#new_SockhopServer_new)
@@ -274,14 +329,12 @@ constructor options.
     * [.disconnect()](#SockhopServer+disconnect) ⇒ <code>Promise</code>
     * [.close()](#SockhopServer+close) ⇒
     * ["connect" (sock)](#SockhopServer+event_connect)
-    * ["data" (object, meta)](#SockhopServer+event_data)
+    * ["receive" (object, meta)](#SockhopServer+event_receive)
     * ["disconnect" (sock)](#SockhopServer+event_disconnect)
 
 <a name="new_SockhopServer_new"></a>
 
 ### new SockhopServer(opts)
-new()
-
 Constructs a new SockhopServer
 
 
@@ -385,10 +438,10 @@ connect event
 | --- | --- | --- |
 | sock | <code>net.Socket</code> | the socket that just connected |
 
-<a name="SockhopServer+event_data"></a>
+<a name="SockhopServer+event_receive"></a>
 
-### "data" (object, meta)
-data event
+### "receive" (object, meta)
+receive event
 
 We have successfully received an object from the client
 

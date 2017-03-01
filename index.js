@@ -68,13 +68,52 @@ class SockhopPong {
 	}
 }
 
+/**
+ * connect event
+ *
+ * @event SockhopClient#connect
+ * @param {net.Socket} sock the socket that just connected
+ */
+
+/**
+ * receive event
+ *
+ * We have successfully received an object from the server
+ *
+ * @event SockhopClient#receive
+ * @param {object} object the received object
+ * @param {object} meta metadata
+ * @param {string} meta.type the received object type ("object", "string", etc. or prototype name - e.g. "Widget")
+ */
+
+/**
+ * disconnect event
+ *
+ * @event SockhopClient#disconnect
+ * @param {net.Socket} sock the socket that just disconnected
+ */
+
+
+
 /** 
  * Wrapped TCP client
- * @extends EventEmitter
+ * @fires SockhopClient#connect
+ * @fires SockhopClient#disconnect
+ * @fires SockhopClient#receive
+ * @fires Error * @extends EventEmitter
  */
 class SockhopClient extends EventEmitter{
 
-	constructor(opts={}){
+	/**
+	 * Constructs a new SockhopClient
+	 *
+	 * @param {object} opts an object containing optional configuration options
+	 * @param {string} opts.address the IP address to bind to, defaults to "127.0.0.1"
+	 * @param {number} opts.port the TCP port to use, defaults to 50000
+	 * @param {number} opts.auto_reconnect_interval the auto reconnection interval, in ms.  Defaults to 2000 (2s)
+	 * @param {string} opts.terminator the JSON object delimiter.  Defaults to "\n"
+	 */	
+	 constructor(opts={}){
 
 		super();
 		var _self=this;
@@ -431,11 +470,11 @@ class SockhopClient extends EventEmitter{
  */
 
 /**
- * data event
+ * receive event
  *
  * We have successfully received an object from the client
  *
- * @event SockhopServer#data
+ * @event SockhopServer#receive
  * @param {object} object the received object
  * @param {object} meta metadata
  * @param {string} meta.type the received object type ("object", "string", etc. or prototype name - e.g. "Widget")
@@ -468,14 +507,12 @@ class SockhopClient extends EventEmitter{
  * @extends EventEmitter
  * @fires SockhopServer#connect
  * @fires SockhopServer#disconnect
- * @fires SockhopServer#data
+ * @fires SockhopServer#receive
  * @fires Error
  */
 class SockhopServer extends EventEmitter {
 
 	/**
-	 * new()
-	 *
 	 * Constructs a new SockhopServer
 	 *
 	 * @param {object} opts an object containing optional configuration options
@@ -484,7 +521,6 @@ class SockhopServer extends EventEmitter {
 	 * @param {string} opts.client_type the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
 	 * @param {string} opts.terminator the JSON object delimiter.  Defaults to "\n"
 	 */
-
 	constructor(opts={}){
 
 		super();
@@ -541,7 +577,7 @@ class SockhopServer extends EventEmitter {
 							return;
 						}
 
-						if(this._client_type=="SockhopClient") {
+						if(_self._client_type=="SockhopClient") {
 	
 							_self.emit("receive", o.data, {type:o.type, socket: sock });
 

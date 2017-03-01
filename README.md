@@ -55,7 +55,7 @@ Sockhop easily passes objects across the wire.  If you pack/transcode JS in a wa
 <dd><p>TCP Ping reply</p>
 <p>Used internally when .ping() is replied</p>
 </dd>
-<dt><a href="#SockhopClient">SockhopClient</a></dt>
+<dt><a href="#SockhopClient">SockhopClient</a> ⇐ <code>EventEmitter</code></dt>
 <dd><p>Wrapped TCP client</p>
 </dd>
 <dt><a href="#SockhopServer">SockhopServer</a> ⇐ <code>EventEmitter</code></dt>
@@ -117,13 +117,14 @@ Used internally when .ping() is replied
 **Kind**: global class  
 <a name="SockhopClient"></a>
 
-## SockhopClient
+## SockhopClient ⇐ <code>EventEmitter</code>
 Wrapped TCP client
 
 **Kind**: global class  
-**Emits**: <code>[connect](#SockhopClient+event_connect)</code>, <code>[disconnect](#SockhopClient+event_disconnect)</code>, <code>[receive](#SockhopClient+event_receive)</code>, <code>event:Error \* @extends EventEmitter</code>  
+**Extends:** <code>EventEmitter</code>  
+**Emits**: <code>[connect](#SockhopClient+event_connect)</code>, <code>[disconnect](#SockhopClient+event_disconnect)</code>, <code>[receive](#SockhopClient+event_receive)</code>, <code>event:Error</code>  
 
-* [SockhopClient](#SockhopClient)
+* [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
     * [new SockhopClient(opts)](#new_SockhopClient_new)
     * [.connected](#SockhopClient+connected) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>
@@ -284,7 +285,7 @@ We have successfully received an object from the server
 | --- | --- | --- |
 | object | <code>object</code> | the received object |
 | meta | <code>object</code> | metadata |
-| meta.type | <code>string</code> | the received object type ("object", "string", etc. or prototype name - e.g. "Widget") |
+| meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
 
 <a name="SockhopClient+event_disconnect"></a>
 
@@ -451,7 +452,7 @@ We have successfully received an object from the client
 | --- | --- | --- |
 | object | <code>object</code> | the received object |
 | meta | <code>object</code> | metadata |
-| meta.type | <code>string</code> | the received object type ("object", "string", etc. or prototype name - e.g. "Widget") |
+| meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
 | meta.socket | <code>net.Socket</code> | the socket that sent us this object |
 
 <a name="SockhopServer+event_disconnect"></a>

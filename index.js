@@ -83,7 +83,7 @@ class SockhopPong {
  * @event SockhopClient#receive
  * @param {object} object the received object
  * @param {object} meta metadata
- * @param {string} meta.type the received object type ("object", "string", etc. or prototype name - e.g. "Widget")
+ * @param {string} meta.type the received object constructor ("Object", "String", "Widget", etc)
  */
 
 /**
@@ -100,7 +100,8 @@ class SockhopPong {
  * @fires SockhopClient#connect
  * @fires SockhopClient#disconnect
  * @fires SockhopClient#receive
- * @fires Error * @extends EventEmitter
+ * @fires Error 
+ * @extends EventEmitter
  */
 class SockhopClient extends EventEmitter{
 
@@ -477,7 +478,7 @@ class SockhopClient extends EventEmitter{
  * @event SockhopServer#receive
  * @param {object} object the received object
  * @param {object} meta metadata
- * @param {string} meta.type the received object type ("object", "string", etc. or prototype name - e.g. "Widget")
+ * @param {string} meta.type the received object constructor ("Object", "String", "Widget", etc)
  * @param {net.Socket} meta.socket the socket that sent us this object
  */
 
@@ -583,7 +584,7 @@ class SockhopServer extends EventEmitter {
 
 						} else {
 
-							_self.emit("receive", o, {type:"object", socket: sock });
+							_self.emit("receive", o, {type:"Object", socket: sock });
 						}
 					});	
 

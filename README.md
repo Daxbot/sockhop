@@ -366,7 +366,7 @@ Socket getter
 ### sockhopServer.ping(delay)
 Ping
 
-Ping all clients, detect timeouts
+Ping all clients, detect timeouts. Only works if connected to a SockhopClient.
 
 **Kind**: instance method of <code>[SockhopServer](#SockhopServer)</code>  
 

@@ -613,7 +613,7 @@ class SockhopServer extends EventEmitter {
 	/** 
 	 * Ping
 	 * 
-	 * Ping all clients, detect timeouts
+	 * Ping all clients, detect timeouts. Only works if connected to a SockhopClient.
 	 * @param {number} delay in ms (0 disables ping)
 	 */
 	 ping(delay=0){
@@ -694,10 +694,18 @@ class SockhopServer extends EventEmitter {
 		if(!sock || !o || typeof(o)=="undefined") throw new Error("SockhopServer send() requires a socket and data");
 
 		// Create a message
-		var m={
-			"type"	:	o.constructor.name,
-			data	:	o
-		};		
+		var m;
+		if(_self._client_type=="SockhopClient") {
+
+			m={
+				"type"	:	o.constructor.name,
+				data	:	o
+			};
+
+		} else {
+
+			m=o;
+		}	
 
 		if(sock.destroyed){
 

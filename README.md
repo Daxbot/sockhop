@@ -8,7 +8,7 @@ Node.js socket server and client with all the painful stuff taken out.
 - Auto reconnect  
 - Pass objects directly across the socket
 - Ping with auto disconnect/reconnect
-- Manages binary Buffers across the wire, reconstructs fragmented JSON Buffers
+- Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/ObjectBuffer.js)
 - Server options for talking to (non Sockhop) other clients
 
 ## Example
@@ -71,6 +71,12 @@ The resulting receive event has a &quot;meta&quot; parameter; meta.type will lis
 and you might want a different delimiter for JSON.  Both these parameters are configurable in the 
 constructor options.</p>
 </dd>
+<dt><a href="#ObjectBuffer">ObjectBuffer</a> ⇐ <code>EventEmitter</code></dt>
+<dd><p>Object Buffer</p>
+<p>de/serialize objects to/from a Buffer </p>
+<p>Automatically reassembles fragmented buffers (useful when the buffer passes through 
+a socket, for example, and is received in pieces) and gives you your object back</p>
+</dd>
 </dl>
 
 <a name="SockhopPing"></a>
@@ -125,7 +131,7 @@ Wrapped TCP client
 **Emits**: <code>[connect](#SockhopClient+event_connect)</code>, <code>[disconnect](#SockhopClient+event_disconnect)</code>, <code>[receive](#SockhopClient+event_receive)</code>, <code>event:Error</code>  
 
 * [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
-    * [new SockhopClient(opts)](#new_SockhopClient_new)
+    * [new SockhopClient([opts])](#new_SockhopClient_new)
     * [.connected](#SockhopClient+connected) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect)
@@ -143,17 +149,17 @@ Wrapped TCP client
 
 <a name="new_SockhopClient_new"></a>
 
-### new SockhopClient(opts)
+### new SockhopClient([opts])
 Constructs a new SockhopClient
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| opts | <code>object</code> | an object containing optional configuration options |
-| opts.address | <code>string</code> | the IP address to bind to, defaults to "127.0.0.1" |
-| opts.port | <code>number</code> | the TCP port to use, defaults to 50000 |
-| opts.auto_reconnect_interval | <code>number</code> | the auto reconnection interval, in ms.  Defaults to 2000 (2s) |
-| opts.terminator | <code>string</code> | the JSON object delimiter.  Defaults to "\n" |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [opts] | <code>object</code> |  | an object containing configuration options |
+| [opts.address] | <code>string</code> | <code>&quot;\&quot;127.0.0.1\&quot;&quot;</code> | the IP address to bind to |
+| [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
+| [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
+| [opts.terminator] | <code>string</code> &#124; <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
 
 <a name="SockhopClient+connected"></a>
 
@@ -320,7 +326,7 @@ constructor options.
 **Emits**: <code>[connect](#SockhopServer+event_connect)</code>, <code>[disconnect](#SockhopServer+event_disconnect)</code>, <code>[receive](#SockhopServer+event_receive)</code>, <code>event:Error</code>  
 
 * [SockhopServer](#SockhopServer) ⇐ <code>EventEmitter</code>
-    * [new SockhopServer(opts)](#new_SockhopServer_new)
+    * [new SockhopServer([opts])](#new_SockhopServer_new)
     * [.sockets](#SockhopServer+sockets) ⇒ <code>array</code>
     * [.ping(delay)](#SockhopServer+ping)
     * [.listen()](#SockhopServer+listen) ⇒ <code>Promise</code>
@@ -335,17 +341,18 @@ constructor options.
 
 <a name="new_SockhopServer_new"></a>
 
-### new SockhopServer(opts)
+### new SockhopServer([opts])
 Constructs a new SockhopServer
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| opts | <code>object</code> | an object containing optional configuration options |
-| opts.address | <code>string</code> | the IP address to bind to, defaults to "127.0.0.1" |
-| opts.port | <code>number</code> | the TCP port to use, defaults to 50000 |
-| opts.client_type | <code>string</code> | the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
-| opts.terminator | <code>string</code> | the JSON object delimiter.  Defaults to "\n" |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [opts] | <code>object</code> |  | an object containing configuration options |
+| [opts.address] | <code>string</code> | <code>&quot;\&quot;127.0.0.1\&quot;&quot;</code> | the IP address to bind to |
+| [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
+| [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
+| [opts.terminator] | <code>string</code> &#124; <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
+| opts.client_type | <code>string</code> |  | the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 
 <a name="SockhopServer+sockets"></a>
 
@@ -465,6 +472,63 @@ disconnect event
 | Param | Type | Description |
 | --- | --- | --- |
 | sock | <code>net.Socket</code> | the socket that just disconnected |
+
+<a name="ObjectBuffer"></a>
+
+## ObjectBuffer ⇐ <code>EventEmitter</code>
+Object Buffer
+
+de/serialize objects to/from a Buffer 
+
+Automatically reassembles fragmented buffers (useful when the buffer passes through 
+a socket, for example, and is received in pieces) and gives you your object back
+
+**Kind**: global class  
+**Extends:** <code>EventEmitter</code>  
+
+* [ObjectBuffer](#ObjectBuffer) ⇐ <code>EventEmitter</code>
+    * [new ObjectBuffer(opts)](#new_ObjectBuffer_new)
+    * [.buf2obj(buffer)](#ObjectBuffer+buf2obj) ⇒ <code>Array</code>
+    * [.obj2buf(object, buffer)](#ObjectBuffer+obj2buf)
+
+<a name="new_ObjectBuffer_new"></a>
+
+### new ObjectBuffer(opts)
+Constructs a new ObjectBuffer
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| opts | <code>object</code> |  | the options |
+| [opts.terminator] | <code>string</code> &#124; <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
+
+<a name="ObjectBuffer+buf2obj"></a>
+
+### objectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
+buf2obj
+
+Convert a Buffer into one or more objects
+
+**Kind**: instance method of <code>[ObjectBuffer](#ObjectBuffer)</code>  
+**Returns**: <code>Array</code> - found the objects we found  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
+
+<a name="ObjectBuffer+obj2buf"></a>
+
+### objectBuffer.obj2buf(object, buffer)
+obj2buf
+
+Convert an Object to a Buffer
+
+**Kind**: instance method of <code>[ObjectBuffer](#ObjectBuffer)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>Object</code> | the object to convert |
+| buffer | <code>Buffer</code> | the buffer representing that object |
 
 
 ## License

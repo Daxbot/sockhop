@@ -108,11 +108,11 @@ class SockhopClient extends EventEmitter{
 	/**
 	 * Constructs a new SockhopClient
 	 *
-	 * @param {object} opts an object containing optional configuration options
-	 * @param {string} opts.address the IP address to bind to, defaults to "127.0.0.1"
-	 * @param {number} opts.port the TCP port to use, defaults to 50000
-	 * @param {number} opts.auto_reconnect_interval the auto reconnection interval, in ms.  Defaults to 2000 (2s)
-	 * @param {string} opts.terminator the JSON object delimiter.  Defaults to "\n"
+	 * @param {object} [opts] an object containing configuration options
+	 * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
+	 * @param {number} [opts.port=50000] the TCP port to use
+	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
+	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
 	 */	
 	 constructor(opts={}){
 
@@ -129,7 +129,7 @@ class SockhopClient extends EventEmitter{
 		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
 		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer({terminator: opts.terminator||"\n"});
+		this._objectbuffer=new ObjectBuffer({terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator });
 		this._objectbuffer.on("error",(e)=>{throw e;});
 	}
 
@@ -513,14 +513,16 @@ class SockhopClient extends EventEmitter{
  */
 class SockhopServer extends EventEmitter {
 
+
 	/**
 	 * Constructs a new SockhopServer
 	 *
-	 * @param {object} opts an object containing optional configuration options
-	 * @param {string} opts.address the IP address to bind to, defaults to "127.0.0.1"
-	 * @param {number} opts.port the TCP port to use, defaults to 50000
+	 * @param {object} [opts] an object containing configuration options
+	 * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
+	 * @param {number} [opts.port=50000] the TCP port to use
+	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
+	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
 	 * @param {string} opts.client_type the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
-	 * @param {string} opts.terminator the JSON object delimiter.  Defaults to "\n"
 	 */
 	constructor(opts={}){
 
@@ -535,7 +537,7 @@ class SockhopServer extends EventEmitter {
 		this.interval_timer=null;
 
 		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer({terminator: opts.terminator||"\n"});
+		this._objectbuffer=new ObjectBuffer({terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator });
 		this._objectbuffer.on("error",(e)=>{throw e;});
 
 		// Setup server

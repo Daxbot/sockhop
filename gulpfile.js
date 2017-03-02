@@ -19,7 +19,7 @@ gulp.task("docs",() =>{
 
 	const templatefile=fs.readFileSync("README.hbs", "utf8");
 
-	return jsdoc2md.render({files: "index.js", template:templatefile})
+	return jsdoc2md.render({files: ["index.js","lib/ObjectBuffer.js"], template:templatefile})
 		.then(output=> fs.writeFile("README.md", output));
 });
 

@@ -159,6 +159,7 @@ Constructs a new SockhopClient
 | [opts.address] | <code>string</code> | <code>&quot;\&quot;127.0.0.1\&quot;&quot;</code> | the IP address to bind to |
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
+| opts.peer_type | <code>string</code> |  | the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 | [opts.terminator] | <code>string</code> &#124; <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
 
 <a name="SockhopClient+connected"></a>
@@ -352,7 +353,7 @@ Constructs a new SockhopServer
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
 | [opts.terminator] | <code>string</code> &#124; <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
-| opts.client_type | <code>string</code> |  | the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
+| opts.peer_type | <code>string</code> |  | the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 
 <a name="SockhopServer+sockets"></a>
 

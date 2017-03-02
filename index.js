@@ -112,14 +112,17 @@ class SockhopClient extends EventEmitter{
 	 * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
 	 * @param {number} [opts.port=50000] the TCP port to use
 	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
+	 * @param {string} opts.peer_type the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
 	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
 	 */	
+
 	 constructor(opts={}){
 
 		super();
 		var _self=this;
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
+		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
 		this.interval_timer=null;
 		this._auto_reconnect=false; // Call setter please!  Was: (typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
 		this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;	//ms
@@ -258,7 +261,14 @@ class SockhopClient extends EventEmitter{
 						return;
 					}
 
-					_self.emit("receive", o.data,{type:o.type});
+					if(_self._peer_type=="Sockhop") {
+
+						_self.emit("receive", o.data, {type:o.type});
+
+					} else {
+
+						_self.emit("receive", o, {type:"Object"});
+					}
 
 				});
 			})
@@ -371,10 +381,18 @@ class SockhopClient extends EventEmitter{
 
 
 		// Create a message
-		var m={
-			"type"	:	o.constructor.name,
-			data	:	o
-		};		
+		var m;
+		if(this._peer_type=="Sockhop") {
+
+			m={
+				"type"	:	o.constructor.name,
+				data	:	o
+			};
+
+		} else {
+
+			m=o;
+		}	
 
 		if(this._socket.destroyed){
 
@@ -522,7 +540,7 @@ class SockhopServer extends EventEmitter {
 	 * @param {number} [opts.port=50000] the TCP port to use
 	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
 	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
-	 * @param {string} opts.client_type the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
+	 * @param {string} opts.peer_type the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
 	 */
 	constructor(opts={}){
 
@@ -530,7 +548,7 @@ class SockhopServer extends EventEmitter {
 		var _self=this;
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
-		this._client_type=(opts.client_type!="json")?"SockhopClient":"json";
+		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
 		this._sockets=[];
 		this.pings=new Map();
 		this.server=net.createServer();
@@ -580,7 +598,7 @@ class SockhopServer extends EventEmitter {
 							return;
 						}
 
-						if(_self._client_type=="SockhopClient") {
+						if(_self._peer_type=="Sockhop") {
 	
 							_self.emit("receive", o.data, {type:o.type, socket: sock });
 
@@ -695,7 +713,7 @@ class SockhopServer extends EventEmitter {
 
 		// Create a message
 		var m;
-		if(_self._client_type=="SockhopClient") {
+		if(_self._peer_type=="Sockhop") {
 
 			m={
 				"type"	:	o.constructor.name,

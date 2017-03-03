@@ -133,7 +133,10 @@ class SockhopClient extends EventEmitter{
 
 		// Create ObjectBuffer and pass along any errors
 		this._objectbuffer=new ObjectBuffer({terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator });
-		this._objectbuffer.on("error",(e)=>{throw e;});
+		this._objectbuffer.on("error",(e)=>{
+
+			_self.emit("error", e);
+		});
 	}
 
 	/**
@@ -556,7 +559,10 @@ class SockhopServer extends EventEmitter {
 
 		// Create ObjectBuffer and pass along any errors
 		this._objectbuffer=new ObjectBuffer({terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator });
-		this._objectbuffer.on("error",(e)=>{throw e;});
+		this._objectbuffer.on("error",(e)=>{
+
+			_self.emit("error", e);
+		});
 
 		// Setup server
 		this.server.on('connection', function(sock){

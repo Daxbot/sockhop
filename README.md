@@ -1,7 +1,9 @@
 # Sockhop
 
-Node.js socket server and client with all the painful stuff taken out.  
-
+<p align="center">
+	<img src="https://raw.githubusercontent.com/DaxBot/sockhop/master/assets/sockhop_365px.png">
+	<p align="center">Node.js sockets server and client with all the painful stuff taken out.</p>
+</p>
 
 - Easy wrappers over the tricky parts of net.socket
 - Object centric - put a string, object, Widget, whatever into one end and it comes out the other
@@ -39,6 +41,12 @@ Node.js socket server and client with all the painful stuff taken out.
 	});
 
 
+```
+
+## Linting, building docs, and testing
+```sh
+gulp
+mocha
 ```
 
 ## Notes

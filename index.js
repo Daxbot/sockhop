@@ -114,6 +114,7 @@ class SockhopClient extends EventEmitter{
 	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
 	 * @param {string} opts.peer_type the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
 	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
+	 * @param {boolean} [opts.allow_non_objects=false] allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor.
 	 */	
 
 	 constructor(opts={}){
@@ -132,7 +133,10 @@ class SockhopClient extends EventEmitter{
 		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
 		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer({terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator });
+		this._objectbuffer=new ObjectBuffer({
+				terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
+				allow_non_objects: opts.allow_non_objects
+			});
 		this._objectbuffer.on("error",(e)=>{
 
 			_self.emit("error", e);
@@ -266,11 +270,11 @@ class SockhopClient extends EventEmitter{
 
 					if(_self._peer_type=="Sockhop") {
 
-						_self.emit("receive", o.data, {type:o.type});
+						_self.emit("receive", o.data, {type:o.type});		// Remote end sends type: "Widget", "Array", etc
 
 					} else {
 
-						_self.emit("receive", o, {type:"Object"});
+						_self.emit("receive", o, {type: o.constructor.name });		// We read converted data directly, will be "String" or "Object"
 					}
 
 				});
@@ -543,6 +547,7 @@ class SockhopServer extends EventEmitter {
 	 * @param {number} [opts.port=50000] the TCP port to use
 	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
 	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
+	 * @param {boolean} [opts.allow_non_objects=false] allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor.
 	 * @param {string} opts.peer_type the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
 	 */
 	constructor(opts={}){
@@ -558,7 +563,10 @@ class SockhopServer extends EventEmitter {
 		this.interval_timer=null;
 
 		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer({terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator });
+		this._objectbuffer=new ObjectBuffer({
+				terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
+				allow_non_objects: opts.allow_non_objects
+			});
 		this._objectbuffer.on("error",(e)=>{
 
 			_self.emit("error", e);
@@ -606,11 +614,11 @@ class SockhopServer extends EventEmitter {
 
 						if(_self._peer_type=="Sockhop") {
 	
-							_self.emit("receive", o.data, {type:o.type, socket: sock });
+							_self.emit("receive", o.data, {type:o.type, socket: sock });	// Remote end sends type: "Widget", "Array", etc
 
 						} else {
 
-							_self.emit("receive", o, {type:"Object", socket: sock });
+							_self.emit("receive", o, {type:o.constructor.name, socket: sock });		// We read converted data directly, will be "String" or "Object"
 						}
 					});	
 

@@ -161,6 +161,7 @@ Constructs a new SockhopClient
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
 | opts.peer_type | <code>string</code> |  | the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 | [opts.terminator] | <code>string</code> &#124; <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
+| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor. |
 
 <a name="SockhopClient+connected"></a>
 
@@ -353,6 +354,7 @@ Constructs a new SockhopServer
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
 | [opts.terminator] | <code>string</code> &#124; <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
+| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor. |
 | opts.peer_type | <code>string</code> |  | the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 
 <a name="SockhopServer+sockets"></a>
@@ -502,6 +504,7 @@ Constructs a new ObjectBuffer
 | --- | --- | --- | --- |
 | opts | <code>object</code> |  | the options |
 | [opts.terminator] | <code>string</code> &#124; <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
+| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
 
 <a name="ObjectBuffer+buf2obj"></a>
 

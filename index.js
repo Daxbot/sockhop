@@ -276,7 +276,7 @@ class SockhopClient extends EventEmitter{
 
 							// Call the callback instead of bubbling the event
 							this._send_callbacks[o.callback_id](o.data, {type:o.type});
-							this._send_callbacks.delete(o.callback_id);
+							delete this._send_callbacks[o.callback_id];
 
 						// Remote end is requesting callback
 						} else if (o.id){
@@ -676,7 +676,7 @@ class SockhopServer extends EventEmitter {
 
 								// Call the callback instead of bubbling the event
 								_self._send_callbacks[o.callback_id](o.data, {type:o.type});
-								_self._send_callbacks.delete(o.callback_id);
+								delete _self._send_callbacks[o.callback_id];
 
 							// Remote end is requesting callback
 							} else if (o.id){

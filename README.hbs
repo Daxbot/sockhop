@@ -10,6 +10,7 @@
 - Auto reconnect  
 - Pass objects directly across the socket
 - Ping with auto disconnect/reconnect
+- Remote callbacks across socket
 - Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/ObjectBuffer.js)
 - Server options for talking to (non Sockhop) other clients
 
@@ -17,12 +18,12 @@
 ```javascript
 
 	// Client
-	var c=new Sockhop.client({auto_reconnect: true});
+	let c=new Sockhop.client({auto_reconnect: true});
 	c.on("connect",()=>c.ping(1000)); 	// Ping server every 1000ms, detect problems
 	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));
 
 	// Server
-	var s=new Sockhop.server();
+	let s=new Sockhop.server();
 
 	// Connect
 	s.listen()
@@ -42,6 +43,23 @@
 
 
 ```
+
+Remote callback example:
+```javascript
+
+
+	server.on("receive", (obj, meta)=>{
+
+		// obj=="Promise to call when you get this"
+		meta.callback("I got your message!");
+	});
+
+	c.send("Promise to call when you get this", (reply)=>{
+
+		// reply == "I got your message!"
+	});
+```
+
 
 ## Linting, building docs, and testing
 ```sh

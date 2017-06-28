@@ -10,6 +10,7 @@
 - Auto reconnect  
 - Pass objects directly across the socket
 - Ping with auto disconnect/reconnect
+- Remote callbacks across socket
 - Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/ObjectBuffer.js)
 - Server options for talking to (non Sockhop) other clients
 
@@ -17,12 +18,12 @@
 ```javascript
 
 	// Client
-	var c=new Sockhop.client({auto_reconnect: true});
+	let c=new Sockhop.client({auto_reconnect: true});
 	c.on("connect",()=>c.ping(1000)); 	// Ping server every 1000ms, detect problems
 	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));
 
 	// Server
-	var s=new Sockhop.server();
+	let s=new Sockhop.server();
 
 	// Connect
 	s.listen()
@@ -42,6 +43,23 @@
 
 
 ```
+
+Remote callback example:
+```javascript
+
+
+	server.on("receive", (obj, meta)=>{
+
+		// obj=="Promise to call when you get this"
+		meta.callback("I got your message!");
+	});
+
+	c.send("Promise to call when you get this", (reply)=>{
+
+		// reply == "I got your message!"
+	});
+```
+
 
 ## Linting, building docs, and testing
 ```sh
@@ -148,7 +166,7 @@ Wrapped TCP client
     * [._perform_auto_reconnect()](#SockhopClient+_perform_auto_reconnect)
     * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
-    * [.send(object)](#SockhopClient+send) ⇒ <code>Promise</code>
+    * [.send(object, [rcallback])](#SockhopClient+send) ⇒ <code>Promise</code>
     * [.ping(delay)](#SockhopClient+ping)
     * [.disconnect()](#SockhopClient+disconnect) ⇒
     * ["connect" (sock)](#SockhopClient+event_connect)
@@ -243,16 +261,21 @@ Get bound address
 **Returns**: <code>string</code> - the IP address we are bound to  
 <a name="SockhopClient+send"></a>
 
-### sockhopClient.send(object) ⇒ <code>Promise</code>
+### sockhopClient.send(object, [rcallback]) ⇒ <code>Promise</code>
 Send
 
 Send an object to the server
 
 **Kind**: instance method of <code>[SockhopClient](#SockhopClient)</code>  
+**Throws**:
+
+- <code>Error</code> 
+
 
 | Param | Type | Description |
 | --- | --- | --- |
 | object | <code>object</code> | to be sent over the wire |
+| [rcallback] | <code>function</code> | Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise |
 
 <a name="SockhopClient+ping"></a>
 
@@ -341,7 +364,7 @@ constructor options.
     * [.ping(delay)](#SockhopServer+ping)
     * [.listen()](#SockhopServer+listen) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopServer+get_bound_address) ⇒ <code>string</code>
-    * [.send(socket, object)](#SockhopServer+send) ⇒ <code>Promise</code>
+    * [.send(socket, object, [callback])](#SockhopServer+send) ⇒ <code>Promise</code>
     * [.sendall(object)](#SockhopServer+sendall) ⇒ <code>Promise</code>
     * [.disconnect()](#SockhopServer+disconnect) ⇒ <code>Promise</code>
     * [.close()](#SockhopServer+close) ⇒
@@ -402,7 +425,7 @@ Get bound address
 **Returns**: <code>string</code> - the IP address we are bound to  
 <a name="SockhopServer+send"></a>
 
-### sockhopServer.send(socket, object) ⇒ <code>Promise</code>
+### sockhopServer.send(socket, object, [callback]) ⇒ <code>Promise</code>
 Send
 
 Send an object to one clients
@@ -414,6 +437,7 @@ Send an object to one clients
 | --- | --- | --- |
 | socket | <code>net.socket</code> | on which to send it |
 | object | <code>object</code> | that we want to send |
+| [callback] | <code>function</code> | Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise |
 
 <a name="SockhopServer+sendall"></a>
 

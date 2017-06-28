@@ -128,6 +128,7 @@ class SockhopClient extends EventEmitter{
 		this._auto_reconnect=false; // Call setter please!  Was: (typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
 		this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;	//ms
 		this._auto_reconnect_timer=null;
+		this._send_callbacks={};
 		this._connected=false;
 		this._connecting=false;
 		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
@@ -270,7 +271,22 @@ class SockhopClient extends EventEmitter{
 
 					if(_self._peer_type=="Sockhop") {
 
-						_self.emit("receive", o.data, {type:o.type});		// Remote end sends type: "Widget", "Array", etc
+						// Handle remote callback (callback activated)
+						if(o.callback_id) {
+
+							// Call the callback instead of bubbling the event
+							this._send_callbacks[o.callback_id](o.data, {type:o.type});
+
+						// Remote end is requesting callback
+						} else if (o.id){
+
+							_self.emit("receive", o.data, {type:o.type, callback: function(oo){ _self._trigger_remote_callback(o.id, oo);} });
+
+						} else {
+
+							_self.emit("receive", o.data, {type:o.type});		// Remote end sends type: "Widget", "Array", etc
+						}
+
 
 					} else {
 
@@ -378,17 +394,46 @@ class SockhopClient extends EventEmitter{
 	}
 
 	/**
+	 * Trigger a remote callback
+	 *
+	 * Our side received a message with a callback, and we are now triggering that remote callback
+	 *
+	 * @private
+	 * @param {string} id the id of the remote callback
+	 * @param {object} o the object we want to send as part of our reply
+	 * @throws Error
+	 */
+	_trigger_remote_callback(id, o) {
+
+		let m={
+			type	:	o.constructor.name,
+			data	:	o,
+			callback_id: id
+		};
+
+		if(this._socket.destroyed){
+
+			this._socket.emit("end");
+			throw new Error("Client unable to send() - socket has been destroyed");
+		}
+
+		this._socket.writeAsync(this._objectbuffer.obj2buf(m));
+	}
+
+	/**
 	 * Send
 	 *
 	 * Send an object to the server
 	 * @param {object} object to be sent over the wire
+	 * @param {function} [rcallback] Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise
 	 * @return {Promise} 
+	 * @throws {Error}
 	 */
-	send(o){
+	send(o, callback){
 
 
 		// Create a message
-		var m;
+		let m;
 		if(this._peer_type=="Sockhop") {
 
 			m={
@@ -399,12 +444,23 @@ class SockhopClient extends EventEmitter{
 		} else {
 
 			m=o;
+			if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
 		}	
 
 		if(this._socket.destroyed){
 
 			this._socket.emit("end");
 			return Promise.reject(new Error("Client unable to send() - socket has been destroyed"));
+		}
+
+		// Handle remote callback setup
+		if(callback) {
+
+			if (typeof(callback)!= 'function') throw new Error("remote_callback must be a function");
+
+			// A reply is expected. Tag the message so we will recognize it when we get it back
+			m.id=uuid();
+			this._send_callbacks[m.id]=callback;
 		}
 
 		return this._socket.writeAsync(this._objectbuffer.obj2buf(m));
@@ -477,7 +533,6 @@ class SockhopClient extends EventEmitter{
 
 		// Disable auto reconnect (else we will just connect again)
 		this._auto_reconnect=false;
-
 		this._socket.end();
 		this._socket.destroy();
 
@@ -558,6 +613,7 @@ class SockhopServer extends EventEmitter {
 		this.port=opts.port||50000;
 		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
 		this._sockets=[];
+		this._send_callbacks={};
 		this.pings=new Map();
 		this.server=net.createServer();
 		this.interval_timer=null;
@@ -614,7 +670,21 @@ class SockhopServer extends EventEmitter {
 
 						if(_self._peer_type=="Sockhop") {
 	
-							_self.emit("receive", o.data, {type:o.type, socket: sock });	// Remote end sends type: "Widget", "Array", etc
+							// Handle remote callback (callback activated)
+							if(o.callback_id) {
+
+								// Call the callback instead of bubbling the event
+								_self._send_callbacks[o.callback_id](o.data, {type:o.type});
+
+							// Remote end is requesting callback
+							} else if (o.id){
+
+								_self.emit("receive", o.data, {type:o.type, socket: sock, callback: function(oo){ _self._trigger_remote_callback(sock, o.id, oo);} });
+
+							} else {
+
+								_self.emit("receive", o.data, {type:o.type, socket: sock });		// Remote end sends type: "Widget", "Array", etc
+							}
 
 						} else {
 
@@ -709,16 +779,45 @@ class SockhopServer extends EventEmitter {
 		return this.server.address().address;
 	}
 
+	/**
+	 * Trigger a remote callback
+	 *
+	 * Our side received a message with a callback, and we are now triggering that remote callback
+	 *
+	 * @private
+	 * @param {net.socket} socket on which to send it
+	 * @param {string} id the id of the remote callback
+	 * @param {object} o the object we want to send as part of our reply
+	 * @throws Error
+	 */
+	_trigger_remote_callback(sock, id, o) {
+
+		let m={
+			type	:	o.constructor.name,
+			data	:	o,
+			callback_id: id
+		};
+
+		if(sock.destroyed){
+
+			sock.emit("end");
+			throw new Error("Client unable to send() - socket has been destroyed");
+		}
+
+		sock.writeAsync(this._objectbuffer.obj2buf(m));
+	}
+
 	/** 
 	 * Send
 	 *
 	 * Send an object to one clients
 	 * @param {net.socket} socket on which to send it
 	 * @param {object} object that we want to send
+	 * @param {function} [callback] Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise
 	 * @throw Error
 	 * @return {Promise}
 	 */
-	send(sock,o){
+	send(sock,o, callback){
 
 		let _self=this;
 
@@ -737,6 +836,7 @@ class SockhopServer extends EventEmitter {
 		} else {
 
 			m=o;
+			if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
 		}	
 
 		if(sock.destroyed){
@@ -744,10 +844,20 @@ class SockhopServer extends EventEmitter {
 			sock.emit("end");
 			return Promise.reject(new Error("Socket was destroyed"));
 
-		} else {
+		} 
 
-			return sock.writeAsync(this._objectbuffer.obj2buf(m));
+		// Handle remote callback setup
+		if(callback) {
+
+			if (typeof(callback)!= 'function') throw new Error("remote_callback must be a function");
+
+			// A reply is expected. Tag the message so we will recognize it when we get it back
+			m.id=uuid();
+			this._send_callbacks[m.id]=callback;
 		}
+
+		return sock.writeAsync(this._objectbuffer.obj2buf(m));
+		
 	}
 
 

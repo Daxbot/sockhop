@@ -64,7 +64,35 @@ describe("Client-server", function(){
 
 	});
 
+	it("client.send() with remote triggered callback", function(done){
 
+		s.once("receive", (msg, meta)=>{
+			assert.equal(msg, "Promise to call when you get this");
+			meta.callback("I got it!");
+		});
+
+		c.send("Promise to call when you get this", (reply)=>{
+
+			assert.equal(reply, "I got it!");
+			done();
+		});
+
+	});
+
+	it("server.send() with remote triggered callback", function(done){
+
+		c.once("receive", (msg, meta)=>{
+			assert.equal(msg, "Please RSVP to the server");
+			meta.callback("RSVP");
+		});
+
+		s.send(s.sockets[0], "Please RSVP to the server", (reply)=>{
+
+			assert.equal(reply, "RSVP");
+			done();
+		});
+
+	});
 });
 
 

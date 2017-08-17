@@ -121,6 +121,7 @@ class SockhopClient extends EventEmitter{
 
 		super();
 		var _self=this;
+		this.pings=[];
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
@@ -171,8 +172,23 @@ class SockhopClient extends EventEmitter{
 	 */
 	set auto_reconnect(b){
 
+		// Save it
 		this._auto_reconnect=b;
-		if(this._auto_reconnect && !this.connected && !this._socket.connecting) this._perform_auto_reconnect();
+
+		if(this._auto_reconnect){
+
+			// Begin auto connecting
+			if(!this.connected && !this._socket.connecting) this._perform_auto_reconnect();			
+
+		} else {
+
+			// ..or else stop it
+			if(this._auto_reconnect_timer) {
+
+				clearTimeout(this._auto_reconnect_timer);
+				_auto_reconnect_timer=null;
+			}
+		}
 	}
 
 	/**
@@ -182,6 +198,8 @@ class SockhopClient extends EventEmitter{
 	 * We will initiate it, and manage the fallout.
 	 */
 	_perform_auto_reconnect(){
+
+console.log("_perform_auto_reconnect");
 
 		// If we are already connected or connecting, we can disregard
 		if(this.connected || this._socket.connecting) return;
@@ -213,6 +231,31 @@ class SockhopClient extends EventEmitter{
 	}
 
 	/**
+	 * End a socket
+	 * 
+	 * Emits 'disconnect' event, replaces the old socket with a new one
+	 * @private
+	 */
+	_end_socket() {
+
+		let _self=this;
+
+		// Change state of _connected 
+		let was_connected=_self._connected;
+		_self._connected=false;
+
+		// Emit 'disconnected' if we just transitioned state
+		if(was_connected) _self.emit("disconnect", _self._socket);
+
+		// Create a new socket.  Let everything be clean again!
+		_self.socket=new net.Socket();
+
+		// Reconnect (should be safe even if auto_reconnect is false)
+		console.log("performing auto_reconnect from _end_socket")
+		this._perform_auto_reconnect();
+	}
+
+	/**
 	 * Socket setter
 	 *
 	 * @param {net.socket} socket a new socket to set up
@@ -220,32 +263,10 @@ class SockhopClient extends EventEmitter{
 	set socket(s) {
 
 		var _self=this;
-		this.pings=[];
+
 		this._socket=s;
 		this._socket
-			.on("end",()=>{
-
-				// Stop pinging change state of _connected 
-				let was_connected=_self._connected;
-				_self._connected=false;
-				_self.ping(0);
-
-				// Emit 'disconnected' if we just transitioned state
-				if(was_connected) _self.emit("disconnect", _self._socket);
-
-				// Create a new socket.  Let everything be clean again!
-				_self.socket=new net.Socket();
-
-				// If we are set to auto reconnect, fire that in 100ms (without the delay, we seem to be connect()ing on the old socket, which
-				// causes us to get a connect event and then an immediate disconnect event)
-				if(_self._auto_reconnect) {
-
-					setTimeout(()=>{
-						_self._perform_auto_reconnect();
-
-					}, 100);
-				}
-			})
+			.on("end",()=>this._end_socket())
 			.on("data", (buf)=>{
 
 				this._objectbuffer.buf2obj(buf).forEach((o)=>{
@@ -298,17 +319,33 @@ class SockhopClient extends EventEmitter{
 			})
 			.on("error",(e)=>{
 
-				// If we are still connected but got an ECONNRESET, kill the connection.  This will also trigger "end" on the socket
+//console.log(`we got error ${e}`);
+
+				// If we are still connected but got an ECONNRESET, kill the connection.  
 				if(_self._connected && e.toString().match(/ECONNRESET/)){
 
-					_self.disconnect();
-				} 
+					_self._end_socket();
 
-				// If we are the only one listening for a socket error, bubble it up through the client
-				if(_self._socket.listenerCount("error")==1){
+				// We got 'This socket is closed' but we are supposed to auto reconnect.  Handle quietly
+				} else if(e.toString().match(/This socket is closed/) && _self.auto_reconnect===true) {
 
+					_self._end_socket();
+
+				// ECONNREFUSED but we are supposed to auto reconnect (or we are connecting, in which case connect() will reject and emitting an error would be superfluous) 
+				} else if(e.toString().match(/ECONNREFUSED/) && (_self.auto_reconnect===true || _self._connecting)) {
+
+					// Ignore 
+
+				} else {  // Other
+
+//					console.log(`emitting because _self.auto_reconnect=${_self.auto_reconnect}`);
 					_self.emit("error",e);
 				}
+
+				// // If we are the only one listening for a socket error, bubble it up through the client
+				// if(_self._socket.listenerCount("error")==1){
+
+				// }
 			});
 
 	}
@@ -351,31 +388,35 @@ class SockhopClient extends EventEmitter{
 			let on_error, on_connect, remove_both_listeners;
 
 			on_error=(e)=>{
+				console.log("on_error master fired");
 				self._connecting=false;
 				remove_both_listeners();
-				// sock.removeAllListeners("connect");
 				reject(e);
 			};
 
 			on_connect=()=>{
 
+				console.log("on_connect master fired");
 				self._connecting=false;
 				self._connected=true;
 				remove_both_listeners();
-				// sock.removeAllListeners("connect");
+				console.log("== emitting connect event");
 				self.emit("connect", sock);
 				resolve();
 			};
 
 			remove_both_listeners=()=>{
 
+				console.log(`BEFORE listener count incremented to ${sock.listenerCount("connect")}, error count is ${sock.listenerCount("error")}`);
 				sock.removeListener("error", on_error);
 				sock.removeListener("connect", on_connect);
+				console.log(`AFTER listener count incremented to ${sock.listenerCount("connect")}, error count is ${sock.listenerCount("error")}`);
 			};
 
 			// Connect the listeners
 			sock.on("error", on_error);
 			sock.on("connect", on_connect);
+			console.log(`connect listener count incremented to ${sock.listenerCount("connect")}, error count is ${sock.listenerCount("error")}`);
 
 			self._connecting=true;
 			sock.connect(this.port, this.address);
@@ -470,11 +511,13 @@ class SockhopClient extends EventEmitter{
 	/** 
 	 * Ping
 	 * 
-	 * Send ping, detect timeouts.  If we have 4 timeouts in a row, we stop pinging, kill the connection and emit a 'disconnect' event.
-	 * You can then call .connect() again to reconnect.  Don't forget to re-enable pings.
+	 * Send ping, detect timeouts.  If we have 4 timeouts in a row, we kill the connection and emit a 'disconnect' event.
+	 * You can then call .connect() again to reconnect.  
 	 * @param {number} delay in ms (0 disables ping)
 	 */
 	 ping(delay=0){
+
+	 	let _self=this;
 
 	 	// Remove any old timers
  		if(this.intervaltimer){
@@ -482,40 +525,41 @@ class SockhopClient extends EventEmitter{
  			this.interval_timer=null;
  		}
 
+ 		// Clear old pings
+ 		this.pings=[];
+
 	 	// Set up new timer
 	 	if(delay!==0){
 
 		 	// Set up a new ping timer
 		 	this.interval_timer=setInterval(()=>{
 
+		 		// Only proceed if we are connected
+		 		if(!_self._connected) return;
+
 		 		// Send a new ping on each timer
 		 		var p = new SockhopPing();
 
 	 			// Save new ping
-	 			this.pings.push(p);
+	 			_self.pings.push(p);
 
 	 			// Delete old pings
-	 			while(this.pings.length>4) this.pings.shift();
+	 			while(_self.pings.length>4) _self.pings.shift();
 
-	 			let unanswered=this.pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
-	 			if(this.pings.length>3 && this.pings.length==unanswered){
+	 			// If all (but at least 4) pings are unanswered, take action!
+	 			let unanswered=_self.pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
+	 			if(_self.pings.length>3 && _self.pings.length==unanswered){
 
-	 				// Kill timer
-		 			this.ping(0);
-
-		 			// Shutdown the socket
-	 				this._socket.end();
-	 				this._socket.destroy();
-
-	 				// Old socket is dead
-					this._socket.emit("end");
-
+	 				// Destroy socket, emit 'disconnect' event, mark ourself as disconnected
+	 				_self.pings=[];
+		 			_self._end_socket();
 	 				return;
 	 			}
-	 			var _self=this;
-		 		this.send(p).catch((e)=>{
 
-		 			_self.ping(0);	// Socket has already been shut down etc
+	 			// If we get this far, send the ping.  
+		 		_self.send(p).catch((e)=>{
+
+		 			// Even if it fails, we are remembering that we sent it and will disconnect after enough failures
 		 		});
 
 		 	}, delay);
@@ -538,7 +582,7 @@ class SockhopClient extends EventEmitter{
 		this._socket.destroy();
 
 		// Old socket is dead
-		this._socket.emit("end");
+		this._end_socket();
 		return Promise.resolve();
 	}
 }

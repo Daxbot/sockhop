@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "watch:test": "nodemon -w index.js -w test/ -x npm run test -s"
+    "lint": "jshint --reporter=node_modules/jshint-stylish index.js test/",
+    "lint:test" : "npm run lint -s && npm run test -s",
+    "watch:lint": "nodemon -w index.js -w test/ -x npm run lint -s",
+    "watch:test": "nodemon -w index.js -w test/ -x npm run test -s",
+    "dev": "nodemon -w index.js -w test/ -x npm run lint:test -s"
   },
   "repository": {
     "type": "git",
@@ -24,6 +28,7 @@
     "gulp-jshint": "^2.0.4",
     "jsdoc-to-markdown": "^2.0.1",
     "jshint": "^2.9.4",
+    "jshint-stylish": "^2.2.1",
     "nodemon": "^1.11.0"
   }
 }

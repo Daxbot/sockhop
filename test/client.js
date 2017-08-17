@@ -28,7 +28,6 @@ describe("Client",()=>{
 			done();
 		});
 
-
 	});
 
 	it("disconnect()", ()=>{

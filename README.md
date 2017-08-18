@@ -282,8 +282,8 @@ Send an object to the server
 ### sockhopClient.ping(delay)
 Ping
 
-Send ping, detect timeouts.  If we have 4 timeouts in a row, we stop pinging, kill the connection and emit a 'disconnect' event.
-You can then call .connect() again to reconnect.  Don't forget to re-enable pings.
+Send ping, detect timeouts.  If we have 4 timeouts in a row, we kill the connection and emit a 'disconnect' event.
+You can then call .connect() again to reconnect.
 
 **Kind**: instance method of <code>[SockhopClient](#SockhopClient)</code>  
 

@@ -132,7 +132,7 @@ class SockhopClient extends EventEmitter{
 		this._send_callbacks={};
 		this._connected=false;
 		this._connecting=false;
-		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
+//		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
 		// Create ObjectBuffer and pass along any errors
 		this._objectbuffer=new ObjectBuffer({
@@ -177,8 +177,11 @@ class SockhopClient extends EventEmitter{
 
 		if(this._auto_reconnect){
 
+			// Make sure we are not already connecting
+			if(this._socket && this._socket.connecting===true) return;
+
 			// Begin auto connecting
-			if(!this.connected && !this._socket.connecting) this._perform_auto_reconnect();			
+			if(!this.connected) this._perform_auto_reconnect();			
 
 		} else {
 
@@ -199,10 +202,10 @@ class SockhopClient extends EventEmitter{
 	 */
 	_perform_auto_reconnect(){
 
-console.log("_perform_auto_reconnect");
 
 		// If we are already connected or connecting, we can disregard
-		if(this.connected || this._socket.connecting) return;
+		if(this._socket && this._socket.connecting) return;
+		if(this.connected) return;
 
 		// If auto reconnect has been disabled, we can disregard
 		if(!this._auto_reconnect) return;
@@ -247,11 +250,15 @@ console.log("_perform_auto_reconnect");
 		// Emit 'disconnected' if we just transitioned state
 		if(was_connected) _self.emit("disconnect", _self._socket);
 
-		// Create a new socket.  Let everything be clean again!
-		_self.socket=new net.Socket();
+		// Delete socket
+		if(_self._socket) {
+
+			_self._socket.destroy();
+			_self._socket=null;
+		}
+//		_self.socket=new net.Socket();
 
 		// Reconnect (should be safe even if auto_reconnect is false)
-		console.log("performing auto_reconnect from _end_socket")
 		this._perform_auto_reconnect();
 	}
 
@@ -372,8 +379,8 @@ console.log("_perform_auto_reconnect");
 	 */
 	connect(){
 
-		var self=this;
-		var sock=this._socket;
+		let self=this;
+
 
 		// If we are connected, we can return immediately
 		if(this._connected) return Promise.resolve();
@@ -383,43 +390,33 @@ console.log("_perform_auto_reconnect");
 
 		return new Promise((resolve, reject)=>{
 
-
-			// Create two event handlers.  We don't want (e.g.) our 'reject' function called whenever the socket throws an error.
-			let on_error, on_connect, remove_both_listeners;
-
-			on_error=(e)=>{
-				console.log("on_error master fired");
-				self._connecting=false;
-				remove_both_listeners();
-				reject(e);
-			};
-
-			on_connect=()=>{
-
-				console.log("on_connect master fired");
-				self._connecting=false;
-				self._connected=true;
-				remove_both_listeners();
-				console.log("== emitting connect event");
-				self.emit("connect", sock);
-				resolve();
-			};
-
-			remove_both_listeners=()=>{
-
-				console.log(`BEFORE listener count incremented to ${sock.listenerCount("connect")}, error count is ${sock.listenerCount("error")}`);
-				sock.removeListener("error", on_error);
-				sock.removeListener("connect", on_connect);
-				console.log(`AFTER listener count incremented to ${sock.listenerCount("connect")}, error count is ${sock.listenerCount("error")}`);
-			};
-
-			// Connect the listeners
-			sock.on("error", on_error);
-			sock.on("connect", on_connect);
-			console.log(`connect listener count incremented to ${sock.listenerCount("connect")}, error count is ${sock.listenerCount("error")}`);
-
 			self._connecting=true;
-			sock.connect(this.port, this.address);
+
+			// If we try to createConnection immediately something hangs under certain circumstances.  HACK
+			setTimeout(()=>{
+
+				self.socket=net.createConnection(self.port, self.address, ()=>{
+
+					self._connecting=false;
+					self._connected=true;
+					self.emit("connect", self._socket);
+					resolve();
+				});
+
+
+
+				// This socket is new and only has the error handlers that we created when we used the this.socket setter.  Add one more
+				self.socket.once("error",(e)=>{
+
+					if(self._socket && self._connecting===true && self._connected===false){
+
+						self._connecting=false;
+						reject(e);
+					}
+				});
+
+			},0);
+
 
 		});
 	}

@@ -91,9 +91,11 @@ describe("Ping", function(){
 
 	});
 
-	this.slow(10000);
 
 	it("Client reconnects on disconnect (should be slow)", function(done){
+
+		this.slow(10000);
+		this.timeout(10000);
 
 		s=new Sockhop.server({port: 50005});
 		s2=new Sockhop.server({port: 50006});
@@ -109,6 +111,8 @@ describe("Ping", function(){
 				done();
 			});
 
+
+			c._end_socket();
 			c.connect();				
 		});
 

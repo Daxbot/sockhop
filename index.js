@@ -464,7 +464,7 @@ class SockhopClient extends EventEmitter{
 	 *
 	 * Send an object to the server
 	 * @param {object} object to be sent over the wire
-	 * @param {function} [rcallback] Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise
+	 * @param {function} [rcallback] Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise
 	 * @return {Promise} 
 	 * @throws {Error}
 	 */
@@ -602,6 +602,7 @@ class SockhopClient extends EventEmitter{
  * @param {object} meta metadata
  * @param {string} meta.type the received object constructor ("Object", "String", "Widget", etc)
  * @param {net.Socket} meta.socket the socket that sent us this object
+ * @param {function} [meta.callback] the callback function, if the client is requesting a callback. Pass an object you want returned to the client
  */
 
 /**
@@ -722,7 +723,7 @@ class SockhopServer extends EventEmitter {
 							// Remote end is requesting callback
 							} else if (o.id){
 
-								_self.emit("receive", o.data, {type:o.type, socket: sock, callback: function(oo){ _self._trigger_remote_callback(sock, o.id, oo);} });
+								_self.emit("receive", o.data, {type:o.type, socket: sock, callback: function(oo={}){ _self._trigger_remote_callback(sock, o.id, oo);} });
 
 							} else {
 

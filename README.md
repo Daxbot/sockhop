@@ -275,7 +275,7 @@ Send an object to the server
 | Param | Type | Description |
 | --- | --- | --- |
 | object | <code>object</code> | to be sent over the wire |
-| [rcallback] | <code>function</code> | Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise |
+| [rcallback] | <code>function</code> | Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise |
 
 <a name="SockhopClient+ping"></a>
 
@@ -496,6 +496,7 @@ We have successfully received an object from the client
 | meta | <code>object</code> | metadata |
 | meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
 | meta.socket | <code>net.Socket</code> | the socket that sent us this object |
+| [meta.callback] | <code>function</code> | the callback function, if the client is requesting a callback. Pass an object you want returned to the client |
 
 <a name="SockhopServer+event_disconnect"></a>
 

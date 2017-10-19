@@ -19,6 +19,11 @@ describe("Client-server", function(){
 			done();
 		});
 	});
+	it("client.connect returns if connected",function(done){
+
+			c.connect()
+			.then(()=>done());
+	});
 	it("client.connected transitions from true to false on disconnect",function(done){
 
 		assert.equal(c.connected,true);
@@ -29,7 +34,12 @@ describe("Client-server", function(){
 			done();
 		});
 	});
-
+	it("client.send return error when not connected to server",function(done){
+		c.send("data").catch((e)=>{
+		done();
+	});
+		
+	});
 
 	it("client allows reconnect after disconnect", function(done){
 

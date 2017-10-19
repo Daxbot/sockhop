@@ -486,9 +486,8 @@ class SockhopClient extends EventEmitter{
 			if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
 		}	
 
-		if(this._socket.destroyed){
+		if((this._socket && this._socket.destroyed) || this._socket === null){
 
-			this._socket.emit("end");
 			return Promise.reject(new Error("Client unable to send() - socket has been destroyed"));
 		}
 

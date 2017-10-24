@@ -262,6 +262,8 @@ class SockhopClient extends EventEmitter{
 		this._perform_auto_reconnect();
 	}
 
+
+
 	/**
 	 * Socket setter
 	 *
@@ -677,13 +679,13 @@ class SockhopServer extends EventEmitter {
 			_self.pings.set(sock,[]);
 
 			// Emit event
-			_self.emit("connect", sock);
+			_self.emit_async("connect", sock);
 
 			// Setup the socket events
 			sock
 				.on("end",()=>{
 
-					_self.emit("disconnect", sock);
+					_self.emit_async("disconnect", sock);
 					_self._sockets.splice(_self._sockets.indexOf(sock), 1);
 					_self.pings.delete(sock);
 				})
@@ -743,6 +745,20 @@ class SockhopServer extends EventEmitter {
 				});
 			_self._sockets.push(sock);
 		});
+	}
+
+	/**
+	 * Emit async
+	 *
+	 * We end up with odd event loops sometimes, e.g. if an on("disconnect") calls .sendall(), another "disconnect" will be emitted.
+	 * This functon emits evens asynchronously and breaks the chain
+	 * //HACK  -- THIS IS A HACKY FIX -- //HACK
+	 */
+	emit_async() {
+
+		let self=this;
+		let _arguments=arguments;
+		setTimeout(function(){ self.emit.apply(self,_arguments); },0);
 	}
 
 	/**

@@ -213,12 +213,12 @@ class SockhopClient extends EventEmitter{
 		// If we already have a reconnect timer running, disregard
 		if(this._auto_reconnect_timer) return;
 
-		var _self=this;
+		let _self=this;
 		this.connect()
 			.catch((e)=>{
 
 				// If we already have a reconnect timer running, disregard
-				if(this._auto_reconnect_timer) return;
+				if(_self._auto_reconnect_timer) return;
 
 				// Reconnect failed.  We don't care why.  Try again
 				_self._auto_reconnect_timer=setTimeout(()=>{
@@ -256,7 +256,9 @@ class SockhopClient extends EventEmitter{
 			_self._socket.destroy();
 			_self._socket=null;
 		}
-//		_self.socket=new net.Socket();
+
+		// Clear any pending pings
+		_self.pings=[];
 
 		// Reconnect (should be safe even if auto_reconnect is false)
 		this._perform_auto_reconnect();
@@ -518,7 +520,7 @@ class SockhopClient extends EventEmitter{
 	 	let _self=this;
 
 	 	// Remove any old timers
- 		if(this.intervaltimer){
+ 		if(this.interval_timer){
  			clearInterval(this.interval_timer);
  			this.interval_timer=null;
  		}
@@ -546,10 +548,12 @@ class SockhopClient extends EventEmitter{
 
 	 			// If all (but at least 4) pings are unanswered, take action!
 	 			let unanswered=_self.pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
+
 	 			if(_self.pings.length>3 && _self.pings.length==unanswered){
 
-	 				// Destroy socket, emit 'disconnect' event, mark ourself as disconnected
-	 				_self.pings=[];
+	 				// console.log("disconnecting due to ping count = "+unanswered);
+
+	 				// Destroy socket, emit 'disconnect' event, mark ourself as disconnected.  Will also clear any old pings
 		 			_self._end_socket();
 	 				return;
 	 			}

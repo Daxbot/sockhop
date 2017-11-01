@@ -361,6 +361,7 @@ constructor options.
 * [SockhopServer](#SockhopServer) ⇐ <code>EventEmitter</code>
     * [new SockhopServer([opts])](#new_SockhopServer_new)
     * [.sockets](#SockhopServer+sockets) ⇒ <code>array</code>
+    * [.emit_async()](#SockhopServer+emit_async)
     * [.ping(delay)](#SockhopServer+ping)
     * [.listen()](#SockhopServer+listen) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopServer+get_bound_address) ⇒ <code>string</code>
@@ -395,6 +396,16 @@ Socket getter
 
 **Kind**: instance property of <code>[SockhopServer](#SockhopServer)</code>  
 **Returns**: <code>array</code> - the underlying socket objects for our clients  
+<a name="SockhopServer+emit_async"></a>
+
+### sockhopServer.emit_async()
+Emit async
+
+We end up with odd event loops sometimes, e.g. if an on("disconnect") calls .sendall(), another "disconnect" will be emitted.
+This functon emits evens asynchronously and breaks the chain
+//HACK  -- THIS IS A HACKY FIX -- //HACK
+
+**Kind**: instance method of <code>[SockhopServer](#SockhopServer)</code>  
 <a name="SockhopServer+ping"></a>
 
 ### sockhopServer.ping(delay)

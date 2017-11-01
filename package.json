@@ -1,12 +1,12 @@
 {
   "name": "sockhop",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Sockets with messages, pings, etc",
   "main": "index.js",
   "scripts": {
     "test": "mocha",
     "lint": "jshint --reporter=node_modules/jshint-stylish index.js test/",
-    "lint:test" : "npm run lint -s && npm run test -s",
+    "lint:test": "npm run lint -s && npm run test -s",
     "watch:lint": "nodemon -w index.js -w test/ -x npm run lint -s",
     "watch:test": "nodemon -w index.js -w test/ -x npm run test -s",
     "dev": "nodemon -w index.js -w test/ -x npm run lint:test -s"

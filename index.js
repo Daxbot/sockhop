@@ -781,45 +781,48 @@ class SockhopServer extends EventEmitter {
 	 * Ping all clients, detect timeouts. Only works if connected to a SockhopClient.
 	 * @param {number} delay in ms (0 disables ping)
 	 */
-	 ping(delay=0){
+	 ping(delay = 0) {
+	 	
+     // Remove any old timers
+     if (this.intervaltimer) {
+         clearInterval(this.interval_timer);
+         this.interval_timer = null;
+     }
 
-	 	// Remove any old timers
- 		if(this.intervaltimer){
- 			clearInterval(this.interval_timer);
- 			this.interval_timer=null;
- 		}
 
+     // Set up new timer
+     if (delay !== 0) {
 
-	 	// Set up new timer
-	 	if(delay!==0){
+         // Set up a new ping timer
+         this.interval_timer = setInterval(() => {
+             // Send a new ping on each timer
 
-		 	// Set up a new ping timer
-		 	this.interval_timer=setInterval(()=>{
+             for (let s of this._sockets) {
+                 var p = new SockhopPing();
+                 this.send(s, p);
 
-		 		// Send a new ping on each timer
-		 		var p = new SockhopPing();
-		 		for(let s of this._sockets){
+                 // Save new ping
+                 let pings = this.pings.get(s);
 
-		 			// Save new ping
-		 			let pings=this.pings.get(s);
-		 			pings.push(p);
+                 if (!pings)
+                     continue;
 
-		 			// Delete old pings
-		 			while(pings.length>4) pings.shift();
+                 pings.push(p);
 
-		 			let unanswered=pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
-		 			if(pings.length>3 && pings.length==unanswered){
+                 // Delete old pings
+                 while (pings.length > 4) pings.shift();
 
-		 				s.end();
-		 				s.destroy();
-		 				s.emit("end");
-		 			}
-		 		}
-		 		this.sendall(p);
+                 let unanswered = pings.reduce((a, v) => a + (v.unanswered() ? 1 : 0), 0);
+                 if (pings.length > 3 && pings.length == unanswered) {
 
-		 	}, delay);
-		 }
-	 }
+                     s.end();
+                     s.destroy();
+                     s.emit("end");
+                 }
+             }
+         }, delay);
+     }
+ }
 
 	/**
 	 * Listen

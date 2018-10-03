@@ -662,6 +662,10 @@ class SockhopServer extends EventEmitter {
 		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
 		this._sockets=[];
 		this._objectbuffers=[];	// One per socket, using corresponding indices
+		this._encoding_objectbuffer=new ObjectBuffer({
+					terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
+					allow_non_objects: opts.allow_non_objects
+				});
 		this._send_callbacks={};
 		this.pings=new Map();
 		this.server=net.createServer();
@@ -878,7 +882,7 @@ class SockhopServer extends EventEmitter {
 			throw new Error("Client unable to send() - socket has been destroyed");
 		}
 
-		sock.writeAsync(this._objectbuffers[0].obj2buf(m));		// Since they are all set up the same, we just use the first one for speed
+		sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));		
 	}
 
 	/** 
@@ -930,7 +934,7 @@ class SockhopServer extends EventEmitter {
 			this._send_callbacks[m.id]=callback;
 		}
 
-		return sock.writeAsync(this._objectbuffers[0].obj2buf(m));		// Since they are all set up the same, we just use the first one for speed
+		return sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));		
 
 	
 	}

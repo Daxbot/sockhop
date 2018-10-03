@@ -661,23 +661,29 @@ class SockhopServer extends EventEmitter {
 		this.port=opts.port||50000;
 		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
 		this._sockets=[];
+		this._objectbuffers=[];	// One per socket, using corresponding indices
 		this._send_callbacks={};
 		this.pings=new Map();
 		this.server=net.createServer();
 		this.interval_timer=null;
 
-		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer({
-				terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
-				allow_non_objects: opts.allow_non_objects
-			});
-		this._objectbuffer.on("error",(e)=>{
-
-			_self.emit("error", e);
-		});
 
 		// Setup server
 		this.server.on('connection', function(sock){
+
+			// Setup ObjectBuffer
+			let objectbuffer=new ObjectBuffer({
+					terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
+					allow_non_objects: opts.allow_non_objects
+				});
+			objectbuffer.on("error",(e)=>{
+
+				_self.emit("error", e);	// Should we pass along a reference to sock?
+			});
+
+			// Save the socket and objectbuffer in corresponding indices
+			_self._sockets.push(sock);
+			_self._objectbuffers[_self._sockets.indexOf(sock)]=objectbuffer;
 
 			// Setup empty pings map
 			_self.pings.set(sock,[]);
@@ -689,13 +695,19 @@ class SockhopServer extends EventEmitter {
 			sock
 				.on("end",()=>{
 
+					// Emit event
 					_self.emit_async("disconnect", sock);
-					_self._sockets.splice(_self._sockets.indexOf(sock), 1);
+
+					// Remove the socket and objectbuffer
+					let index=_self._sockets.indexOf(sock);
+					_self._sockets.splice(index, 1);
+					_self._objectbuffers.splice(index, 1);
+
 					_self.pings.delete(sock);
 				})
 				.on('data',function(buf){
 
-					_self._objectbuffer.buf2obj(buf).forEach((o)=>{
+					objectbuffer.buf2obj(buf).forEach((o)=>{
 
 						// Handle SockhopPing requests with SockhopPong
 						if(o.type=="SockhopPing"){
@@ -747,7 +759,6 @@ class SockhopServer extends EventEmitter {
 						// Bubble socket errors
 						_self.emit("error",e);
 				});
-			_self._sockets.push(sock);
 		});
 	}
 
@@ -867,7 +878,7 @@ class SockhopServer extends EventEmitter {
 			throw new Error("Client unable to send() - socket has been destroyed");
 		}
 
-		sock.writeAsync(this._objectbuffer.obj2buf(m));
+		sock.writeAsync(this._objectbuffers[0].obj2buf(m));		// Since they are all set up the same, we just use the first one for speed
 	}
 
 	/** 
@@ -919,8 +930,9 @@ class SockhopServer extends EventEmitter {
 			this._send_callbacks[m.id]=callback;
 		}
 
-		return sock.writeAsync(this._objectbuffer.obj2buf(m));
-		
+		return sock.writeAsync(this._objectbuffers[0].obj2buf(m));		// Since they are all set up the same, we just use the first one for speed
+
+	
 	}
 
 

@@ -4,7 +4,7 @@ var EventEmitter=require("events").EventEmitter;
 var inherits = require("util").inherits;
 var uuid=require("uuid");
 var ObjectBuffer=require("./lib/ObjectBuffer.js");
-/** 
+/**
  * TCP Ping
  *
  * Used internally when .ping() is called
@@ -31,7 +31,7 @@ class SockhopPing {
 	}
 
 	/**
-	 * Conclude a ping 
+	 * Conclude a ping
 	 *
 	 * Sets the returned, finished values
 	 * @param {SockhopPong} pong the pong (ping reply) that is finishing this ping
@@ -47,7 +47,7 @@ class SockhopPing {
 	}
 }
 
-/** 
+/**
  * TCP Ping reply
  *
  * Used internally when .ping() is replied
@@ -63,7 +63,7 @@ class SockhopPong {
 	}
 
 	get finished(){
-		
+
 		return this._finished;
 	}
 }
@@ -95,12 +95,12 @@ class SockhopPong {
 
 
 
-/** 
+/**
  * Wrapped TCP client
  * @fires SockhopClient#connect
  * @fires SockhopClient#disconnect
  * @fires SockhopClient#receive
- * @fires Error 
+ * @fires Error
  * @extends EventEmitter
  */
 class SockhopClient extends EventEmitter{
@@ -115,7 +115,7 @@ class SockhopClient extends EventEmitter{
 	 * @param {string} opts.peer_type the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
 	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
 	 * @param {boolean} [opts.allow_non_objects=false] allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor.
-	 */	
+	 */
 
 	 constructor(opts={}){
 
@@ -181,7 +181,7 @@ class SockhopClient extends EventEmitter{
 			if(this._socket && this._socket.connecting===true) return;
 
 			// Begin auto connecting
-			if(!this.connected) this._perform_auto_reconnect();			
+			if(!this.connected) this._perform_auto_reconnect();
 
 		} else {
 
@@ -235,7 +235,7 @@ class SockhopClient extends EventEmitter{
 
 	/**
 	 * End a socket
-	 * 
+	 *
 	 * Emits 'disconnect' event, replaces the old socket with a new one
 	 * @private
 	 */
@@ -243,7 +243,7 @@ class SockhopClient extends EventEmitter{
 
 		let _self=this;
 
-		// Change state of _connected 
+		// Change state of _connected
 		let was_connected=_self._connected;
 		_self._connected=false;
 
@@ -291,7 +291,7 @@ class SockhopClient extends EventEmitter{
 						return;
 					}
 
-					// Handle SockhopPong 
+					// Handle SockhopPong
 					if(o.type=="SockhopPong"){
 
 						for(let p of _self.pings){
@@ -332,7 +332,7 @@ class SockhopClient extends EventEmitter{
 
 //console.log(`we got error ${e}`);
 
-				// If we are still connected but got an ECONNRESET, kill the connection.  
+				// If we are still connected but got an ECONNRESET, kill the connection.
 				if(_self._connected && e.toString().match(/ECONNRESET/)){
 
 					_self._end_socket();
@@ -342,10 +342,10 @@ class SockhopClient extends EventEmitter{
 
 					_self._end_socket();
 
-				// ECONNREFUSED but we are supposed to auto reconnect (or we are connecting, in which case connect() will reject and emitting an error would be superfluous) 
+				// ECONNREFUSED but we are supposed to auto reconnect (or we are connecting, in which case connect() will reject and emitting an error would be superfluous)
 				} else if(e.toString().match(/ECONNREFUSED/) && (_self.auto_reconnect===true || _self._connecting)) {
 
-					// Ignore 
+					// Ignore
 
 				} else {  // Other
 
@@ -375,7 +375,7 @@ class SockhopClient extends EventEmitter{
 	 * Connect
 	 *
 	 * Connect to the server
-	 * If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.  
+	 * If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.
 	 * Calling this directly will get you a Promise rejection if you are not able to connect the first time.
 	 * N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
 	 *
@@ -429,7 +429,7 @@ class SockhopClient extends EventEmitter{
 	/**
 	 * Get bound address
 	 *
-	 * @return {string} the IP address we are bound to 
+	 * @return {string} the IP address we are bound to
 	 */
 	get_bound_address(){
 
@@ -469,7 +469,7 @@ class SockhopClient extends EventEmitter{
 	 * Send an object to the server
 	 * @param {object} object to be sent over the wire
 	 * @param {function} [rcallback] Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise
-	 * @return {Promise} 
+	 * @return {Promise}
 	 * @throws {Error}
 	 */
 	send(o, callback){
@@ -488,7 +488,7 @@ class SockhopClient extends EventEmitter{
 
 			m=o;
 			if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
-		}	
+		}
 
 		if((this._socket && this._socket.destroyed) || this._socket === null){
 
@@ -506,13 +506,13 @@ class SockhopClient extends EventEmitter{
 		}
 
 		return this._socket.writeAsync(this._objectbuffer.obj2buf(m));
-	}	
+	}
 
-	/** 
+	/**
 	 * Ping
-	 * 
+	 *
 	 * Send ping, detect timeouts.  If we have 4 timeouts in a row, we kill the connection and emit a 'disconnect' event.
-	 * You can then call .connect() again to reconnect.  
+	 * You can then call .connect() again to reconnect.
 	 * @param {number} delay in ms (0 disables ping)
 	 */
 	 ping(delay=0){
@@ -558,7 +558,7 @@ class SockhopClient extends EventEmitter{
 	 				return;
 	 			}
 
-	 			// If we get this far, send the ping.  
+	 			// If we get this far, send the ping.
 		 		_self.send(p).catch((e)=>{
 
 		 			// Even if it fails, we are remembering that we sent it and will disconnect after enough failures
@@ -618,19 +618,19 @@ class SockhopClient extends EventEmitter{
  */
 
 
-/** 
+/**
  * Wrapped TCP server
  *
  * When data is received by the server, the received Buffer is concatenated with previously
  * received Buffers until a delimiter (usually "\n") is received.  The composite Buffer is then treated
  * like a JSON string and converted to an object, which is triggers a "receive" event.
- * If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type - 
+ * If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type -
  * this allows you to pass custom objects (prototypes) across the wire, and the other end will know
  * it has received your Widget, or Foo, or whatever.  Plain objects, strings, etc. are also similarly labelled.
  * The resulting receive event has a "meta" parameter; meta.type will list the object type.
  *
  * Of course, if your client is not a SockhopClient, you don't want this wrapping/unwrapping behavior
- * and you might want a different delimiter for JSON.  Both these parameters are configurable in the 
+ * and you might want a different delimiter for JSON.  Both these parameters are configurable in the
  * constructor options.
  *
  * @extends EventEmitter
@@ -721,7 +721,7 @@ class SockhopServer extends EventEmitter {
 							return;
 						}
 
-						// Handle SockhopPong 
+						// Handle SockhopPong
 						if(o.type=="SockhopPong"){
 
 							var pings=_self.pings.get(sock);
@@ -733,7 +733,7 @@ class SockhopServer extends EventEmitter {
 						}
 
 						if(_self._peer_type=="Sockhop") {
-	
+
 							// Handle remote callback (callback activated)
 							if(o.callback_id) {
 
@@ -755,7 +755,7 @@ class SockhopServer extends EventEmitter {
 
 							_self.emit("receive", o, {type:o.constructor.name, socket: sock });		// We read converted data directly, will be "String" or "Object"
 						}
-					});	
+					});
 
 				})
 				.on("error",(e)=>{
@@ -790,9 +790,9 @@ class SockhopServer extends EventEmitter {
 	 	return this._sockets;
 	 }
 
-	/** 
+	/**
 	 * Ping
-	 * 
+	 *
 	 * Ping all clients, detect timeouts. Only works if connected to a SockhopClient.
 	 * @param {number} delay in ms (0 disables ping)
 	 */
@@ -812,11 +812,17 @@ class SockhopServer extends EventEmitter {
 		 	this.interval_timer=setInterval(()=>{
 
 		 		// Send a new ping on each timer
-		 		var p = new SockhopPing();
 		 		for(let s of this._sockets){
+
+					let p = new SockhopPing();
+					this.send(s, p);
 
 		 			// Save new ping
 		 			let pings=this.pings.get(s);
+
+					if (!pings)
+						continue;
+
 		 			pings.push(p);
 
 		 			// Delete old pings
@@ -830,7 +836,7 @@ class SockhopServer extends EventEmitter {
 		 				s.emit("end");
 		 			}
 		 		}
-		 		this.sendall(p);
+
 
 		 	}, delay);
 		 }
@@ -838,7 +844,7 @@ class SockhopServer extends EventEmitter {
 
 	/**
 	 * Listen
-	 * 
+	 *
 	 * Bind and wait for incoming connections
 	 * @return {Promise}
 	 */
@@ -850,7 +856,7 @@ class SockhopServer extends EventEmitter {
 	/**
 	 * Get bound address
 	 *
-	 * @return {string} the IP address we are bound to 
+	 * @return {string} the IP address we are bound to
 	 */
 	get_bound_address(){
 
@@ -882,10 +888,10 @@ class SockhopServer extends EventEmitter {
 			throw new Error("Client unable to send() - socket has been destroyed");
 		}
 
-		sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));		
+		sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));
 	}
 
-	/** 
+	/**
 	 * Send
 	 *
 	 * Send an object to one clients
@@ -915,14 +921,14 @@ class SockhopServer extends EventEmitter {
 
 			m=o;
 			if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
-		}	
+		}
 
 		if(sock.destroyed){
 
 			sock.emit("end");
 			return Promise.reject(new Error("Socket was destroyed"));
 
-		} 
+		}
 
 		// Handle remote callback setup
 		if(callback) {
@@ -934,13 +940,13 @@ class SockhopServer extends EventEmitter {
 			this._send_callbacks[m.id]=callback;
 		}
 
-		return sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));		
+		return sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));
 
-	
+
 	}
 
 
-	/** 
+	/**
 	 * Sendall
 	 *
 	 * Send an object to all clients
@@ -959,14 +965,14 @@ class SockhopServer extends EventEmitter {
 	 * Disconnect
 	 *
 	 * Disconnect all clients
-	 * Does not close the server - use close() for that 
+	 * Does not close the server - use close() for that
 	 * @return {Promise}
 	 */
 	 disconnect(){
 
 	 	this.ping(0);	// Stop all pinging
-		return Promise.all(this._sockets.map((s)=>s.endAsync()));	 	
-	 }	
+		return Promise.all(this._sockets.map((s)=>s.endAsync()));
+	 }
 
 	 /**
 	  * Close

@@ -1,6 +1,6 @@
 {
   "name": "sockhop",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Sockets with messages, pings, etc",
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "url": "https://github.com/DaxBot/sockhop"
   },
   "author": "c0d3",
-  "license": "SEE LICENSE IN README.md",
+  "license": "MIT",
   "dependencies": {
     "bluebird": "^3.4.7",
     "mocha": "^3.2.0",

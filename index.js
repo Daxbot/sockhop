@@ -717,7 +717,7 @@ class SockhopServer extends EventEmitter {
 						if(o.type=="SockhopPing"){
 
 							var p=new SockhopPong(o.data);
-							_self.send(sock,p);
+							_self.send(sock,p).catch(()=>{});	// We don't care about errors here
 							return;
 						}
 

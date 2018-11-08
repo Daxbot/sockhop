@@ -186,10 +186,10 @@ class SockhopClient extends EventEmitter{
 		} else {
 
 			// ..or else stop it
-			if(this._auto_reconnect_timer) {
+			if(this._auto_reconnect_timer!==null) {
 
 				clearTimeout(this._auto_reconnect_timer);
-				_auto_reconnect_timer=null;
+				this._auto_reconnect_timer=null;
 			}
 		}
 	}
@@ -520,7 +520,7 @@ class SockhopClient extends EventEmitter{
 	 	let _self=this;
 
 	 	// Remove any old timers
- 		if(this.interval_timer){
+ 		if(this.interval_timer!==null){
  			clearInterval(this.interval_timer);
  			this.interval_timer=null;
  		}
@@ -574,12 +574,15 @@ class SockhopClient extends EventEmitter{
 	 * disconnect
 	 *
 	 * Disconnect the socket (send FIN)
+	 * Pinging will also be turned off... if you want to keep pinging, you will need to call .ping() again after you connect again
+	 *
 	 * @return Promise
 	 */
 	disconnect(){
 
 		// Disable auto reconnect (else we will just connect again)
 		this._auto_reconnect=false;
+		this.ping(0); // Stop pinging
 		this._socket.end();
 		this._socket.destroy();
 
@@ -799,7 +802,8 @@ class SockhopServer extends EventEmitter {
 	 ping(delay=0){
 
 	 	// Remove any old timers
- 		if(this.intervaltimer){
+ 		if(this.interval_timer!==null){
+ 
  			clearInterval(this.interval_timer);
  			this.interval_timer=null;
  		}

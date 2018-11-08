@@ -39,6 +39,7 @@ describe("client.auto_reconnect", function(){
 
 			s.once("receive", (msg)=>{
 				assert.equal(msg, "data goes in");
+				c.ping(0);
 				done();
 			});
 
@@ -159,15 +160,6 @@ describe("client.auto_reconnect", function(){
 			connect_event_counter++;
 		});
 
-		// c.on("connect",()=>{
-
-		// 	console.log("connect event!");
-		// });
-
-		// c.on("disconnect",()=>{
-
-		// 	console.log("DISconnect event!");
-		// });
 
 		// Start the server
 		let slambang=spawn("node", ["./slambang.js"]);
@@ -209,6 +201,13 @@ describe("client.auto_reconnect", function(){
 
 	});
 
+
+	after(("closeup"),()=>{
+
+		if(c.auto_reconnect) c.auto_reconnect=false;
+		s.close();
+
+	});
 });
 
 

@@ -9,6 +9,7 @@ describe("Ping", function(){
 	this.slow(3000);
 	s=new Sockhop.server({port: 50004});
 	c=new Sockhop.client({port: 50004});
+	s2=new Sockhop.server({port: 50006});
 
 	it("Client pings server successfully for 500ms", function(done){
 
@@ -26,12 +27,14 @@ describe("Ping", function(){
 			setTimeout(()=>{	// Let it ping for 500ms, then done
 
 				s.removeAllListeners("disconnect");
+				c.ping(0);
 				done();
 
 			}, 500);
 
 		});
 	});
+
 
 	it("Simultaneous ping client<-->server for 500ms", function(done){
 
@@ -80,6 +83,7 @@ describe("Ping", function(){
 		c.once("disconnect",()=>{
 
 			s.disconnect();
+			c.ping(0);
 			done();
 		});
 		c.connect().then(()=>{
@@ -97,8 +101,8 @@ describe("Ping", function(){
 		this.slow(10000);
 		this.timeout(10000);
 
+		s.close();
 		s=new Sockhop.server({port: 50005});
-		s2=new Sockhop.server({port: 50006});
 
 		c=new Sockhop.client({port: 50005});
 		// Set up disconnect event to reconnect
@@ -108,6 +112,7 @@ describe("Ping", function(){
 			c.port=50006;
 			c.once("connect",()=>{
 
+				c.ping(0);
 				done();
 			});
 
@@ -136,6 +141,12 @@ describe("Ping", function(){
 
 	});
 
+
+	after(("close servers"),()=>{
+
+		s.close();
+		s2.close();
+	});
 });
 
 

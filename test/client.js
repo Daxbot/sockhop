@@ -39,11 +39,15 @@ describe("Client",()=>{
 
 		return c.connect()
 			.then(()=>c.disconnect())
-			.then(()=>s.close())
 			.then(()=>{
 
 				return Promise.resolve();
 			});
 	});
 
+	after(("close servers"),()=>{
+
+		s.close();
+
+	});
 });

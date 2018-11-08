@@ -103,6 +103,10 @@ describe("Client-server", function(){
 		});
 
 	});
+	after("close server",()=>{
+
+		s.close();
+	});
 });
 
 

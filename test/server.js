@@ -36,8 +36,13 @@ describe("Server",()=>{
 	
 		let x=new Sockhop.server({port: 50008});
 
-		x.listen();
-		x.close().then(()=>done());
+		x.listen().then(()=>x.close()).then(()=>done());
+	});
+
+	after(("close server"),()=>{
+
+		s.close();
+
 	});
 
 });

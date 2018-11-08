@@ -33,5 +33,10 @@ describe("Events", function(){
 		s.disconnect();
 	});
 
+	after("close server",()=>{
+
+		s.close();
+	});
+
 });
 

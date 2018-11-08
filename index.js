@@ -109,6 +109,7 @@ class SockhopClient extends EventEmitter{
 	 * Constructs a new SockhopClient
 	 *
 	 * @param {object} [opts] an object containing configuration options
+ 	 * @param {string} [opts.path] the path for a Unix domain socket.  If used, this will override the address and port values.
 	 * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
 	 * @param {number} [opts.port=50000] the TCP port to use
 	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
@@ -122,6 +123,7 @@ class SockhopClient extends EventEmitter{
 		super();
 		var _self=this;
 		this.pings=[];
+ 		this.path=opts.path||null;
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
@@ -399,15 +401,15 @@ class SockhopClient extends EventEmitter{
 			// If we try to createConnection immediately something hangs under certain circumstances.  HACK
 			setTimeout(()=>{
 
-				self.socket=net.createConnection(self.port, self.address, ()=>{
+				let callback=()=>{
 
 					self._connecting=false;
 					self._connected=true;
 					self.emit("connect", self._socket);
 					resolve();
-				});
+				};
 
-
+				self.socket=self.path?net.createConnection(self.path, callback):net.createConnection(self.port, self.address, callback);
 
 				// This socket is new and only has the error handlers that we created when we used the this.socket setter.  Add one more
 				self.socket.once("error",(e)=>{
@@ -649,6 +651,7 @@ class SockhopServer extends EventEmitter {
 	 * Constructs a new SockhopServer
 	 *
 	 * @param {object} [opts] an object containing configuration options
+ 	 * @param {string} [opts.path] the path for a Unix domain socket.  If used, this will override the address and port values.
 	 * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
 	 * @param {number} [opts.port=50000] the TCP port to use
 	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
@@ -661,6 +664,7 @@ class SockhopServer extends EventEmitter {
 		super();
 		var _self=this;
 		this.address=opts.address||"127.0.0.1";
+		this.path=opts.path||null;
 		this.port=opts.port||50000;
 		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
 		this._sockets=[];
@@ -854,7 +858,7 @@ class SockhopServer extends EventEmitter {
 	 */
 	listen(){
 
-		return this.server.listenAsync(this.port, this.address);
+ 		return this.path?this.server.listenAsync(this.path):this.server.listenAsync(this.port, this.address);
 	}
 
 	/**

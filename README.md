@@ -2,13 +2,14 @@
 
 <p align="center">
 	<img src="https://raw.githubusercontent.com/DaxBot/sockhop/master/assets/sockhop_365px.png">
-	<p align="center">Node.js sockets server and client with all the painful stuff taken out.</p>
+	<p align="center">Node.js IPC</p>
 </p>
 
-- Easy wrappers over the tricky parts of net.socket
 - Object centric - put a string, object, Widget, whatever into one end and it comes out the other
+- Pass objects directly between different node programs
+- Uses TCP sockets or Unix domain sockets transparent to you
+- Easy wrappers over the tricky parts of net.socket
 - Auto reconnect  
-- Pass objects directly across the socket
 - Ping with auto disconnect/reconnect
 - Remote callbacks across socket
 - Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/ObjectBuffer.js)
@@ -16,30 +17,42 @@
 
 ## Example
 ```javascript
-
-	// Client
-	let c=new Sockhop.client({auto_reconnect: true});
-	c.on("connect",()=>c.ping(1000)); 	// Ping server every 1000ms, detect problems
-	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));
+	const Sockhop=require("sockhop");
 
 	// Server
-	let s=new Sockhop.server();
+	let s=new Sockhop.server();		// You can specify a socket location, IP address, etc. or it will pick defaults
 
-	// Connect
+
+	// Client
+	let c=new Sockhop.client();
+
+
+	class Widget {
+
+		/* ... */
+	}
+
 	s.listen()
 	.then(()=>c.connect())
 	.then(()=>{
 
+		// Send a number
+		s.sendall(6);
+
 		// Send everyone a Widget
 		s.sendall(new Widget());
 
-		// Send everyone something else
+		// Send everyone a generic object
 		s.sendall({
 			"name" : "Joe",
 			"age"  : 105
 		});
 
 	});
+
+
+	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));	// "I got a Widget" etc
+
 
 
 ```
@@ -70,6 +83,8 @@ mocha
 ## Notes
 Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes auto ping functionality.
 
+If you ```server.listen()```, make sure you ```server.close()``` when you are done so Node won't hang forever on program exit.  Similarly, if you turn on ```client.ping()``` or set ```client.auto_reconnect=true```, make sure you finish up by ```client.ping(0)``` (to disable pings) and ```client.auto_reconnect=false```.  Alternately you can ```client.disconnect()``` and it will turn off pings/auto_reconnect for you.
+
 ## Classes
 
 <dl>
@@ -89,12 +104,12 @@ Sockhop easily passes objects across the wire.  If you pack/transcode JS in a wa
 <p>When data is received by the server, the received Buffer is concatenated with previously
 received Buffers until a delimiter (usually &quot;\n&quot;) is received.  The composite Buffer is then treated
 like a JSON string and converted to an object, which is triggers a &quot;receive&quot; event.
-If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type - 
+If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type -
 this allows you to pass custom objects (prototypes) across the wire, and the other end will know
 it has received your Widget, or Foo, or whatever.  Plain objects, strings, etc. are also similarly labelled.
 The resulting receive event has a &quot;meta&quot; parameter; meta.type will list the object type.</p>
 <p>Of course, if your client is not a SockhopClient, you don&#39;t want this wrapping/unwrapping behavior
-and you might want a different delimiter for JSON.  Both these parameters are configurable in the 
+and you might want a different delimiter for JSON.  Both these parameters are configurable in the
 constructor options.</p>
 </dd>
 <dt><a href="#ObjectBuffer">ObjectBuffer</a> ⇐ <code>EventEmitter</code></dt>
@@ -129,7 +144,7 @@ Is this ping Unanswered?
 <a name="SockhopPing+conclude_with_pong"></a>
 
 ### sockhopPing.conclude_with_pong(pong)
-Conclude a ping 
+Conclude a ping
 
 Sets the returned, finished values
 
@@ -182,6 +197,7 @@ Constructs a new SockhopClient
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [opts] | <code>object</code> |  | an object containing configuration options |
+| [opts.path] | <code>string</code> |  | the path for a Unix domain socket.  If used, this will override the address and port values. |
 | [opts.address] | <code>string</code> | <code>&quot;\&quot;127.0.0.1\&quot;&quot;</code> | the IP address to bind to |
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
@@ -247,7 +263,7 @@ We will initiate it, and manage the fallout.
 Connect
 
 Connect to the server
-If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.  
+If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.
 Calling this directly will get you a Promise rejection if you are not able to connect the first time.
 N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
 
@@ -297,6 +313,7 @@ You can then call .connect() again to reconnect.
 disconnect
 
 Disconnect the socket (send FIN)
+Pinging will also be turned off... if you want to keep pinging, you will need to call .ping() again after you connect again
 
 **Kind**: instance method of <code>[SockhopClient](#SockhopClient)</code>  
 **Returns**: Promise  
@@ -345,13 +362,13 @@ Wrapped TCP server
 When data is received by the server, the received Buffer is concatenated with previously
 received Buffers until a delimiter (usually "\n") is received.  The composite Buffer is then treated
 like a JSON string and converted to an object, which is triggers a "receive" event.
-If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type - 
+If the client is a SockhopClient, it will further wrap sent data in metadata that describes the type -
 this allows you to pass custom objects (prototypes) across the wire, and the other end will know
 it has received your Widget, or Foo, or whatever.  Plain objects, strings, etc. are also similarly labelled.
 The resulting receive event has a "meta" parameter; meta.type will list the object type.
 
 Of course, if your client is not a SockhopClient, you don't want this wrapping/unwrapping behavior
-and you might want a different delimiter for JSON.  Both these parameters are configurable in the 
+and you might want a different delimiter for JSON.  Both these parameters are configurable in the
 constructor options.
 
 **Kind**: global class  
@@ -382,6 +399,7 @@ Constructs a new SockhopServer
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [opts] | <code>object</code> |  | an object containing configuration options |
+| [opts.path] | <code>string</code> |  | the path for a Unix domain socket.  If used, this will override the address and port values. |
 | [opts.address] | <code>string</code> | <code>&quot;\&quot;127.0.0.1\&quot;&quot;</code> | the IP address to bind to |
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |

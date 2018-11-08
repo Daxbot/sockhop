@@ -2,13 +2,14 @@
 
 <p align="center">
 	<img src="https://raw.githubusercontent.com/DaxBot/sockhop/master/assets/sockhop_365px.png">
-	<p align="center">Node.js sockets server and client with all the painful stuff taken out.</p>
+	<p align="center">Node.js IPC</p>
 </p>
 
-- Easy wrappers over the tricky parts of net.socket
 - Object centric - put a string, object, Widget, whatever into one end and it comes out the other
+- Pass objects directly between different node programs
+- Uses TCP sockets or Unix domain sockets transparent to you
+- Easy wrappers over the tricky parts of net.socket
 - Auto reconnect  
-- Pass objects directly across the socket
 - Ping with auto disconnect/reconnect
 - Remote callbacks across socket
 - Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/ObjectBuffer.js)
@@ -16,30 +17,42 @@
 
 ## Example
 ```javascript
-
-	// Client
-	let c=new Sockhop.client({auto_reconnect: true});
-	c.on("connect",()=>c.ping(1000)); 	// Ping server every 1000ms, detect problems
-	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));
+	const Sockhop=require("sockhop");
 
 	// Server
-	let s=new Sockhop.server();
+	let s=new Sockhop.server();		// You can specify a socket location, IP address, etc. or it will pick defaults
 
-	// Connect
+
+	// Client
+	let c=new Sockhop.client();
+
+
+	class Widget {
+
+		/* ... */
+	}
+
 	s.listen()
 	.then(()=>c.connect())
 	.then(()=>{
 
+		// Send a number
+		s.sendall(6);
+
 		// Send everyone a Widget
 		s.sendall(new Widget());
 
-		// Send everyone something else
+		// Send everyone a generic object
 		s.sendall({
 			"name" : "Joe",
 			"age"  : 105
 		});
 
 	});
+
+
+	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));	// "I got a Widget" etc
+
 
 
 ```
@@ -69,6 +82,8 @@ mocha
 
 ## Notes
 Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes auto ping functionality.
+
+If you ```server.listen()```, make sure you ```server.close()``` when you are done so Node won't hang forever on program exit.  Similarly, if you turn on ```client.ping()``` or set ```client.auto_reconnect=true```, make sure you finish up by ```client.ping(0)``` (to disable pings) and ```client.auto_reconnect=false```.  Alternately you can ```client.disconnect()``` and it will turn off pings/auto_reconnect for you.
 
 {{>main}}
 

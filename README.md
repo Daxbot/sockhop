@@ -19,41 +19,29 @@
 ```javascript
 	const Sockhop=require("sockhop");
 
-	// Server
+	// Create server/client pair
 	let s=new Sockhop.server();		// You can specify a socket location, IP address, etc. or it will pick defaults
-
-
-	// Client
 	let c=new Sockhop.client();
 
+	// Something to pass 
+	class Widget {	/* ... */	}
 
-	class Widget {
-
-		/* ... */
-	}
-
+	// Pass a Widget
 	s.listen()
 	.then(()=>c.connect())
 	.then(()=>{
 
-		// Send a number
-		s.sendall(6);
-
-		// Send everyone a Widget
-		s.sendall(new Widget());
-
-		// Send everyone a generic object
-		s.sendall({
-			"name" : "Joe",
-			"age"  : 105
-		});
+		// Send everyone a Widget 
+		s.sendall(new Widget()); // Can put anything here
 
 	});
 
+	c.on("receive", (obj, metadata)=>{
 
-	c.on("receive", (obj, metadata)=>console.log("I got a "+metadata.type));	// "I got a Widget" etc
+		// obj is serialized Widget
+		// metadata.type=="Widget"
 
-
+	});	
 
 ```
 

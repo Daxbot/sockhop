@@ -770,7 +770,13 @@ class SockhopServer extends EventEmitter {
 						// Bubble socket errors
 						_self.emit("error",e);
 				});
-		});
+			})
+			.on("error",(e)=>{
+
+					// Bubble server errors
+					_self.emit("error",e);
+			});
+	//		});
 	}
 
 	/**

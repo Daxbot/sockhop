@@ -127,6 +127,7 @@ class SockhopClient extends EventEmitter{
 		this.address=opts.address||"127.0.0.1";
 		this.port=opts.port||50000;
 		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
+		this._no_delay=opts.no_delay||false;
 		this.interval_timer=null;
 		this._auto_reconnect=false; // Call setter please!  Was: (typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
 		this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;	//ms
@@ -194,6 +195,26 @@ class SockhopClient extends EventEmitter{
 				this._auto_reconnect_timer=null;
 			}
 		}
+	}
+
+	/**
+	 * no_delay getter
+	 *
+	 * @return {boolean} the current no_delay setting
+	 */
+	get no_delay(){
+		return this._no_delay;
+	}
+
+	/**
+	 * no_delay getter
+	 *
+	 * @param {boolean} no_delay current no_delay setting
+	 */
+	set no_delay(b){
+		this._no_delay = b;
+		if(this._socket)
+			this._socket.setNoDelay(b);
 	}
 
 	/**
@@ -278,6 +299,7 @@ class SockhopClient extends EventEmitter{
 		var _self=this;
 
 		this._socket=s;
+		this._socket.setNoDelay(this._no_delay);
 		this._socket
 			.on("end",()=>this._end_socket())
 			.on("data", (buf)=>{

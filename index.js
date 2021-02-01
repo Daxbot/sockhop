@@ -1,7 +1,6 @@
 var Bluebird=require("bluebird");
 var net=Bluebird.promisifyAll(require("net"));
 var EventEmitter=require("events").EventEmitter;
-var inherits = require("util").inherits;
 var uuid=require("uuid");
 var ObjectBuffer=require("./lib/ObjectBuffer.js");
 /**

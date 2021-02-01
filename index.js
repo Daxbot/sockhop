@@ -128,8 +128,10 @@ class SockhopClient extends EventEmitter{
 		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
 		this._no_delay=opts.no_delay||false;
 		this.interval_timer=null;
+		this.connect_timer = null;
 		this._auto_reconnect=false; // Call setter please!  Was: (typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
 		this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;	//ms
+		this._auto_reconnect_timeout=opts.auto_reconnect_timeout||2000;		//ms
 		this._auto_reconnect_timer=null;
 		this._send_callbacks={};
 		this._connected=false;
@@ -236,7 +238,7 @@ class SockhopClient extends EventEmitter{
 		if(this._auto_reconnect_timer) return;
 
 		let _self=this;
-		this.connect()
+		this.connect(this._auto_reconnect_timeout)
 			.catch((e)=>{
 
 				// If we already have a reconnect timer running, disregard
@@ -402,9 +404,10 @@ class SockhopClient extends EventEmitter{
 	 * Calling this directly will get you a Promise rejection if you are not able to connect the first time.
 	 * N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
 	 *
+	 * @param {number} [timeout] how long to wait for the connection in milliseconds.
 	 * @return {Promise}
 	 */
-	connect(){
+	connect(timeout=null){
 
 		let self=this;
 
@@ -420,12 +423,16 @@ class SockhopClient extends EventEmitter{
 			self._connecting=true;
 
 			// If we try to createConnection immediately something hangs under certain circumstances.  HACK
-			setTimeout(()=>{
+			setImmediate(()=>{
 
 				let callback=()=>{
 
 					self._connecting=false;
 					self._connected=true;
+					if(self.connect_timer) {
+						clearTimeout(self.connect_timer);
+						self.connect_timer = null;
+					}
 					self.emit("connect", self._socket);
 					resolve();
 				};
@@ -435,6 +442,11 @@ class SockhopClient extends EventEmitter{
 				// This socket is new and only has the error handlers that we created when we used the this.socket setter.  Add one more
 				self.socket.once("error",(e)=>{
 
+					if(self.connect_timer) {
+						clearTimeout(self.connect_timer);
+						self.connect_timer = null;
+					}
+
 					if(self._socket && self._connecting===true && self._connected===false){
 
 						self._connecting=false;
@@ -442,9 +454,15 @@ class SockhopClient extends EventEmitter{
 					}
 				});
 
-			},0);
-
-
+				if(timeout !== null) {
+					self.connect_timer = setTimeout(() => {
+						self.socket.destroy();
+						self.connect_timer = null;
+						self._connecting=false;
+						reject("Connection timed out");
+					}, timeout);
+				}
+			});
 		});
 	}
 

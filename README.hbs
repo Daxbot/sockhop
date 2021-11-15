@@ -1,8 +1,8 @@
 # Sockhop
 
 <p align="center">
-	<img src="https://raw.githubusercontent.com/DaxBot/sockhop/master/assets/sockhop_365px.png">
-	<p align="center">Node.js IPC</p>
+  <img src="https://raw.githubusercontent.com/DaxBot/sockhop/master/assets/sockhop_365px.png">
+  <p align="center">Node.js IPC</p>
 </p>
 
 - Object centric - put a string, object, Widget, whatever into one end and it comes out the other
@@ -17,31 +17,31 @@
 
 ## Example
 ```javascript
-	const Sockhop=require("sockhop");
+  const Sockhop=require("sockhop");
 
-	// Create server/client pair
-	let s=new Sockhop.server();		// You can specify a socket location, IP address, etc. or it will pick defaults
-	let c=new Sockhop.client();
+  // Create server/client pair
+  let s=new Sockhop.server();    // You can specify a socket location, IP address, etc. or it will pick defaults
+  let c=new Sockhop.client();
 
-	// Something to pass 
-	class Widget {	/* ... */	}
+  // Something to pass 
+  class Widget {  /* ... */  }
 
-	// Pass a Widget
-	s.listen()
-	.then(()=>c.connect())
-	.then(()=>{
+  // Pass a Widget
+  s.listen()
+  .then(()=>c.connect())
+  .then(()=>{
 
-		// Send everyone a Widget 
-		s.sendall(new Widget()); // Can put anything here
+    // Send everyone a Widget 
+    s.sendall(new Widget()); // Can put anything here
 
-	});
+  });
 
-	c.on("receive", (obj, metadata)=>{
+  c.on("receive", (obj, metadata)=>{
 
-		// obj is serialized Widget
-		// metadata.type=="Widget"
+    // obj is serialized Widget
+    // metadata.type=="Widget"
 
-	});	
+  });  
 
 ```
 
@@ -49,16 +49,16 @@ Remote callback example:
 ```javascript
 
 
-	server.on("receive", (obj, meta)=>{
+  server.on("receive", (obj, meta)=>{
 
-		// obj=="Promise to call when you get this"
-		meta.callback("I got your message!");
-	});
+    // obj=="Promise to call when you get this"
+    meta.callback("I got your message!");
+  });
 
-	c.send("Promise to call when you get this", (reply)=>{
+  c.send("Promise to call when you get this", (reply)=>{
 
-		// reply == "I got your message!"
-	});
+    // reply == "I got your message!"
+  });
 ```
 
 

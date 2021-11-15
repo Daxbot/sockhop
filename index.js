@@ -11,40 +11,40 @@ var ObjectBuffer=require("./lib/ObjectBuffer.js");
  */
 class SockhopPing {
 
-	constructor(o={}){
+    constructor(o={}){
 
-		this._id=o._id||uuid();
-		this._created=o._created||new Date();
-		this._returned=o._returned||null;
-		this._finished=o._finished||null;
-	}
+        this._id=o._id||uuid();
+        this._created=o._created||new Date();
+        this._returned=o._returned||null;
+        this._finished=o._finished||null;
+    }
 
-	/**
-	 * Unanswered
-	 *
-	 * Is this ping Unanswered?
-	 * @return {boolean}
-	 */
-	unanswered(){
+    /**
+     * Unanswered
+     *
+     * Is this ping Unanswered?
+     * @return {boolean}
+     */
+    unanswered(){
 
-		return (this._finished===null)?true:false;
-	}
+        return (this._finished===null)?true:false;
+    }
 
-	/**
-	 * Conclude a ping
-	 *
-	 * Sets the returned, finished values
-	 * @param {SockhopPong} pong the pong (ping reply) that is finishing this ping
-	 */
-	conclude_with_pong(p){
+    /**
+     * Conclude a ping
+     *
+     * Sets the returned, finished values
+     * @param {SockhopPong} pong the pong (ping reply) that is finishing this ping
+     */
+    conclude_with_pong(p){
 
-		if(p._id==this._id){
+        if(p._id==this._id){
 
-			this._returned=p._returned;
-			this._finished=new Date();
-			//console.log("finished: "+JSON.stringify(this));
-		}
-	}
+            this._returned=p._returned;
+            this._finished=new Date();
+            //console.log("finished: "+JSON.stringify(this));
+        }
+    }
 }
 
 /**
@@ -54,18 +54,18 @@ class SockhopPing {
  */
 class SockhopPong {
 
-	constructor(o={}){
+    constructor(o={}){
 
-		this._id=o._id||null;
-		this._created=o._created||null;
-		this._returned=o._returned||new Date();
-		this._finished=o._finished||null;
-	}
+        this._id=o._id||null;
+        this._created=o._created||null;
+        this._returned=o._returned||new Date();
+        this._finished=o._finished||null;
+    }
 
-	get finished(){
+    get finished(){
 
-		return this._finished;
-	}
+        return this._finished;
+    }
 }
 
 /**
@@ -105,493 +105,493 @@ class SockhopPong {
  */
 class SockhopClient extends EventEmitter{
 
-	/**
-	 * Constructs a new SockhopClient
-	 *
-	 * @param {object} [opts] an object containing configuration options
- 	 * @param {string} [opts.path] the path for a Unix domain socket.  If used, this will override the address and port values.
-	 * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
-	 * @param {number} [opts.port=50000] the TCP port to use
-	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
-	 * @param {string} opts.peer_type the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
-	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
-	 * @param {boolean} [opts.allow_non_objects=false] allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor.
-	 */
+    /**
+     * Constructs a new SockhopClient
+     *
+     * @param {object} [opts] an object containing configuration options
+      * @param {string} [opts.path] the path for a Unix domain socket.  If used, this will override the address and port values.
+     * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
+     * @param {number} [opts.port=50000] the TCP port to use
+     * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
+     * @param {string} opts.peer_type the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
+     * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
+     * @param {boolean} [opts.allow_non_objects=false] allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor.
+     */
 
-	 constructor(opts={}){
+     constructor(opts={}){
 
-		super();
-		var _self=this;
-		this.pings=[];
- 		this.path=opts.path||null;
-		this.address=opts.address||"127.0.0.1";
-		this.port=opts.port||50000;
-		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
-		this.interval_timer=null;
-		this._auto_reconnect=false; // Call setter please!  Was: (typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
-		this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;	//ms
-		this._auto_reconnect_timer=null;
-		this._send_callbacks={};
-		this._connected=false;
-		this._connecting=false;
-//		this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
+        super();
+        var _self=this;
+        this.pings=[];
+         this.path=opts.path||null;
+        this.address=opts.address||"127.0.0.1";
+        this.port=opts.port||50000;
+        this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
+        this.interval_timer=null;
+        this._auto_reconnect=false; // Call setter please!  Was: (typeof(opts.auto_reconnect)=='boolean')?opts.auto_reconnect:false;
+        this._auto_reconnect_interval=opts.auto_reconnect_interval||2000;    //ms
+        this._auto_reconnect_timer=null;
+        this._send_callbacks={};
+        this._connected=false;
+        this._connecting=false;
+//        this.socket=new net.Socket();  // Uses setter, will be stored in this._socket
 
-		// Create ObjectBuffer and pass along any errors
-		this._objectbuffer=new ObjectBuffer({
-				terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
-				allow_non_objects: opts.allow_non_objects
-			});
-		this._objectbuffer.on("error",(e)=>{
+        // Create ObjectBuffer and pass along any errors
+        this._objectbuffer=new ObjectBuffer({
+                terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
+                allow_non_objects: opts.allow_non_objects
+            });
+        this._objectbuffer.on("error",(e)=>{
 
-			_self.emit("error", e);
-		});
-	}
+            _self.emit("error", e);
+        });
+    }
 
-	/**
-	 * connected
-	 *
-	 * @return {boolean} connected whether or not we are currently connected
-	 */
-	get connected(){
+    /**
+     * connected
+     *
+     * @return {boolean} connected whether or not we are currently connected
+     */
+    get connected(){
 
-		return this._connected;
-	}
+        return this._connected;
+    }
 
-	/**
-	 * auto_reconnect getter
-	 *
-	 * @return {boolean} auto_reconnect the current auto_reconnect setting
-	 */
-	get auto_reconnect(){
+    /**
+     * auto_reconnect getter
+     *
+     * @return {boolean} auto_reconnect the current auto_reconnect setting
+     */
+    get auto_reconnect(){
 
-		return this._auto_reconnect;
-	}
+        return this._auto_reconnect;
+    }
 
-	/**
-	 * auto_reconnect setter
-	 *
-	 * @param {boolean} auto_reconnect the desired auto_reconnect setting
-	 */
-	set auto_reconnect(b){
+    /**
+     * auto_reconnect setter
+     *
+     * @param {boolean} auto_reconnect the desired auto_reconnect setting
+     */
+    set auto_reconnect(b){
 
-		// Save it
-		this._auto_reconnect=b;
+        // Save it
+        this._auto_reconnect=b;
 
-		if(this._auto_reconnect){
+        if(this._auto_reconnect){
 
-			// Make sure we are not already connecting
-			if(this._socket && this._socket.connecting===true) return;
+            // Make sure we are not already connecting
+            if(this._socket && this._socket.connecting===true) return;
 
-			// Begin auto connecting
-			if(!this.connected) this._perform_auto_reconnect();
+            // Begin auto connecting
+            if(!this.connected) this._perform_auto_reconnect();
 
-		} else {
+        } else {
 
-			// ..or else stop it
-			if(this._auto_reconnect_timer!==null) {
+            // ..or else stop it
+            if(this._auto_reconnect_timer!==null) {
 
-				clearTimeout(this._auto_reconnect_timer);
-				this._auto_reconnect_timer=null;
-			}
-		}
-	}
+                clearTimeout(this._auto_reconnect_timer);
+                this._auto_reconnect_timer=null;
+            }
+        }
+    }
 
-	/**
-	 * Perform an auto reconnet (internal)
-	 *
-	 * We have determined that an auto reconnect is necessary.
-	 * We will initiate it, and manage the fallout.
-	 */
-	_perform_auto_reconnect(){
-
-
-		// If we are already connected or connecting, we can disregard
-		if(this._socket && this._socket.connecting) return;
-		if(this.connected) return;
-
-		// If auto reconnect has been disabled, we can disregard
-		if(!this._auto_reconnect) return;
-
-		// If we already have a reconnect timer running, disregard
-		if(this._auto_reconnect_timer) return;
-
-		let _self=this;
-		this.connect()
-			.catch((e)=>{
-
-				// If we already have a reconnect timer running, disregard
-				if(_self._auto_reconnect_timer) return;
-
-				// Reconnect failed.  We don't care why.  Try again
-				_self._auto_reconnect_timer=setTimeout(()=>{
-
-					// Signify that we have no timer (it just ended)
-					_self._auto_reconnect_timer=null;
-
-					// Call ourself
-					_self._perform_auto_reconnect();
-
-				}, _self._auto_reconnect_interval);
-			});
-	}
-
-	/**
-	 * End a socket
-	 *
-	 * Emits 'disconnect' event, replaces the old socket with a new one
-	 * @private
-	 */
-	_end_socket() {
-
-		let _self=this;
-
-		// Change state of _connected
-		let was_connected=_self._connected;
-		_self._connected=false;
-
-		// Emit 'disconnected' if we just transitioned state
-		if(was_connected) _self.emit("disconnect", _self._socket);
-
-		// Delete socket
-		if(_self._socket) {
-
-			_self._socket.destroy();
-			_self._socket=null;
-		}
-
-		// Clear any pending pings
-		_self.pings=[];
-
-		// Reconnect (should be safe even if auto_reconnect is false)
-		this._perform_auto_reconnect();
-	}
+    /**
+     * Perform an auto reconnet (internal)
+     *
+     * We have determined that an auto reconnect is necessary.
+     * We will initiate it, and manage the fallout.
+     */
+    _perform_auto_reconnect(){
 
 
+        // If we are already connected or connecting, we can disregard
+        if(this._socket && this._socket.connecting) return;
+        if(this.connected) return;
 
-	/**
-	 * Socket setter
-	 *
-	 * @param {net.socket} socket a new socket to set up
-	 */
-	set socket(s) {
+        // If auto reconnect has been disabled, we can disregard
+        if(!this._auto_reconnect) return;
 
-		var _self=this;
+        // If we already have a reconnect timer running, disregard
+        if(this._auto_reconnect_timer) return;
 
-		this._socket=s;
-		this._socket
-			.on("end",()=>this._end_socket())
-			.on("data", (buf)=>{
+        let _self=this;
+        this.connect()
+            .catch((e)=>{
 
-				this._objectbuffer.buf2obj(buf).forEach((o)=>{
+                // If we already have a reconnect timer running, disregard
+                if(_self._auto_reconnect_timer) return;
 
-					// Handle SockhopPing requests with silent SockhopPong
-					if(o.type=="SockhopPing"){
+                // Reconnect failed.  We don't care why.  Try again
+                _self._auto_reconnect_timer=setTimeout(()=>{
 
-						var p=new SockhopPong(o.data);
-						_self.send(p)
-							.catch((e)=>{});	// Ignore any sending problems, there is nothing further we need to do
-						return;
-					}
+                    // Signify that we have no timer (it just ended)
+                    _self._auto_reconnect_timer=null;
 
-					// Handle SockhopPong
-					if(o.type=="SockhopPong"){
+                    // Call ourself
+                    _self._perform_auto_reconnect();
 
-						for(let p of _self.pings){
+                }, _self._auto_reconnect_interval);
+            });
+    }
 
-							p.conclude_with_pong(o.data);
-						}
-						return;
-					}
+    /**
+     * End a socket
+     *
+     * Emits 'disconnect' event, replaces the old socket with a new one
+     * @private
+     */
+    _end_socket() {
 
-					if(_self._peer_type=="Sockhop") {
+        let _self=this;
 
-						// Handle remote callback (callback activated)
-						if(o.callback_id) {
+        // Change state of _connected
+        let was_connected=_self._connected;
+        _self._connected=false;
 
-							// Call the callback instead of bubbling the event
-							this._send_callbacks[o.callback_id](o.data, {type:o.type});
-							delete this._send_callbacks[o.callback_id];
+        // Emit 'disconnected' if we just transitioned state
+        if(was_connected) _self.emit("disconnect", _self._socket);
 
-						// Remote end is requesting callback
-						} else if (o.id){
+        // Delete socket
+        if(_self._socket) {
 
-							_self.emit("receive", o.data, {type:o.type, callback: function(oo){ _self._trigger_remote_callback(o.id, oo);} });
+            _self._socket.destroy();
+            _self._socket=null;
+        }
 
-						} else {
+        // Clear any pending pings
+        _self.pings=[];
 
-							_self.emit("receive", o.data, {type:o.type});		// Remote end sends type: "Widget", "Array", etc
-						}
+        // Reconnect (should be safe even if auto_reconnect is false)
+        this._perform_auto_reconnect();
+    }
 
 
-					} else {
 
-						_self.emit("receive", o, {type: o.constructor.name });		// We read converted data directly, will be "String" or "Object"
-					}
+    /**
+     * Socket setter
+     *
+     * @param {net.socket} socket a new socket to set up
+     */
+    set socket(s) {
 
-				});
-			})
-			.on("error",(e)=>{
+        var _self=this;
+
+        this._socket=s;
+        this._socket
+            .on("end",()=>this._end_socket())
+            .on("data", (buf)=>{
+
+                this._objectbuffer.buf2obj(buf).forEach((o)=>{
+
+                    // Handle SockhopPing requests with silent SockhopPong
+                    if(o.type=="SockhopPing"){
+
+                        var p=new SockhopPong(o.data);
+                        _self.send(p)
+                            .catch((e)=>{});    // Ignore any sending problems, there is nothing further we need to do
+                        return;
+                    }
+
+                    // Handle SockhopPong
+                    if(o.type=="SockhopPong"){
+
+                        for(let p of _self.pings){
+
+                            p.conclude_with_pong(o.data);
+                        }
+                        return;
+                    }
+
+                    if(_self._peer_type=="Sockhop") {
+
+                        // Handle remote callback (callback activated)
+                        if(o.callback_id) {
+
+                            // Call the callback instead of bubbling the event
+                            this._send_callbacks[o.callback_id](o.data, {type:o.type});
+                            delete this._send_callbacks[o.callback_id];
+
+                        // Remote end is requesting callback
+                        } else if (o.id){
+
+                            _self.emit("receive", o.data, {type:o.type, callback: function(oo){ _self._trigger_remote_callback(o.id, oo);} });
+
+                        } else {
+
+                            _self.emit("receive", o.data, {type:o.type});        // Remote end sends type: "Widget", "Array", etc
+                        }
+
+
+                    } else {
+
+                        _self.emit("receive", o, {type: o.constructor.name });        // We read converted data directly, will be "String" or "Object"
+                    }
+
+                });
+            })
+            .on("error",(e)=>{
 
 //console.log(`we got error ${e}`);
 
-				// If we are still connected but got an ECONNRESET, kill the connection.
-				if(_self._connected && e.toString().match(/ECONNRESET/)){
+                // If we are still connected but got an ECONNRESET, kill the connection.
+                if(_self._connected && e.toString().match(/ECONNRESET/)){
 
-					_self._end_socket();
+                    _self._end_socket();
 
-				// We got 'This socket is closed' but we are supposed to auto reconnect.  Handle quietly
-				} else if(e.toString().match(/This socket is closed/) && _self.auto_reconnect===true) {
+                // We got 'This socket is closed' but we are supposed to auto reconnect.  Handle quietly
+                } else if(e.toString().match(/This socket is closed/) && _self.auto_reconnect===true) {
 
-					_self._end_socket();
+                    _self._end_socket();
 
-				// ECONNREFUSED but we are supposed to auto reconnect (or we are connecting, in which case connect() will reject and emitting an error would be superfluous)
-				} else if(e.toString().match(/ECONNREFUSED/) && (_self.auto_reconnect===true || _self._connecting)) {
+                // ECONNREFUSED but we are supposed to auto reconnect (or we are connecting, in which case connect() will reject and emitting an error would be superfluous)
+                } else if(e.toString().match(/ECONNREFUSED/) && (_self.auto_reconnect===true || _self._connecting)) {
 
-					// Ignore
+                    // Ignore
 
-				} else {  // Other
+                } else {  // Other
 
-//					console.log(`emitting because _self.auto_reconnect=${_self.auto_reconnect}`);
-					_self.emit("error",e);
-				}
+//                    console.log(`emitting because _self.auto_reconnect=${_self.auto_reconnect}`);
+                    _self.emit("error",e);
+                }
 
-				// // If we are the only one listening for a socket error, bubble it up through the client
-				// if(_self._socket.listenerCount("error")==1){
+                // // If we are the only one listening for a socket error, bubble it up through the client
+                // if(_self._socket.listenerCount("error")==1){
 
-				// }
-			});
+                // }
+            });
 
-	}
+    }
 
-	/**
-	 * Socket getter
-	 *
-	 * @return {net.socket} underlying socket object
-	 */
-	get socket (){
+    /**
+     * Socket getter
+     *
+     * @return {net.socket} underlying socket object
+     */
+    get socket (){
 
-		return this._socket;
-	}
+        return this._socket;
+    }
 
-	/**
-	 * Connect
-	 *
-	 * Connect to the server
-	 * If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.
-	 * Calling this directly will get you a Promise rejection if you are not able to connect the first time.
-	 * N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
-	 *
-	 * @return {Promise}
-	 */
-	connect(){
+    /**
+     * Connect
+     *
+     * Connect to the server
+     * If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.
+     * Calling this directly will get you a Promise rejection if you are not able to connect the first time.
+     * N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
+     *
+     * @return {Promise}
+     */
+    connect(){
 
-		let self=this;
+        let self=this;
 
 
-		// If we are connected, we can return immediately
-		if(this._connected) return Promise.resolve();
+        // If we are connected, we can return immediately
+        if(this._connected) return Promise.resolve();
 
-		// Only allow ourself to be called once per actual connect
-		if(this._connecting) return Promise.reject(new Error("You have already called connect() once. Still trying to connect!"));
+        // Only allow ourself to be called once per actual connect
+        if(this._connecting) return Promise.reject(new Error("You have already called connect() once. Still trying to connect!"));
 
-		return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject)=>{
 
-			self._connecting=true;
+            self._connecting=true;
 
-			// If we try to createConnection immediately something hangs under certain circumstances.  HACK
-			setTimeout(()=>{
+            // If we try to createConnection immediately something hangs under certain circumstances.  HACK
+            setTimeout(()=>{
 
-				let callback=()=>{
+                let callback=()=>{
 
-					self._connecting=false;
-					self._connected=true;
-					self.emit("connect", self._socket);
-					resolve();
-				};
+                    self._connecting=false;
+                    self._connected=true;
+                    self.emit("connect", self._socket);
+                    resolve();
+                };
 
-				self.socket=self.path?net.createConnection(self.path, callback):net.createConnection(self.port, self.address, callback);
+                self.socket=self.path?net.createConnection(self.path, callback):net.createConnection(self.port, self.address, callback);
 
-				// This socket is new and only has the error handlers that we created when we used the this.socket setter.  Add one more
-				self.socket.once("error",(e)=>{
+                // This socket is new and only has the error handlers that we created when we used the this.socket setter.  Add one more
+                self.socket.once("error",(e)=>{
 
-					if(self._socket && self._connecting===true && self._connected===false){
+                    if(self._socket && self._connecting===true && self._connected===false){
 
-						self._connecting=false;
-						reject(e);
-					}
-				});
+                        self._connecting=false;
+                        reject(e);
+                    }
+                });
 
-			},0);
+            },0);
 
 
-		});
-	}
+        });
+    }
 
 
-	/**
-	 * Get bound address
-	 *
-	 * @return {string} the IP address we are bound to
-	 */
-	get_bound_address(){
+    /**
+     * Get bound address
+     *
+     * @return {string} the IP address we are bound to
+     */
+    get_bound_address(){
 
-		return this._socket.address().address;
-	}
-
-	/**
-	 * Trigger a remote callback
-	 *
-	 * Our side received a message with a callback, and we are now triggering that remote callback
-	 *
-	 * @private
-	 * @param {string} id the id of the remote callback
-	 * @param {object} o the object we want to send as part of our reply
-	 * @throws Error
-	 */
-	_trigger_remote_callback(id, o) {
+        return this._socket.address().address;
+    }
+
+    /**
+     * Trigger a remote callback
+     *
+     * Our side received a message with a callback, and we are now triggering that remote callback
+     *
+     * @private
+     * @param {string} id the id of the remote callback
+     * @param {object} o the object we want to send as part of our reply
+     * @throws Error
+     */
+    _trigger_remote_callback(id, o) {
 
-		let m={
-			type	:	o.constructor.name,
-			data	:	o,
-			callback_id: id
-		};
+        let m={
+            type    :    o.constructor.name,
+            data    :    o,
+            callback_id: id
+        };
 
-		if(this._socket.destroyed){
+        if(this._socket.destroyed){
 
-			this._socket.emit("end");
-			throw new Error("Client unable to send() - socket has been destroyed");
-		}
+            this._socket.emit("end");
+            throw new Error("Client unable to send() - socket has been destroyed");
+        }
 
-		this._socket.writeAsync(this._objectbuffer.obj2buf(m));
-	}
+        this._socket.writeAsync(this._objectbuffer.obj2buf(m));
+    }
 
-	/**
-	 * Send
-	 *
-	 * Send an object to the server
-	 * @param {object} object to be sent over the wire
-	 * @param {function} [rcallback] Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise
-	 * @return {Promise}
-	 * @throws {Error}
-	 */
-	send(o, callback){
+    /**
+     * Send
+     *
+     * Send an object to the server
+     * @param {object} object to be sent over the wire
+     * @param {function} [rcallback] Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise
+     * @return {Promise}
+     * @throws {Error}
+     */
+    send(o, callback){
 
 
-		// Create a message
-		let m;
-		if(this._peer_type=="Sockhop") {
+        // Create a message
+        let m;
+        if(this._peer_type=="Sockhop") {
 
-			m={
-				"type"	:	o.constructor.name,
-				data	:	o
-			};
+            m={
+                "type"    :    o.constructor.name,
+                data    :    o
+            };
 
-		} else {
+        } else {
 
-			m=o;
-			if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
-		}
+            m=o;
+            if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
+        }
 
-		if((this._socket && this._socket.destroyed) || this._socket === null){
+        if((this._socket && this._socket.destroyed) || this._socket === null){
 
-			return Promise.reject(new Error("Client unable to send() - socket has been destroyed"));
-		}
+            return Promise.reject(new Error("Client unable to send() - socket has been destroyed"));
+        }
 
-		// Handle remote callback setup
-		if(callback) {
+        // Handle remote callback setup
+        if(callback) {
 
-			if (typeof(callback)!= 'function') throw new Error("remote_callback must be a function");
+            if (typeof(callback)!= 'function') throw new Error("remote_callback must be a function");
 
-			// A reply is expected. Tag the message so we will recognize it when we get it back
-			m.id=uuid();
-			this._send_callbacks[m.id]=callback;
-		}
+            // A reply is expected. Tag the message so we will recognize it when we get it back
+            m.id=uuid();
+            this._send_callbacks[m.id]=callback;
+        }
 
-		return this._socket.writeAsync(this._objectbuffer.obj2buf(m));
-	}
+        return this._socket.writeAsync(this._objectbuffer.obj2buf(m));
+    }
 
-	/**
-	 * Ping
-	 *
-	 * Send ping, detect timeouts.  If we have 4 timeouts in a row, we kill the connection and emit a 'disconnect' event.
-	 * You can then call .connect() again to reconnect.
-	 * @param {number} delay in ms (0 disables ping)
-	 */
-	 ping(delay=0){
+    /**
+     * Ping
+     *
+     * Send ping, detect timeouts.  If we have 4 timeouts in a row, we kill the connection and emit a 'disconnect' event.
+     * You can then call .connect() again to reconnect.
+     * @param {number} delay in ms (0 disables ping)
+     */
+     ping(delay=0){
 
-	 	let _self=this;
+         let _self=this;
 
-	 	// Remove any old timers
- 		if(this.interval_timer!==null){
- 			clearInterval(this.interval_timer);
- 			this.interval_timer=null;
- 		}
+         // Remove any old timers
+         if(this.interval_timer!==null){
+             clearInterval(this.interval_timer);
+             this.interval_timer=null;
+         }
 
- 		// Clear old pings
- 		this.pings=[];
+         // Clear old pings
+         this.pings=[];
 
-	 	// Set up new timer
-	 	if(delay!==0){
+         // Set up new timer
+         if(delay!==0){
 
-		 	// Set up a new ping timer
-		 	this.interval_timer=setInterval(()=>{
+             // Set up a new ping timer
+             this.interval_timer=setInterval(()=>{
 
-		 		// Only proceed if we are connected
-		 		if(!_self._connected) return;
+                 // Only proceed if we are connected
+                 if(!_self._connected) return;
 
-		 		// Send a new ping on each timer
-		 		var p = new SockhopPing();
+                 // Send a new ping on each timer
+                 var p = new SockhopPing();
 
-	 			// Save new ping
-	 			_self.pings.push(p);
+                 // Save new ping
+                 _self.pings.push(p);
 
-	 			// Delete old pings
-	 			while(_self.pings.length>4) _self.pings.shift();
+                 // Delete old pings
+                 while(_self.pings.length>4) _self.pings.shift();
 
-	 			// If all (but at least 4) pings are unanswered, take action!
-	 			let unanswered=_self.pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
+                 // If all (but at least 4) pings are unanswered, take action!
+                 let unanswered=_self.pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
 
-	 			if(_self.pings.length>3 && _self.pings.length==unanswered){
+                 if(_self.pings.length>3 && _self.pings.length==unanswered){
 
-	 				// console.log("disconnecting due to ping count = "+unanswered);
+                     // console.log("disconnecting due to ping count = "+unanswered);
 
-	 				// Destroy socket, emit 'disconnect' event, mark ourself as disconnected.  Will also clear any old pings
-		 			_self._end_socket();
-	 				return;
-	 			}
+                     // Destroy socket, emit 'disconnect' event, mark ourself as disconnected.  Will also clear any old pings
+                     _self._end_socket();
+                     return;
+                 }
 
-	 			// If we get this far, send the ping.
-		 		_self.send(p).catch((e)=>{
+                 // If we get this far, send the ping.
+                 _self.send(p).catch((e)=>{
 
-		 			// Even if it fails, we are remembering that we sent it and will disconnect after enough failures
-		 		});
+                     // Even if it fails, we are remembering that we sent it and will disconnect after enough failures
+                 });
 
-		 	}, delay);
-		 }
-	 }
+             }, delay);
+         }
+     }
 
 
 
-	/**
-	 * disconnect
-	 *
-	 * Disconnect the socket (send FIN)
-	 * Pinging will also be turned off... if you want to keep pinging, you will need to call .ping() again after you connect again
-	 *
-	 * @return Promise
-	 */
-	disconnect(){
+    /**
+     * disconnect
+     *
+     * Disconnect the socket (send FIN)
+     * Pinging will also be turned off... if you want to keep pinging, you will need to call .ping() again after you connect again
+     *
+     * @return Promise
+     */
+    disconnect(){
 
-		// Disable auto reconnect (else we will just connect again)
-		this._auto_reconnect=false;
-		this.ping(0); // Stop pinging
-		this._socket.end();
-		this._socket.destroy();
+        // Disable auto reconnect (else we will just connect again)
+        this._auto_reconnect=false;
+        this.ping(0); // Stop pinging
+        this._socket.end();
+        this._socket.destroy();
 
-		// Old socket is dead
-		this._end_socket();
-		return Promise.resolve();
-	}
+        // Old socket is dead
+        this._end_socket();
+        return Promise.resolve();
+    }
 }
 
 
@@ -647,373 +647,373 @@ class SockhopClient extends EventEmitter{
 class SockhopServer extends EventEmitter {
 
 
-	/**
-	 * Constructs a new SockhopServer
-	 *
-	 * @param {object} [opts] an object containing configuration options
- 	 * @param {string} [opts.path] the path for a Unix domain socket.  If used, this will override the address and port values.
-	 * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
-	 * @param {number} [opts.port=50000] the TCP port to use
-	 * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
-	 * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
-	 * @param {boolean} [opts.allow_non_objects=false] allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor.
-	 * @param {string} opts.peer_type the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
-	 */
-	constructor(opts={}){
+    /**
+     * Constructs a new SockhopServer
+     *
+     * @param {object} [opts] an object containing configuration options
+      * @param {string} [opts.path] the path for a Unix domain socket.  If used, this will override the address and port values.
+     * @param {string} [opts.address="127.0.0.1"] the IP address to bind to
+     * @param {number} [opts.port=50000] the TCP port to use
+     * @param {number} [opts.auto_reconnect_interval=2000] the auto reconnection interval, in ms.
+     * @param {(string|array)} [opts.terminator="\n"] the JSON object delimiter.  Passed directly to the ObjectBuffer constructor.
+     * @param {boolean} [opts.allow_non_objects=false] allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor.
+     * @param {string} opts.peer_type the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects
+     */
+    constructor(opts={}){
 
-		super();
-		var _self=this;
-		this.address=opts.address||"127.0.0.1";
-		this.path=opts.path||null;
-		this.port=opts.port||50000;
-		this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
-		this._sockets=[];
-		this._objectbuffers=[];	// One per socket, using corresponding indices
-		this._encoding_objectbuffer=new ObjectBuffer({
-					terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
-					allow_non_objects: opts.allow_non_objects
-				});
-		this._send_callbacks={};
-		this.pings=new Map();
-		this.server=net.createServer();
-		this.interval_timer=null;
+        super();
+        var _self=this;
+        this.address=opts.address||"127.0.0.1";
+        this.path=opts.path||null;
+        this.port=opts.port||50000;
+        this._peer_type=(opts.peer_type!="json")?"Sockhop":"json";
+        this._sockets=[];
+        this._objectbuffers=[];    // One per socket, using corresponding indices
+        this._encoding_objectbuffer=new ObjectBuffer({
+                    terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
+                    allow_non_objects: opts.allow_non_objects
+                });
+        this._send_callbacks={};
+        this.pings=new Map();
+        this.server=net.createServer();
+        this.interval_timer=null;
 
 
-		// Setup server
-		this.server.on('connection', function(sock){
+        // Setup server
+        this.server.on('connection', function(sock){
 
-			// Setup ObjectBuffer
-			let objectbuffer=new ObjectBuffer({
-					terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
-					allow_non_objects: opts.allow_non_objects
-				});
-			objectbuffer.on("error",(e)=>{
+            // Setup ObjectBuffer
+            let objectbuffer=new ObjectBuffer({
+                    terminator: (typeof(opts.terminator) == "undefined")?"\n":opts.terminator,
+                    allow_non_objects: opts.allow_non_objects
+                });
+            objectbuffer.on("error",(e)=>{
 
-				_self.emit("error", e);	// Should we pass along a reference to sock?
-			});
+                _self.emit("error", e);    // Should we pass along a reference to sock?
+            });
 
-			// Save the socket and objectbuffer in corresponding indices
-			_self._sockets.push(sock);
-			_self._objectbuffers[_self._sockets.indexOf(sock)]=objectbuffer;
+            // Save the socket and objectbuffer in corresponding indices
+            _self._sockets.push(sock);
+            _self._objectbuffers[_self._sockets.indexOf(sock)]=objectbuffer;
 
-			// Setup empty pings map
-			_self.pings.set(sock,[]);
+            // Setup empty pings map
+            _self.pings.set(sock,[]);
 
-			// Emit event
-			_self.emit_async("connect", sock);
+            // Emit event
+            _self.emit_async("connect", sock);
 
-			// Setup the socket events
-			sock
-				.on("end",()=>{
+            // Setup the socket events
+            sock
+                .on("end",()=>{
 
-					// Emit event
-					_self.emit_async("disconnect", sock);
+                    // Emit event
+                    _self.emit_async("disconnect", sock);
 
-					// Remove the socket and objectbuffer
-					let index=_self._sockets.indexOf(sock);
-					_self._sockets.splice(index, 1);
-					_self._objectbuffers.splice(index, 1);
+                    // Remove the socket and objectbuffer
+                    let index=_self._sockets.indexOf(sock);
+                    _self._sockets.splice(index, 1);
+                    _self._objectbuffers.splice(index, 1);
 
-					_self.pings.delete(sock);
-				})
-				.on('data',function(buf){
+                    _self.pings.delete(sock);
+                })
+                .on('data',function(buf){
 
-					objectbuffer.buf2obj(buf).forEach((o)=>{
+                    objectbuffer.buf2obj(buf).forEach((o)=>{
 
-						// Handle SockhopPing requests with SockhopPong
-						if(o.type=="SockhopPing"){
+                        // Handle SockhopPing requests with SockhopPong
+                        if(o.type=="SockhopPing"){
 
-							var p=new SockhopPong(o.data);
-							_self.send(sock,p).catch(()=>{});	// We don't care about errors here
-							return;
-						}
+                            var p=new SockhopPong(o.data);
+                            _self.send(sock,p).catch(()=>{});    // We don't care about errors here
+                            return;
+                        }
 
-						// Handle SockhopPong
-						if(o.type=="SockhopPong"){
+                        // Handle SockhopPong
+                        if(o.type=="SockhopPong"){
 
-							var pings=_self.pings.get(sock);
-							for(let p of pings){
+                            var pings=_self.pings.get(sock);
+                            for(let p of pings){
 
-								p.conclude_with_pong(o.data);
-							}
-							return;
-						}
+                                p.conclude_with_pong(o.data);
+                            }
+                            return;
+                        }
 
-						if(_self._peer_type=="Sockhop") {
+                        if(_self._peer_type=="Sockhop") {
 
-							// Handle remote callback (callback activated)
-							if(o.callback_id) {
+                            // Handle remote callback (callback activated)
+                            if(o.callback_id) {
 
-								// Call the callback instead of bubbling the event
-								_self._send_callbacks[o.callback_id](o.data, {type:o.type});
-								delete _self._send_callbacks[o.callback_id];
+                                // Call the callback instead of bubbling the event
+                                _self._send_callbacks[o.callback_id](o.data, {type:o.type});
+                                delete _self._send_callbacks[o.callback_id];
 
-							// Remote end is requesting callback
-							} else if (o.id){
+                            // Remote end is requesting callback
+                            } else if (o.id){
 
-								_self.emit("receive", o.data, {type:o.type, socket: sock, callback: function(oo={}){ _self._trigger_remote_callback(sock, o.id, oo);} });
+                                _self.emit("receive", o.data, {type:o.type, socket: sock, callback: function(oo={}){ _self._trigger_remote_callback(sock, o.id, oo);} });
 
-							} else {
+                            } else {
 
-								_self.emit("receive", o.data, {type:o.type, socket: sock });		// Remote end sends type: "Widget", "Array", etc
-							}
+                                _self.emit("receive", o.data, {type:o.type, socket: sock });        // Remote end sends type: "Widget", "Array", etc
+                            }
 
-						} else {
+                        } else {
 
-							_self.emit("receive", o, {type:o.constructor.name, socket: sock });		// We read converted data directly, will be "String" or "Object"
-						}
-					});
+                            _self.emit("receive", o, {type:o.constructor.name, socket: sock });        // We read converted data directly, will be "String" or "Object"
+                        }
+                    });
 
-				})
-				.on("error",(e)=>{
+                })
+                .on("error",(e)=>{
 
-						// Bubble socket errors
-						_self.emit("error",e);
-				});
-			})
-			.on("error",(e)=>{
+                        // Bubble socket errors
+                        _self.emit("error",e);
+                });
+            })
+            .on("error",(e)=>{
 
-					// Bubble server errors
-					_self.emit("error",e);
-			});
-	//		});
-	}
+                    // Bubble server errors
+                    _self.emit("error",e);
+            });
+    //        });
+    }
 
-	/**
-	 * Emit async
-	 *
-	 * We end up with odd event loops sometimes, e.g. if an on("disconnect") calls .sendall(), another "disconnect" will be emitted.
-	 * This functon emits evens asynchronously and breaks the chain
-	 * //HACK  -- THIS IS A HACKY FIX -- //HACK
-	 */
-	emit_async() {
+    /**
+     * Emit async
+     *
+     * We end up with odd event loops sometimes, e.g. if an on("disconnect") calls .sendall(), another "disconnect" will be emitted.
+     * This functon emits evens asynchronously and breaks the chain
+     * //HACK  -- THIS IS A HACKY FIX -- //HACK
+     */
+    emit_async() {
 
-		let self=this;
-		let _arguments=arguments;
-		setTimeout(function(){ self.emit.apply(self,_arguments); },0);
-	}
+        let self=this;
+        let _arguments=arguments;
+        setTimeout(function(){ self.emit.apply(self,_arguments); },0);
+    }
 
-	/**
-	 * Socket getter
-	 *
-	 * @return {array} the underlying socket objects for our clients
-	 */
-	 get sockets(){
+    /**
+     * Socket getter
+     *
+     * @return {array} the underlying socket objects for our clients
+     */
+     get sockets(){
 
-	 	return this._sockets;
-	 }
+         return this._sockets;
+     }
 
-	/**
-	 * Ping
-	 *
-	 * Ping all clients, detect timeouts. Only works if connected to a SockhopClient.
-	 * @param {number} delay in ms (0 disables ping)
-	 */
-	 ping(delay=0){
+    /**
+     * Ping
+     *
+     * Ping all clients, detect timeouts. Only works if connected to a SockhopClient.
+     * @param {number} delay in ms (0 disables ping)
+     */
+     ping(delay=0){
 
-	 	// Remove any old timers
- 		if(this.interval_timer!==null){
+         // Remove any old timers
+         if(this.interval_timer!==null){
  
- 			clearInterval(this.interval_timer);
- 			this.interval_timer=null;
- 		}
+             clearInterval(this.interval_timer);
+             this.interval_timer=null;
+         }
 
 
-	 	// Set up new timer
-	 	if(delay!==0){
+         // Set up new timer
+         if(delay!==0){
 
-		 	// Set up a new ping timer
-		 	this.interval_timer=setInterval(()=>{
+             // Set up a new ping timer
+             this.interval_timer=setInterval(()=>{
 
-		 		// Send a new ping on each timer
-		 		for(let s of this._sockets){
+                 // Send a new ping on each timer
+                 for(let s of this._sockets){
 
-					let p = new SockhopPing();
-					this.send(s, p);
+                    let p = new SockhopPing();
+                    this.send(s, p);
 
-		 			// Save new ping
-		 			let pings=this.pings.get(s);
+                     // Save new ping
+                     let pings=this.pings.get(s);
 
-					if (!pings)
-						continue;
+                    if (!pings)
+                        continue;
 
-		 			pings.push(p);
+                     pings.push(p);
 
-		 			// Delete old pings
-		 			while(pings.length>4) pings.shift();
+                     // Delete old pings
+                     while(pings.length>4) pings.shift();
 
-		 			let unanswered=pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
-		 			if(pings.length>3 && pings.length==unanswered){
+                     let unanswered=pings.reduce((a,v)=>a+(v.unanswered()?1:0),0);
+                     if(pings.length>3 && pings.length==unanswered){
 
-		 				s.end();
-		 				s.destroy();
-		 				s.emit("end");
-		 			}
-		 		}
-
-
-		 	}, delay);
-		 }
-	 }
-
-	/**
-	 * Listen
-	 *
-	 * Bind and wait for incoming connections
-	 * @return {Promise}
-	 */
-	listen(){
-
- 		return this.path?this.server.listenAsync(this.path):this.server.listenAsync(this.port, this.address);
-	}
-
-	/**
-	 * Get bound address
-	 *
-	 * @return {string} the IP address we are bound to
-	 */
-	get_bound_address(){
-
-		return this.server.address().address;
-	}
-
-	/**
-	 * Trigger a remote callback
-	 *
-	 * Our side received a message with a callback, and we are now triggering that remote callback
-	 *
-	 * @private
-	 * @param {net.socket} socket on which to send it
-	 * @param {string} id the id of the remote callback
-	 * @param {object} o the object we want to send as part of our reply
-	 * @throws Error
-	 */
-	_trigger_remote_callback(sock, id, o) {
-
-		let m={
-			type	:	o.constructor.name,
-			data	:	o,
-			callback_id: id
-		};
-
-		if(sock.destroyed){
-
-			sock.emit("end");
-			throw new Error("Client unable to send() - socket has been destroyed");
-		}
-
-		sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));
-	}
-
-	/**
-	 * Send
-	 *
-	 * Send an object to one clients
-	 * @param {net.socket} socket on which to send it
-	 * @param {object} object that we want to send
-	 * @param {function} [callback] Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise
-	 * @throw Error
-	 * @return {Promise}
-	 */
-	send(sock,o, callback){
-
-		let _self=this;
-
-		// Sanity checks
-		if(!sock || !o || typeof(o)=="undefined") throw new Error("SockhopServer send() requires a socket and data");
-
-		// Create a message
-		var m;
-		if(_self._peer_type=="Sockhop") {
-
-			m={
-				"type"	:	o.constructor.name,
-				data	:	o
-			};
-
-		} else {
-
-			m=o;
-			if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
-		}
-
-		if(sock.destroyed){
-
-			sock.emit("end");
-			return Promise.reject(new Error("Socket was destroyed"));
-
-		}
-
-		// Handle remote callback setup
-		if(callback) {
-
-			if (typeof(callback)!= 'function') throw new Error("remote_callback must be a function");
-
-			// A reply is expected. Tag the message so we will recognize it when we get it back
-			m.id=uuid();
-			this._send_callbacks[m.id]=callback;
-		}
-
-		return sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));
+                         s.end();
+                         s.destroy();
+                         s.emit("end");
+                     }
+                 }
 
 
-	}
+             }, delay);
+         }
+     }
+
+    /**
+     * Listen
+     *
+     * Bind and wait for incoming connections
+     * @return {Promise}
+     */
+    listen(){
+
+         return this.path?this.server.listenAsync(this.path):this.server.listenAsync(this.port, this.address);
+    }
+
+    /**
+     * Get bound address
+     *
+     * @return {string} the IP address we are bound to
+     */
+    get_bound_address(){
+
+        return this.server.address().address;
+    }
+
+    /**
+     * Trigger a remote callback
+     *
+     * Our side received a message with a callback, and we are now triggering that remote callback
+     *
+     * @private
+     * @param {net.socket} socket on which to send it
+     * @param {string} id the id of the remote callback
+     * @param {object} o the object we want to send as part of our reply
+     * @throws Error
+     */
+    _trigger_remote_callback(sock, id, o) {
+
+        let m={
+            type    :    o.constructor.name,
+            data    :    o,
+            callback_id: id
+        };
+
+        if(sock.destroyed){
+
+            sock.emit("end");
+            throw new Error("Client unable to send() - socket has been destroyed");
+        }
+
+        sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));
+    }
+
+    /**
+     * Send
+     *
+     * Send an object to one clients
+     * @param {net.socket} socket on which to send it
+     * @param {object} object that we want to send
+     * @param {function} [callback] Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise
+     * @throw Error
+     * @return {Promise}
+     */
+    send(sock,o, callback){
+
+        let _self=this;
+
+        // Sanity checks
+        if(!sock || !o || typeof(o)=="undefined") throw new Error("SockhopServer send() requires a socket and data");
+
+        // Create a message
+        var m;
+        if(_self._peer_type=="Sockhop") {
+
+            m={
+                "type"    :    o.constructor.name,
+                data    :    o
+            };
+
+        } else {
+
+            m=o;
+            if(callback) throw new Error("Unable to use remote callback - peer type must be Sockhop");
+        }
+
+        if(sock.destroyed){
+
+            sock.emit("end");
+            return Promise.reject(new Error("Socket was destroyed"));
+
+        }
+
+        // Handle remote callback setup
+        if(callback) {
+
+            if (typeof(callback)!= 'function') throw new Error("remote_callback must be a function");
+
+            // A reply is expected. Tag the message so we will recognize it when we get it back
+            m.id=uuid();
+            this._send_callbacks[m.id]=callback;
+        }
+
+        return sock.writeAsync(this._encoding_objectbuffer.obj2buf(m));
 
 
-	/**
-	 * Sendall
-	 *
-	 * Send an object to all clients
-	 * @param {object} object to send to all connected clients
-	 * @return {Promise}
-	 */
-	sendall(o){
+    }
 
-		let _self=this;
 
-		// Check each socket in case it was destroyed (unclean death).  Remove bad.  Send data to good.
-		return Promise.all(this._sockets.map((s)=>{if(s.destroyed) s.emit("end"); else return this.send(s,o);}));
-	}
+    /**
+     * Sendall
+     *
+     * Send an object to all clients
+     * @param {object} object to send to all connected clients
+     * @return {Promise}
+     */
+    sendall(o){
 
-	/**
-	 * Disconnect
-	 *
-	 * Disconnect all clients
-	 * Does not close the server - use close() for that
-	 * @return {Promise}
-	 */
-	 disconnect(){
+        let _self=this;
 
-	 	this.ping(0);	// Stop all pinging
-		return Promise.all(this._sockets.map((s)=>s.endAsync()));
-	 }
+        // Check each socket in case it was destroyed (unclean death).  Remove bad.  Send data to good.
+        return Promise.all(this._sockets.map((s)=>{if(s.destroyed) s.emit("end"); else return this.send(s,o);}));
+    }
 
-	 /**
-	  * Close
-	  *
-	  * Disconnects any clients and closes the server
-	  * @return Promise
-	  */
-	  close(){
+    /**
+     * Disconnect
+     *
+     * Disconnect all clients
+     * Does not close the server - use close() for that
+     * @return {Promise}
+     */
+     disconnect(){
 
-	  	return Promise.all([this.disconnect(), this.server.closeAsync()])
-	  			.then(()=>{
+         this.ping(0);    // Stop all pinging
+        return Promise.all(this._sockets.map((s)=>s.endAsync()));
+     }
 
-	  				// Replace the server object (may not be necessary, but seems cleaner)
-					this.server=net.createServer();
-					return Promise.resolve();
-	  			})
-	  			.catch((e)=>{
+     /**
+      * Close
+      *
+      * Disconnects any clients and closes the server
+      * @return Promise
+      */
+      close(){
 
-	  				// Ignore "not running" (means we just shut down the server quickly)
-	  				if(e.toString().match(/not running/)){
+          return Promise.all([this.disconnect(), this.server.closeAsync()])
+                  .then(()=>{
 
-						this.server=net.createServer();
-						return Promise.resolve();
-	  				}
-	  			});
+                      // Replace the server object (may not be necessary, but seems cleaner)
+                    this.server=net.createServer();
+                    return Promise.resolve();
+                  })
+                  .catch((e)=>{
 
-	  }
+                      // Ignore "not running" (means we just shut down the server quickly)
+                      if(e.toString().match(/not running/)){
+
+                        this.server=net.createServer();
+                        return Promise.resolve();
+                      }
+                  });
+
+      }
 
 }
 
@@ -1021,6 +1021,6 @@ class SockhopServer extends EventEmitter {
 
 module.exports=exports={
 
-	"server"	:	SockhopServer,
-	"client"	:	SockhopClient
+    "server"    :    SockhopServer,
+    "client"    :    SockhopClient
 };

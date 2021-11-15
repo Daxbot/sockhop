@@ -5,45 +5,45 @@ var c,s,m;
 
 describe("Server",()=>{
 
-	// Spawn server
-	s=new Sockhop.server({port: 50001});
-	it("listen()",()=>{
+    // Spawn server
+    s=new Sockhop.server({port: 50001});
+    it("listen()",()=>{
 
-		return s.listen();
-	});
+        return s.listen();
+    });
 
-	it("get_bound_address()", ()=>{
+    it("get_bound_address()", ()=>{
 
-		assert.equal(s.get_bound_address(),"127.0.0.1");
-	});
+        assert.equal(s.get_bound_address(),"127.0.0.1");
+    });
 
-	it("close()",()=>{
+    it("close()",()=>{
 
-		s.close();
-	});
+        s.close();
+    });
 
-	it("listen() again",()=>{
+    it("listen() again",()=>{
 
-		return s.listen()
-			.then(()=>{
+        return s.listen()
+            .then(()=>{
 
-				s.close();
-			});
-	});
+                s.close();
+            });
+    });
 
 
-	it("Server slam open/close does not throw uncaught errors", function(done){
-	
-		let x=new Sockhop.server({port: 50008});
+    it("Server slam open/close does not throw uncaught errors", function(done){
+    
+        let x=new Sockhop.server({port: 50008});
 
-		x.listen().then(()=>x.close()).then(()=>done());
-	});
+        x.listen().then(()=>x.close()).then(()=>done());
+    });
 
-	after(("close server"),()=>{
+    after(("close server"),()=>{
 
-		s.close();
+        s.close();
 
-	});
+    });
 
 });
 

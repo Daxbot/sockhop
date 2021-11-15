@@ -8,11 +8,12 @@ describe("Client-server", function(){
     s=new Sockhop.server({port: 50002});
     c=new Sockhop.client({port: 50002});
 
+    before(async() => { await s.listen() });
+
     it("client.connected transitions from false to true on connect",function(done){
 
         assert.equal(c.connected,false);
-        s.listen()
-        .then(()=>c.connect())
+        c.connect()
         .then(()=>{
 
             assert.equal(c.connected, true);
@@ -20,7 +21,6 @@ describe("Client-server", function(){
         });
     });
     it("client.connect returns if connected",function(done){
-
             c.connect()
             .then(()=>done());
     });
@@ -36,16 +36,15 @@ describe("Client-server", function(){
     });
     it("client.send return error when not connected to server",function(done){
         c.send("data").catch((e)=>{
-        done();
-    });
-        
+            done();
+        });
     });
 
     it("client allows reconnect after disconnect", function(done){
-
-            c.connect()
-            .then(()=>done());
+        c.connect()
+        .then(()=>done());
     });
+
 
     it("client.send()", function(done){
 

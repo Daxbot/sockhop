@@ -61,6 +61,55 @@ Remote callback example:
   });
 ```
 
+Session example
+```javascript
+  const Sockhop=require("sockhop");
+
+  /**
+   * Class to save verification information about a
+   * socket
+   */
+  class Session extends Sockhop.session {
+    constructor(socket, server) {
+      super();
+      this.socket = socket; // Save a reference to the socket
+      this.verified = false;
+    }
+    async start() {
+      // Require sockets to verify themselves with in 3 seconds
+      this.to = setTimeout(() => this.socket.end(), 3000);
+    }
+    verify() {
+      this.verified = true;
+      clearTimeout(this.to);
+    }
+  }
+
+  // Create server/client pair
+  let s=new Sockhop.server({session_type : Session});
+  let c=new Sockhop.client();
+
+  s.on('receive', (data, meta) => {
+    // Require verification to continue
+    if ( !meta.session.verified && meta.type !== 'Verify' ) return;
+
+    switch ( meta.type ) {
+    case "Verify":
+      // run verification code here
+      meta.sesison.verify();
+    case "Other":
+      // run everything else here
+    }
+  });
+
+  s.listen()
+  .then(()=>c.connect())
+  .then(()=>{
+    c.send("some verification object");
+  });
+```
+
+
 
 ## Linting, building docs, and testing
 ```sh

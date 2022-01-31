@@ -24,7 +24,7 @@ describe("Client",()=>{
         let cc=new Sockhop.client({port: 49999});
         cc.connect().catch((e)=>{
 
-            assert(e.errno.match(/ECONNREFUSED/));
+            assert(e.message.match(/ECONNREFUSED/));
             done();
         });
 

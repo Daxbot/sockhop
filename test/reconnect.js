@@ -77,12 +77,9 @@ describe("client.auto_reconnect", function(){
         Promise.resolve()
         .then(()=>s.close())
         .then(()=>{
-
-                delete s;    // jshint ignore:line
+            delete s;    // jshint ignore:line
         })
         .then(()=>{
-
-
             // 1s later, create a new server
             setTimeout(()=>{
                 s=new Sockhop.server({port: 50007});

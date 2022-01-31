@@ -1,7 +1,7 @@
 var Sockhop=require("../index.js");
 var assert=require("assert");
 
-var c,s,m;
+var s;
 
 describe("Server",()=>{
 
@@ -33,7 +33,7 @@ describe("Server",()=>{
 
 
     it("Server slam open/close does not throw uncaught errors", function(done){
-    
+
         let x=new Sockhop.server({port: 50008});
 
         x.listen().then(()=>x.close()).then(()=>done());

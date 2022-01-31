@@ -3,7 +3,7 @@ var assert=require("assert");
 var spawn=require("child_process").spawn;
 
 
-var c,s,m;
+var c,s;
 
 describe("client.auto_reconnect", function(){
 
@@ -25,7 +25,7 @@ describe("client.auto_reconnect", function(){
         });
 
         s.listen()
-        .then(()=>c.auto_reconnect=true);
+            .then(()=>c.auto_reconnect=true);
 
     });
 
@@ -53,7 +53,7 @@ describe("client.auto_reconnect", function(){
 
 
     it("Reconnects on server death, only bubble single disconnect event", function(done){
-    
+
         this.slow(3000);
 
         // Count disconnect events
@@ -69,29 +69,29 @@ describe("client.auto_reconnect", function(){
             assert.equal(disconnect_event_counter,1);
             c.disconnect();
             s.close();
-            delete c;    // jshint ignore:line
-            delete s;    // jshint ignore:line
+            delete c; // eslint-disable-line no-delete-var
+            delete s; // eslint-disable-line no-delete-var
             done();
         });
 
         Promise.resolve()
-        .then(()=>s.close())
-        .then(()=>{
-            delete s;    // jshint ignore:line
-        })
-        .then(()=>{
+            .then(()=>s.close())
+            .then(()=>{
+                delete s; // eslint-disable-line no-delete-var
+            })
+            .then(()=>{
             // 1s later, create a new server
-            setTimeout(()=>{
-                s=new Sockhop.server({port: 50007});
-                s.listen();
-            },1000);
-        });
+                setTimeout(()=>{
+                    s=new Sockhop.server({port: 50007});
+                    s.listen();
+                },1000);
+            });
 
     });
 
 
     it("Attempts connect until server appears, then bubbles SINGLE connect event (slow)", function(done){
-    
+
         this.slow(4000);
         this.timeout(3000);
 
@@ -127,28 +127,28 @@ describe("client.auto_reconnect", function(){
         c.auto_reconnect=true;
 
         Promise.resolve()
-        .then(()=>{
+            .then(()=>{
 
-            // After 1s pause, create a new server
-            setTimeout(()=>{
+                // After 1s pause, create a new server
+                setTimeout(()=>{
 
-                s=new Sockhop.server({port: 50009});
-                s.listen();
+                    s=new Sockhop.server({port: 50009});
+                    s.listen();
 
-            },1000);
+                },1000);
 
-        });
+            });
 
     });
 
 
     it("Server violent death (2x), client reconnects and bubbles 2 connect events (slow)", function(done){
-    
+
         this.slow(9000);
         this.timeout(9000);
 
         // Create a fresh client
-        c=new Sockhop.client({port: 50010, auto_reconnect_interval: 200});        
+        c=new Sockhop.client({port: 50010, auto_reconnect_interval: 200});
 
         // Count connect events, start recording connect events
         let connect_event_counter=0;
@@ -159,12 +159,12 @@ describe("client.auto_reconnect", function(){
 
 
         // Start the server
-        let slambang=spawn("node", ["./slambang.js"]);
+        let slambang=spawn("node", ["./slambang.js"]); // eslint-disable-line no-unused-vars
         // slambang.stdout.on("data",(data)=>console.log("data:"+data));
         // slambang.stderr.on("data",(data)=>console.log("err:"+data));
 
         // Ignore any connection errors
-        c.on("error",(e)=>{});    
+        c.on("error",()=>{});
 
         // We are done shortly after we connect, then disconnect, then reconnect again
         c.once("connect", () =>{
@@ -173,7 +173,7 @@ describe("client.auto_reconnect", function(){
                 // We have disconnected.  Wait 500ms, then restart server
                 setTimeout(()=>{
 
-                    let slambang=spawn("node", ["./slambang.js"]);
+                    let slambang=spawn("node", ["./slambang.js"]); // eslint-disable-line no-unused-vars
                     // slambang.stdout.on("data",(data)=>console.log("data:"+data));
                     // slambang.stderr.on("data",(data)=>console.log("err:"+data));
                 },500);

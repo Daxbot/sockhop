@@ -1,7 +1,6 @@
 var Sockhop=require("../index.js");
-var assert=require("assert");
 
-var c,s,m;
+var c,s;
 
 describe("Events", function(){
 
@@ -11,8 +10,8 @@ describe("Events", function(){
     it("server.on('connect')", function(done){
 
         s.once("connect",()=>done())
-        .listen()
-        .then(()=>c.connect());
+            .listen()
+            .then(()=>c.connect());
     });
 
     it("server.on('disconnect')", function(done){

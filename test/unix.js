@@ -1,11 +1,11 @@
 var Sockhop=require("../index.js");
 var assert=require("assert");
 
-var c,s,m;
+var c,s;
 
 describe("Unix domain sockets", function(){
 
-    // Pick a random socket path 
+    // Pick a random socket path
     let socket_name=`/tmp/sockhop${Math.random()*100000}`;
 
     // Unix path setting overrides IP address and port.  When we connect, we set a port number so this test will fail if the unix socket does not work.  Otherwise defaults may prevail and the test passes.
@@ -17,17 +17,17 @@ describe("Unix domain sockets", function(){
     it("client.send()", function(done){
 
         s.listen()
-        .then(()=>c.connect())
-        .then(()=>{
+            .then(()=>c.connect())
+            .then(()=>{
 
-            s.once("receive", (msg)=>{
-                assert.equal(msg, "data goes in");
-                done();
+                s.once("receive", (msg)=>{
+                    assert.equal(msg, "data goes in");
+                    done();
+                });
+
+                c.send("data goes in")
+                    .then(()=>c.disconnect());
             });
-
-            c.send("data goes in")
-            .then(()=>c.disconnect());
-        });
 
     });
 

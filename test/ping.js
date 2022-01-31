@@ -1,8 +1,6 @@
 var Sockhop=require("../index.js");
-var assert=require("assert");
 
-var c,s,m;
-
+var c,s,s2;
 
 describe("Ping", function(){
 
@@ -14,25 +12,25 @@ describe("Ping", function(){
     it("Client pings server successfully for 500ms", function(done){
 
         s.listen()
-        .then(()=>c.connect())
-        .then(()=>{
+            .then(()=>c.connect())
+            .then(()=>{
 
-            s.once("disconnect",()=>{
+                s.once("disconnect",()=>{
 
-                throw new Error("Server has disconnected unexpectedly");
+                    throw new Error("Server has disconnected unexpectedly");
+                });
+
+                c.ping(100);        // Ping at 100ms intervals
+
+                setTimeout(()=>{    // Let it ping for 500ms, then done
+
+                    s.removeAllListeners("disconnect");
+                    c.ping(0);
+                    done();
+
+                }, 500);
+
             });
-
-            c.ping(100);        // Ping at 100ms intervals
-
-            setTimeout(()=>{    // Let it ping for 500ms, then done
-
-                s.removeAllListeners("disconnect");
-                c.ping(0);
-                done();
-
-            }, 500);
-
-        });
     });
 
 
@@ -42,7 +40,7 @@ describe("Ping", function(){
 
             throw new Error("Server has disconnected unexpectedly");
         })
-        .ping(100);        // Ping at 100ms intervals
+            .ping(100);        // Ping at 100ms intervals
 
         setTimeout(()=>{    // Let it ping for 500ms, then disconnect client and done
 
@@ -118,12 +116,12 @@ describe("Ping", function(){
 
 
             c._end_socket();
-            c.connect();                
+            c.connect();
         });
 
         s.listen()
             .then(()=>{
-                
+
                 return s2.listen();
             })
             .then(()=>{

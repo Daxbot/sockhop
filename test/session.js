@@ -1,7 +1,7 @@
 var Sockhop=require("../index.js");
 var assert=require("assert");
 
-var c,s,m;
+var c,s;
 
 class Session extends Sockhop.session {
     a() { return 1; }
@@ -20,7 +20,7 @@ describe("Session", function(){
     s=new Sockhop.server({port: 50032, session_type: Session});
     c=new Sockhop.client({port: 50032});
 
-    before(async() => { await s.listen() });
+    before(async() => { await s.listen(); });
     afterEach(async() => {
         // add a little bit of buffer time to make sure the sockets get
         // cleaned up in between
@@ -38,7 +38,7 @@ describe("Session", function(){
 
     it("session is stopped successfully on disconnect",function(done){
 
-        s.once('connect', (sock, sess) => {
+        s.once('connect', () => {
             c.disconnect();
         });
         s.once('disconnect', (sock, sess) => {

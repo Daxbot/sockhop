@@ -1,7 +1,7 @@
 var Sockhop=require("../index.js");
 var assert=require("assert");
 
-var c,s,m;
+var c,s;
 
 describe("Client",()=>{
 
@@ -11,7 +11,7 @@ describe("Client",()=>{
     it("connect()", function(){
 
         return s.listen()
-                .then(()=>c.connect());
+            .then(()=>c.connect());
     });
 
     it("get_bound_address()", ()=>{
@@ -24,7 +24,7 @@ describe("Client",()=>{
         let cc=new Sockhop.client({port: 49999});
         cc.connect().catch((e)=>{
 
-            assert(e.errno.match(/ECONNREFUSED/));
+            assert(e.message.match(/ECONNREFUSED/));
             done();
         });
 

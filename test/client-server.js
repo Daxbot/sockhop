@@ -1,63 +1,63 @@
 var Sockhop=require("../index.js");
 var assert=require("assert");
 
-var c,s,m;
+var c,s;
 
 describe("Client-server", function(){
 
     s=new Sockhop.server({port: 50002});
     c=new Sockhop.client({port: 50002});
 
-    before(async() => { await s.listen() });
+    before(async() => { await s.listen(); });
 
     it("client.connected transitions from false to true on connect",function(done){
 
         assert.equal(c.connected,false);
         c.connect()
-        .then(()=>{
+            .then(()=>{
 
-            assert.equal(c.connected, true);
-            done();
-        });
+                assert.equal(c.connected, true);
+                done();
+            });
     });
     it("client.connect returns if connected",function(done){
-            c.connect()
+        c.connect()
             .then(()=>done());
     });
     it("client.connected transitions from true to false on disconnect",function(done){
 
         assert.equal(c.connected,true);
         c.disconnect()
-        .then(()=>{
+            .then(()=>{
 
-            assert.equal(c.connected, false);
-            done();
-        });
+                assert.equal(c.connected, false);
+                done();
+            });
     });
     it("client.send return error when not connected to server",function(done){
-        c.send("data").catch((e)=>{
+        c.send("data").catch(()=>{
             done();
         });
     });
 
     it("client allows reconnect after disconnect", function(done){
         c.connect()
-        .then(()=>done());
+            .then(()=>done());
     });
 
 
     it("client.send()", function(done){
 
         c.connect()
-        .then(()=>{
+            .then(()=>{
 
-            s.once("receive", (msg)=>{
-                assert.equal(msg, "data goes in");
-                done();
+                s.once("receive", (msg)=>{
+                    assert.equal(msg, "data goes in");
+                    done();
+                });
+
+                c.send("data goes in");
             });
-
-            c.send("data goes in");
-        });
 
     });
 

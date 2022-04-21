@@ -47,7 +47,7 @@ which users are encouraged to implement for their specific application.</p>
 in that users should write child classes which inhert from this base class to
 interact with the net.Socket instance, and then have their applications call
 the session methods, rather than calling socket methods directly. For instance,
-users are discouraged from directly calling <code>socket.end()</code> to terminate 
+users are discouraged from directly calling <code>socket.end()</code> to terminate
 clients connection from the server. Rather, users should call <code>session.kill()</code>.</p>
 </dd>
 </dl>
@@ -148,6 +148,8 @@ Constructs a new SockhopClient
 | [opts.path] | <code>string</code> |  | the path for a Unix domain socket.  If used, this will override the address and port values. |
 | [opts.address] | <code>string</code> | <code>&quot;\&quot;127.0.0.1\&quot;&quot;</code> | the IP address to bind to |
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
+| [opts.ssl] | <code>boolean</code> | <code>false</code> | use tls |
+| [opts.ssl_options] | <code>object</code> | <code>{}</code> | options to pass to the tls socket constructor, see `tls.connect` for details, note, if any options are provided, the `opts.ssl` flag is overriden as true |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
 | opts.peer_type | <code>string</code> |  | the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
@@ -573,7 +575,7 @@ Sessions are the preferred way for users to interact with client connections,
 in that users should write child classes which inhert from this base class to
 interact with the net.Socket instance, and then have their applications call
 the session methods, rather than calling socket methods directly. For instance,
-users are discouraged from directly calling `socket.end()` to terminate 
+users are discouraged from directly calling `socket.end()` to terminate
 clients connection from the server. Rather, users should call `session.kill()`.
 
 **Kind**: global class  
@@ -629,7 +631,7 @@ Override me to do any setup of the session.
 I get called internally by the SockhopServer immediately after
 a new client connects to the server, before the server emits the
 'connect' event. (before even the socket gets registered in the
-server's `._sockets` list).
+server's `server._sockets` list).
 
 **Kind**: instance abstract method of [<code>SockhopSession</code>](#SockhopSession)  
 **Returns**: <code>Promise</code> - resolves when setup is complete  

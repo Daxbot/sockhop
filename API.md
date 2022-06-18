@@ -10,6 +10,20 @@ a socket, for example, and is received in pieces) and gives you your object back
 <dt><a href="#SockhopClient">SockhopClient</a> ⇐ <code>EventEmitter</code></dt>
 <dd><p>Wrapped TCP client</p>
 </dd>
+<dt><a href="#SockhopError">SockhopError</a> ⇐ <code>Error</code></dt>
+<dd><p>Custom sockhop errors</p>
+<p>Error types, should only change with major versions</p>
+<ul>
+<li>ERR_MULTICONNECT : attempting to call connect while a socket is already connecting</li>
+<li>ERR_SOCKET_DESTROYED : attempting to interact with a destroyed socket</li>
+<li>ERR_REMOTE_CALLBACK_TYPE : attempting to use remote callbacks with wrong message types, or not a callback function</li>
+<li>ERR_NO_SOCKET : attempting to send a message with no socket</li>
+<li>ERR_BAD_DATA : attempting to send a message with no data payload</li>
+<li>ERR_OBJECTBUFFER_BAD_BUFFER : attempting to do a buffer operation with a non-buffer</li>
+<li>ERR_OBJECTBUFFER_BAD_BUFFER_DATA : attempting to do a buffer operation with bad data in the buffer</li>
+<li>ERR_OBJECTBUFFER_BAD_OBJECT : attempting to do an object operation with a non-serializable object</li>
+</ul>
+</dd>
 <dt><a href="#SockhopPing">SockhopPing</a></dt>
 <dd><p>TCP Ping</p>
 <p>Used internally when .ping() is called</p>
@@ -117,7 +131,7 @@ Wrapped TCP client
 
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
-**Emits**: [<code>connect</code>](#SockhopClient+event_connect), [<code>disconnect</code>](#SockhopClient+event_disconnect), [<code>receive</code>](#SockhopClient+event_receive), <code>event:Error</code>  
+**Emits**: [<code>connect</code>](#SockhopClient+event_connect), [<code>disconnect</code>](#SockhopClient+event_disconnect), [<code>receive</code>](#SockhopClient+event_receive), <code>event:SockhopError</code>  
 
 * [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
     * [new SockhopClient([opts])](#new_SockhopClient_new)
@@ -235,7 +249,7 @@ Send an object to the server
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
 **Throws**:
 
-- <code>Error</code> 
+- [<code>SockhopError</code>](#SockhopError) 
 
 
 | Param | Type | Description |
@@ -304,6 +318,34 @@ disconnect event
 | --- | --- | --- |
 | sock | <code>net.Socket</code> | the socket that just disconnected |
 
+<a name="SockhopError"></a>
+
+## SockhopError ⇐ <code>Error</code>
+Custom sockhop errors
+
+Error types, should only change with major versions
+  - ERR_MULTICONNECT : attempting to call connect while a socket is already connecting
+  - ERR_SOCKET_DESTROYED : attempting to interact with a destroyed socket
+  - ERR_REMOTE_CALLBACK_TYPE : attempting to use remote callbacks with wrong message types, or not a callback function
+  - ERR_NO_SOCKET : attempting to send a message with no socket
+  - ERR_BAD_DATA : attempting to send a message with no data payload
+  - ERR_OBJECTBUFFER_BAD_BUFFER : attempting to do a buffer operation with a non-buffer
+  - ERR_OBJECTBUFFER_BAD_BUFFER_DATA : attempting to do a buffer operation with bad data in the buffer
+  - ERR_OBJECTBUFFER_BAD_OBJECT : attempting to do an object operation with a non-serializable object
+
+**Kind**: global class  
+**Extends**: <code>Error</code>  
+<a name="new_SockhopError_new"></a>
+
+### new SockhopError(message, code)
+Constructs a new SockhopError
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>string</code> | A message string describing the error |
+| code | <code>string</code> | A standardized code for filtering error types |
+
 <a name="SockhopPing"></a>
 
 ## SockhopPing
@@ -365,7 +407,7 @@ constructor options.
 
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
-**Emits**: [<code>connect</code>](#SockhopServer+event_connect), [<code>disconnect</code>](#SockhopServer+event_disconnect), [<code>receive</code>](#SockhopServer+event_receive), <code>event:Error</code>  
+**Emits**: [<code>connect</code>](#SockhopServer+event_connect), [<code>disconnect</code>](#SockhopServer+event_disconnect), [<code>receive</code>](#SockhopServer+event_receive), <code>event:SockhopError</code>  
 
 * [SockhopServer](#SockhopServer) ⇐ <code>EventEmitter</code>
     * [new SockhopServer([opts])](#new_SockhopServer_new)
@@ -462,7 +504,10 @@ Send
 Send an object to one clients
 
 **Kind**: instance method of [<code>SockhopServer</code>](#SockhopServer)  
-**Throw**: Error  
+**Throws**:
+
+- SockhopError
+
 
 | Param | Type | Description |
 | --- | --- | --- |

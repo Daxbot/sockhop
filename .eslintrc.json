@@ -23,6 +23,11 @@
         "semi": [
             "error",
             "always"
+        ],
+        "node/no-unpublished-require": [
+            "error", {
+                "allowModules": ["chai"]
+            }
         ]
     }
 }

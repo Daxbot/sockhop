@@ -6,24 +6,25 @@ var c1,c2,s;
 describe("Clean ups", function(){
 
     s=new Sockhop.server({port: 50002, response_timeout:10});
-    c1=new Sockhop.client({port: 50002, response_timeout:10});
-    c2=new Sockhop.client({port: 50002, response_timeout:10});
 
     before(async() => { await s.listen(); });
+    beforeEach(async() => {
+        c1=new Sockhop.client({port: 50002, response_timeout:10});
+        c2=new Sockhop.client({port: 50002, response_timeout:10});
+    });
+    afterEach(async() => {
+        return Promise.all([
+            c1.disconnect(),
+            c2.disconnect()
+        ]);
+    });
 
     it("Properly build up cached objects",async function(){
 
         expect(s.sockets.length).to.equal(0);
         expect(s.sessions.length).to.equal(0);
         expect(s._response_stream_maps.size).to.equal(0);
-        await Promise.all([
-            c1.disconnect(),
-            c2.disconnect()
-        ]).then(() => {
-            return c1.connect();
-        }).then(() => {
-            return new Promise(res => setTimeout(res, 10)); // wait for the callbacks to trigger
-        }).then(()=>{
+        await c1.connect().then(()=>{
             expect(s.sockets.length).to.equal(1);
             expect(s.sessions.length).to.equal(1);
             expect(s._response_stream_maps.size).to.equal(1);
@@ -38,15 +39,12 @@ describe("Clean ups", function(){
 
     it("Empty out objects on graceful disconnect",async function(){
         await Promise.all([
-            c1.disconnect(),
-            c2.disconnect()
-        ]).then(() => {
-            return Promise.all([
-                c1.connect(),
-                c2.connect()
-            ]);
-        }).then(() => {
-            return new Promise(res => setTimeout(res, 10)); // wait for the callbacks to trigger
+            c1.connect(),
+            c2.connect(),
+        ]).then(()=>{
+            // Needs to add a wait here to ensure that the server's callbacks
+            //  get triggered first
+            return new Promise(res => setTimeout(res, 0));
         }).then(()=>{
             expect(s.sockets.length, "Socket length").to.equal(2);
             expect(s.sessions.length, "Session length").to.equal(2);
@@ -66,14 +64,9 @@ describe("Clean ups", function(){
     });
 
     it("Build a response stream",async function(){
-        await Promise.all([
-            c1.disconnect(),
-            c2.disconnect()
-        ]).then(() => {
-            return new Promise(res => {
-                s.once("connect", res);
-                c1.connect();
-            });
+        await  new Promise(res => {
+            s.once("connect", res);
+            c1.connect();
         }).then(()=>{
             // expect(s._response_stream_maps.get(sock)._map.size, "Stream map").to.equal(0);
             expect(c1._response_stream_map._map.size, "Stream map").to.equal(0);
@@ -88,14 +81,9 @@ describe("Clean ups", function(){
     });
 
     it("Steams clean up on timeout (client)",async function(){
-        await Promise.all([
-            c1.disconnect(),
-            c2.disconnect()
-        ]).then(() => {
-            return new Promise(res => {
-                s.once("connect", res);
-                c1.connect();
-            });
+        await new Promise(res => {
+            s.once("connect", res);
+            c1.connect();
         }).then(()=>{
             return c1.request("Can I have some data?");
         }).then(()=>{
@@ -110,15 +98,10 @@ describe("Clean ups", function(){
         });
     });
 
-    it("Steams clean up on data through (client)",async function(){
-        await Promise.all([
-            c1.disconnect(),
-            c2.disconnect()
-        ]).then(() => {
-            return new Promise(res => {
-                s.once("connect", res);
-                c1.connect();
-            });
+    it("Streams clean up on data through (client)",async function(){
+        await new Promise(res => {
+            s.once("connect", res);
+            c1.connect();
         }).then(()=>{
             s.once("request", (req,res) => {
                 res.send("yep");
@@ -132,15 +115,10 @@ describe("Clean ups", function(){
         });
     });
 
-    it("Steams clean up on client disconnect (client)",async function(){
-        await Promise.all([
-            c1.disconnect(),
-            c2.disconnect()
-        ]).then(() => {
-            return new Promise(res => {
-                s.once("connect", res);
-                c1.connect();
-            });
+    it("Streams clean up on client disconnect (client)",async function(){
+        await new Promise(res => {
+            s.once("connect", res);
+            c1.connect();
         }).then(()=>{
             return c1.request("Can I have some data?");
         }).then(()=>{
@@ -152,19 +130,14 @@ describe("Clean ups", function(){
     });
 
 
-    it("Steams clean up on timeout (server)",async function(){
+    it("Streams clean up on timeout (server)",async function(){
         let sock;
-        await Promise.all([
-            c1.disconnect(),
-            c2.disconnect()
-        ]).then(() => {
-            return new Promise(res => {
-                s.once("connect", (_sock) => {
-                    sock=_sock;
-                    res();
-                });
-                c1.connect();
+        await new Promise(res => {
+            s.once("connect", (_sock) => {
+                sock=_sock;
+                res();
             });
+            c1.connect();
         }).then(()=>{
             return s.request(sock,"Can I have some data?");
         }).then(()=>{
@@ -179,19 +152,14 @@ describe("Clean ups", function(){
         });
     });
 
-    it("Steams clean up on data through (server)",async function(){
+    it("Streams clean up on data through (server)",async function(){
         let sock;
-        await Promise.all([
-            c1.disconnect(),
-            c2.disconnect()
-        ]).then(() => {
-            return new Promise(res => {
-                s.once("connect", (_sock) => {
-                    sock=_sock;
-                    res();
-                });
-                c1.connect();
+        await new Promise(res => {
+            s.once("connect", (_sock) => {
+                sock=_sock;
+                res();
             });
+            c1.connect();
         }).then(()=>{
             c1.once("request", (req,res) => {
                 res.send("yep");

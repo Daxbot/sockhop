@@ -164,8 +164,10 @@ Wrapped TCP client
 * [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
     * [new SockhopClient([opts])](#new_SockhopClient_new)
     * [.connected](#SockhopClient+connected) : <code>boolean</code>
-    * [.auto_reconnect_active](#SockhopClient+auto_reconnect_active) : <code>boolean</code>
+    * [.auto_reconnect_active](#SockhopClient+auto_reconnect_active) ⇒ <code>boolean</code>
+    * ~~[.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>~~
     * ~~[.auto_reconnect](#SockhopClient+auto_reconnect)~~
+    * [.set_auto_reconnect_state(auto_reconnect)](#SockhopClient+set_auto_reconnect_state)
     * [.start()](#SockhopClient+start) ⇒ <code>Promise.&lt;this&gt;</code>
     * [.connect(config)](#SockhopClient+connect) ⇒ <code>Promise.&lt;this&gt;</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
@@ -207,10 +209,19 @@ Is the socket connected?
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
 <a name="SockhopClient+auto_reconnect_active"></a>
 
-### sockhopClient.auto\_reconnect\_active : <code>boolean</code>
-Is auto-reconnection active?
+### sockhopClient.auto\_reconnect\_active ⇒ <code>boolean</code>
+Is the auto reconnect system active?
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+<a name="SockhopClient+auto_reconnect"></a>
+
+### ~~sockhopClient.auto\_reconnect ⇒ <code>boolean</code>~~
+***Deprecated***
+
+auto_reconnect getter
+
+**Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>boolean</code> - auto_reconnect the current auto_reconnect setting  
 <a name="SockhopClient+auto_reconnect"></a>
 
 ### ~~sockhopClient.auto\_reconnect~~
@@ -219,14 +230,25 @@ Is auto-reconnection active?
 auto_reconnect setter
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
-**Throws**:
-
-- <code>Error</code> 'The .auto_reconnect setter has been deprecated in v2'
-
 
 | Param | Type | Description |
 | --- | --- | --- |
 | auto_reconnect | <code>boolean</code> | the desired auto_reconnect setting |
+
+<a name="SockhopClient+set_auto_reconnect_state"></a>
+
+### sockhopClient.set\_auto\_reconnect\_state(auto_reconnect)
+Set the state of the auto reconnect system
+
+Note, this method is uncommon for users. Instead you should probably be calling
+`.connect({ auto_reconnect:true })`, `.start()` to start the system or `.disconnect()`
+to stop it. This method exists if you *must* start the system without creating a promise.
+
+**Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type |
+| --- | --- |
+| auto_reconnect | <code>boolean</code> | 
 
 <a name="SockhopClient+start"></a>
 

@@ -121,6 +121,13 @@ describe("Reconnections", function(){
 
     });
 
+    it("Setting auto_reconnect to false cleans up the internal interval", function(done){
+
+        c.auto_reconnect=false;
+        assert.equal(c._auto_reconnect_timer, null, "Timer is still active");
+        done();
+
+    });
 
     it("Server violent death (2x), client reconnects and bubbles 2 connect events (slow)", function(done){
 

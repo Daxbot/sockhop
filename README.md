@@ -170,7 +170,7 @@ MIT
 
 ## Migrating from v1 to v2
 ### ```client.auto_reconnect = true```
-Version 2 clients no longer use the `.auto_reconnect` setter to trigger the reconnection interval, instead clients should use either the ```.connect({ auto_reconnect:true })``` or ```.start()``` methods. For example:
+In version 2 clients using the `.auto_reconnect` setter to trigger the reconnection interval has been deprecated. Instead clients should use either the ```.connect({ auto_reconnect:true })``` or ```.start()``` methods -- of if it is absolutely necessary to trigger the reconnection interval without creating a promise, use ```.set_auto_reconnect_state(true)```. For example:
 
 ```js
 // V1
@@ -188,7 +188,7 @@ client.disconnect();
 ```
 
 The difference between the two new methods is that `connect` will throw if the first connection attempt fails (and then will *not* attempt to reconnect),
-while the `start` method will not resolve until the connection has succeded.
+while the `start` method will not resolve until the connection has succeded, failing as many times as necessary
 
 ### Auto event bubbling to sessions
 In version 2, the "receive" and "request" events on the server are automatically bubbled to the session: so in version 1 code:

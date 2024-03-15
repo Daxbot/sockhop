@@ -66,14 +66,30 @@ describe("Client-server", function(){
         c.connect()
             .then(()=>{
 
-                s.once("request", (req,res)=>{
+                s.once("request", (req)=>{
                     assert.equal(req.data, "data goes in");
-                    res.send("and goes out");
+                    req.respond("and goes out");
                 });
 
-                c.request("data goes in").then(s => {
-                    return s.next();
-                }).then(res => {
+                c.request("data goes in").then(res => {
+                    assert.equal(res.data, "and goes out");
+                    done();
+                });
+            });
+
+    });
+
+    it("client.request() respondable via sesssion", function(done){
+
+        s.once("connect", (_,sess) => {
+            sess.once("request",(req) => {
+                assert.equal(req.data, "data goes in");
+                req.respond("and goes out");
+            });
+        });
+        c.connect()
+            .then(()=>{
+                c.request("data goes in").then(res => {
                     assert.equal(res.data, "and goes out");
                     done();
                 });
@@ -85,32 +101,9 @@ describe("Client-server", function(){
 
         c.connect()
             .then(()=>{
-                c.request("data goes in").then(s => {
-                    s.once("end", (err) => {
-                        assert.equal(err.code, "ERR_RESPONSE_TIMEOUT");
-                        done();
-                    });
-                });
-            });
-
-    });
-
-    it("client.request() times out from no end", function(done){
-
-        c.connect()
-            .then(()=>{
-                s.once("request", (req,res)=>{
-                    assert.equal(req.data, "data goes in");
-                    res.write("and goes out"); // NO END
-                });
-                c.request("data goes in").then(s => {
-                    s.once("end", (err) => {
-                        assert.equal(err.code, "ERR_RESPONSE_TIMEOUT");
-                        done();
-                    });
-                    s.once("data", (data) => {
-                        assert.equal(data, "and goes out");
-                    });
+                c.request("data goes in", {timeout:10}).catch(err => {
+                    assert.equal(err.code, "ERR_RESPONSE_TIMEOUT");
+                    done();
                 });
             });
 
@@ -120,17 +113,15 @@ describe("Client-server", function(){
 
         c.connect()
             .then(()=>{
-                s.once("request", (req,res)=>{
+                s.once("request", (req)=>{
                     assert.equal(req.data, "data goes in");
                     // End after a little while
                     (new Promise(res => setTimeout(res, 100))).then(() => {
-                        res.send("and goes out");
+                        req.respond("and goes out");
                     });
                 });
 
-                c.request("data goes in", { timeout: 200 }).then(s => {
-                    return s.next();
-                }).then(res => {
+                c.request("data goes in", { timeout: 200 }).then(res => {
                     assert.equal(res.data, "and goes out");
                     done();
                 });
@@ -139,42 +130,22 @@ describe("Client-server", function(){
     });
 
 
-    it("Cannot to request 'send' respond twice", function(done){
+    it("Cannot to request 'respond' respond twice", function(done){
 
         c.connect()
             .then(()=>{
 
-                s.once("request", (req,res)=>{
+                s.once("request", (req)=>{
                     assert.equal(req.data, "data goes in");
-                    res.send("and goes out").then(() => {
-                        res.send("but not twice").catch(err => {
-                            assert.equal(err.code, "ERR_RESPONSE_SEND");
+                    req.respond("and goes out").then(() => {
+                        req.respond("but not twice").catch(err => {
+                            assert.equal(err.code, "ERR_RESPONSE_REPEAT");
                             done();
                         });
                     });
                 });
 
                 c.request("data goes in");
-            });
-    });
-
-    it("Can stream multiple packets", function(done){
-
-        c.connect()
-            .then(()=>{
-                s.once("request", (req,res)=>{
-                    assert.equal(req.data, "data goes in");
-                    res.write("and goes out");
-                    res.write("and goes out again");
-                    res.end();
-                });
-
-                c.request("data goes in").then(s => s.all()).then((pkt_array) => {
-                    assert.equal(pkt_array.length, 3);
-                    assert.equal(pkt_array[0].data, "and goes out");
-                    assert.equal(pkt_array[1].data, "and goes out again");
-                    done();
-                });
             });
     });
 
@@ -193,12 +164,12 @@ describe("Client-server", function(){
     it("server.request()", function(done){
 
         s.once("connect", (sock) => {
-            c.once("request", (req,res)=>{
+            c.once("request", (req)=>{
                 assert.equal(req.data, "data goes in");
-                res.send("and goes out");
+                req.respond("and goes out");
             });
 
-            s.request(sock,"data goes in").then(s => s.next()).then(res => {
+            s.request(sock,"data goes in").then(res => {
                 assert.equal(res.data, "and goes out");
                 done();
             });
@@ -228,12 +199,12 @@ describe("Client-server", function(){
     it("session.request()", function(done){
 
         s.once("connect", (sock, sess) => {
-            c.once("request", (req,res)=>{
+            c.once("request", (req)=>{
                 assert.equal(req.data, "data goes in");
-                res.send("and goes out");
+                req.respond("and goes out");
             });
 
-            sess.request("data goes in").then(s => s.next()).then(res => {
+            sess.request("data goes in").then(res => {
                 assert.equal(res.data, "and goes out");
                 done();
             });

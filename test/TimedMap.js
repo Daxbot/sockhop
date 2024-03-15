@@ -14,24 +14,25 @@ describe("TimedMap", function(){
     describe("Setting", function(){
         it("Can set a value", async function(){
             global.map.set("a", 1);
-            expect(global.map.get("a")).to.equal(1);
+            expect(global.map._map.get("a")?.[0]).to.equal(1);
         });
         it("Can set two values", async function(){
             global.map.set("a", 1);
             global.map.set("b", 2);
-            expect(global.map.get("b")).to.equal(2);
+            expect(global.map._map.get("b")?.[0]).to.equal(2);
         });
         it("Can set over a value", async function(){
             global.map.set("a", 1);
             global.map.set("a", 2);
-            expect(global.map.get("a")).to.equal(2);
+            expect(global.map._map.get("a")?.[0]).to.equal(2);
         });
     });
-    describe("Removing", function(){
+    describe("Extracting", function(){
         it("Can remove a value", async function(){
             global.map.set("a", 1);
-            global.map.delete("a");
-            expect(global.map.get("a")).to.equal(undefined);
+            const a = global.map.extract("a");
+            expect(a).to.equal(1);
+            expect(global.map._map.get("a")?.[0]).to.equal(undefined);
         });
     });
     describe("Callbacks", function(){
@@ -41,13 +42,6 @@ describe("TimedMap", function(){
                 done();
             });
             global.map.set("a", 2);
-        });
-        it("Can delete", function(done){
-            global.map.set("a", 1, (reason) => {
-                expect(reason).to.equal("deleted");
-                done();
-            });
-            global.map.delete("a");
         });
         it("Can stop", function(done){
             global.map.set("a", 1, (reason) => {

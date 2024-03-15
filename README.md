@@ -16,7 +16,7 @@
 - Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/ObjectBuffer.js)
 - Server options for talking to (non Sockhop) other clients
 
-## Example
+## Examples
 Here's some basic examples, but check out the [full documentation here](API.md)
 
 ```javascript
@@ -48,80 +48,59 @@ c.on("receive", (obj, metadata)=>{
 
 ```
 
-Promise-based Request/Response example with client-initiated request
+### Promise-based Request/Response example with client-initiated request
 ```javascript
-s.on("request", (request, response, meta)=>{
+s.on("request", (request, meta)=>{
 
   // request.type=="String"
   // request.data=="Can I have some data?"
-  response.send("Sure!");
+  request.respond("Sure!");
 });
 
-c.request("Can I have some data?")
-  .then(stream => stream.next())
-  .then((response)=>{
-    // response.type == "String"
-    // response.data == "Sure!"
-  });
+c.request("Can I have some data?", { timeout: 100 /*Or `null` to disable*/ })
+  .then(response => {
+      // response.type=="String"
+      // response.data=="Sure!"
+  })
+  .catch(err => { /* timeouts and send error appear here */ })
 ```
 
-Promise-based Request/Response example with server-initiated request
+### Promise-based Request/Response example with server-initiated request
 ```javascript
-c.on("request", (request, response)=>{
+c.on("request", (request)=>{
   // request.type=="String"
   // request.data=="Now I want data"
-  response.send("You can have it too");
+  request.respond("You can have it too");
 });
 
 s.once("connect", (sock, sess) => {
   // OR : sess.request("Now I want data")
-  s.request(sock, "Now I want data")
-    .then(stream => stream.next())
+  s.request(sock, "Now I want data", { timeout:100 /*Or `null` to disable*/})
     .then((response)=>{
-
-    // response.type == "String"
-    // response.data == "You can have it too"
-  });
+        // response.type == "String"
+        // response.data == "You can have it too"
+    })
+    .catch(err => { /* timeouts and send error appear here */ })
 });
 
 // Trigger connect event on server to get session reference
 c.disconnect().then(() => c.connect());
 ```
 
-Promise-based Request/Response example with client-initiated request, and streamed data
-```javascript
-s.on("request", (request, response, meta)=>{
 
-  // request.type=="String"
-  // request.data=="Can I have some data?"
-  response.write("Sure!");
-  response.write("Sure again!");
-  response.end(); // Don't forget me, or the client will timeout!
-});
-
-c.request("Can I have some data?")
-  .then(stream => {
-    stream.on("data", (data, type) => { /* data will show up here */ });
-    stream.on("end", () => { /* the stream is over */ });
-  })
-```
-
-
-Remote callback example:
+### Remote callback example:
 ```javascript
 server.on("receive", (obj, meta)=>{
-
   // obj=="Promise to call when you get this"
   meta.callback("I got your message!");
 });
 
 c.send("Promise to call when you get this", (reply)=>{
-
   // reply == "I got your message!"
 });
 ```
 
-Session example
+### Session example
 ```javascript
 const Sockhop=require("sockhop");
 
@@ -181,7 +160,95 @@ npm run test
 ## Notes
 Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes auto ping functionality.
 
-If you ```server.listen()```, make sure you ```server.close()``` when you are done so Node won't hang forever on program exit.  Similarly, if you turn on ```client.ping()``` or set ```client.auto_reconnect=true```, make sure you finish up by ```client.ping(0)``` (to disable pings) and ```client.auto_reconnect=false```.  Alternately you can ```client.disconnect()``` and it will turn off pings/auto_reconnect for you.
+If you ```server.listen()```, make sure you ```server.close()``` when you are done so Node won't hang forever on program exit.
+Similarly, if you turn on ```client.ping()```, make sure to use ```client.ping(0)``` (or ```client.disconnect()```)
+Finally, if you set ```client.connect({auto_reconnect=true})```/```client.start()```, make sure you finish up by using ```client.disconnect()``` and it will turn off pings/auto_reconnect for you.
 
 ## License
 MIT
+
+
+## Migrating from v1 to v2
+### ```client.auto_reconnect = true```
+In version 2 clients using the `.auto_reconnect` setter to trigger the reconnection interval has been deprecated. Instead clients should use either the ```.connect({ auto_reconnect:true })``` or ```.start()``` methods -- of if it is absolutely necessary to trigger the reconnection interval without creating a promise, use ```.set_auto_reconnect_state(true)```. For example:
+
+```js
+// V1
+client.auto_reconnect = true;
+client.once("connected", () => { /* do start things */ });
+client.disconnect();
+
+// V2 (using connect)
+client.connect({ auto_reconnect:true }).then(() => { /* do start things */ });
+client.disconnect();
+
+// V2 (using start)
+client.start().then(() => { /* do start things */ });
+client.disconnect();
+```
+
+The difference between the two new methods is that `connect` will throw if the first connection attempt fails (and then will *not* attempt to reconnect),
+while the `start` method will not resolve until the connection has succeded, failing as many times as necessary
+
+### Auto event bubbling to sessions
+In version 2, the "receive" and "request" events on the server are automatically bubbled to the session: so in version 1 code:
+```
+// V1
+server.on("recieve", (obj, {type, session}) => session.emit("recieve", obj, { type }));
+server.on("session", () => {
+    session.on("recieve", (obj, {type}) => {/* handle session-level code */})
+});
+
+// V2
+server.on("session", () => {
+    session.on("recieve", (obj, {type}) => {/* handle session-level code */})
+});
+```
+
+### Requests
+Requests have been change substantially in version 2. In version 1, requests started a multiplexed data stream over the
+existing socket connection, requiring two steps to retrieve a response (`.request().then(r => r.next()).then(({data}) => {})`)
+This functionality doesn't really fit the concept of a "request/response" -- where a single back-and-forth is more
+inline with the naming. As such, the concept of a data stream will be implemented in a seperate method (`.stream(...)`) in
+a later version, and the `.request(...)` method has been simplified to a single back-and-forth response. In this sense,
+the request method is now just a promisifed workflow for the "callback send" paradigm, with an optional timeout to prevent
+indefinite hanging of requests.
+```js
+// V1
+server.on("request", (request, response, meta)=>{
+
+  // request.type=="String"
+  // request.data=="Can I have some data?"
+  response.write("Sure!");
+  response.write("Sure again!");
+  response.end(); // Don't forget me, or the client will timeout!
+});
+
+client.request("Can I have some data?")
+  .then(stream => {
+    stream.on("data", (data, type) => { /* data will show up here */ });
+    stream.on("end", () => { /* the stream is over */ });
+  })
+
+// V2
+server.on("request", (request, meta)=>{
+
+  // request.type=="String"
+  // request.data=="Can I have some data?"
+  response.respond("Sure!");
+});
+
+client.request("Can I have some data?", { timeout: 100 /*Or `null` to disable*/ })
+  .then(response => {
+      // response.type=="String"
+      // response.data=="Sure!"
+  })
+  .catch(err => { /* timeouts and send error appear here */ })
+
+```
+### Renaming of variables
+The following have been renamed for consistency:
+- `Session#sock` -> `Session#socket`
+
+### TODO
+- [ ] Create sockhop streams to replace the old request style, but make them full-duplex and more flexible

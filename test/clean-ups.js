@@ -74,99 +74,99 @@ describe("Clean ups", function(){
     //         expect(c1._response_stream_map._map.size, "Stream map").to.equal(2);
     //     });
     // });
-// 
-//     it("Steams clean up on timeout (client)",async function(){
-//         await new Promise(res => {
-//             s.once("connect", res);
-//             c1.connect();
-//         }).then(()=>{
-//             return c1.request("Can I have some data?");
-//         }).then(()=>{
-//             expect(c1._response_stream_map._map.size, "Stream map").to.equal(1);
-//             return new Promise(res => {
-//                 for ( const vec of c1._response_stream_map._map.values() ) {
-//                     vec[0].once("end", res);
-//                 }
-//             });
-//         }).then(()=>{
-//             expect(c1._response_stream_map._map.size, "Stream map").to.equal(0);
-//         });
-//     });
+    //
+    //     it("Steams clean up on timeout (client)",async function(){
+    //         await new Promise(res => {
+    //             s.once("connect", res);
+    //             c1.connect();
+    //         }).then(()=>{
+    //             return c1.request("Can I have some data?");
+    //         }).then(()=>{
+    //             expect(c1._response_stream_map._map.size, "Stream map").to.equal(1);
+    //             return new Promise(res => {
+    //                 for ( const vec of c1._response_stream_map._map.values() ) {
+    //                     vec[0].once("end", res);
+    //                 }
+    //             });
+    //         }).then(()=>{
+    //             expect(c1._response_stream_map._map.size, "Stream map").to.equal(0);
+    //         });
+    //     });
 
-//     it("Streams clean up on data through (client)",async function(){
-//         await new Promise(res => {
-//             s.once("connect", res);
-//             c1.connect();
-//         }).then(()=>{
-//             s.once("request", (req,res) => {
-//                 res.send("yep");
-//             });
-//             return c1.request("Can I have some data?");
-//         }).then((stream)=>{
-//             expect(c1._response_stream_map._map.size, "Stream map").to.equal(1);
-//             return stream.next(); // wait for the data
-//         }).then(()=>{
-//             expect(c1._response_stream_map._map.size, "Stream map").to.equal(0);
-//         });
-//     });
-// 
-//     it("Streams clean up on client disconnect (client)",async function(){
-//         await new Promise(res => {
-//             s.once("connect", res);
-//             c1.connect();
-//         }).then(()=>{
-//             return c1.request("Can I have some data?");
-//         }).then(()=>{
-//             expect(c1._response_stream_map._map.size, "Stream map").to.equal(1);
-//             return c1.disconnect();
-//         }).then(()=>{
-//             expect(c1._response_stream_map._map.size, "Stream map").to.equal(0);
-//         });
-//     });
-// 
-// 
-//     it("Streams clean up on timeout (server)",async function(){
-//         let sock;
-//         await new Promise(res => {
-//             s.once("connect", (_sock) => {
-//                 sock=_sock;
-//                 res();
-//             });
-//             c1.connect();
-//         }).then(()=>{
-//             return s.request(sock,"Can I have some data?");
-//         }).then(()=>{
-//             expect(s._callback_map.get(sock)._map.size, "Stream map").to.equal(1);
-//             return new Promise(res => {
-//                 for ( const vec of s._callback_map.get(sock)._map.values() ) {
-//                     vec[0].once("end", res);
-//                 }
-//             });
-//         }).then(()=>{
-//             expect(s._callback_map.get(sock)._map.size, "Stream map").to.equal(0);
-//         });
-//     });
-// 
-//     it("Streams clean up on data through (server)",async function(){
-//         let sock;
-//         await new Promise(res => {
-//             s.once("connect", (_sock) => {
-//                 sock=_sock;
-//                 res();
-//             });
-//             c1.connect();
-//         }).then(()=>{
-//             c1.once("request", (req,res) => {
-//                 res.send("yep");
-//             });
-//             return s.request(sock,"Can I have some data?");
-//         }).then((stream)=>{
-//             expect(s._callback_map.get(sock)._map.size, "Stream map").to.equal(1);
-//             return stream.next();
-//         }).then(()=>{
-//             expect(s._callback_map.get(sock)._map.size, "Stream map").to.equal(0);
-//         });
-//     });
+    //     it("Streams clean up on data through (client)",async function(){
+    //         await new Promise(res => {
+    //             s.once("connect", res);
+    //             c1.connect();
+    //         }).then(()=>{
+    //             s.once("request", (req,res) => {
+    //                 res.send("yep");
+    //             });
+    //             return c1.request("Can I have some data?");
+    //         }).then((stream)=>{
+    //             expect(c1._response_stream_map._map.size, "Stream map").to.equal(1);
+    //             return stream.next(); // wait for the data
+    //         }).then(()=>{
+    //             expect(c1._response_stream_map._map.size, "Stream map").to.equal(0);
+    //         });
+    //     });
+    //
+    //     it("Streams clean up on client disconnect (client)",async function(){
+    //         await new Promise(res => {
+    //             s.once("connect", res);
+    //             c1.connect();
+    //         }).then(()=>{
+    //             return c1.request("Can I have some data?");
+    //         }).then(()=>{
+    //             expect(c1._response_stream_map._map.size, "Stream map").to.equal(1);
+    //             return c1.disconnect();
+    //         }).then(()=>{
+    //             expect(c1._response_stream_map._map.size, "Stream map").to.equal(0);
+    //         });
+    //     });
+    //
+    //
+    //     it("Streams clean up on timeout (server)",async function(){
+    //         let sock;
+    //         await new Promise(res => {
+    //             s.once("connect", (_sock) => {
+    //                 sock=_sock;
+    //                 res();
+    //             });
+    //             c1.connect();
+    //         }).then(()=>{
+    //             return s.request(sock,"Can I have some data?");
+    //         }).then(()=>{
+    //             expect(s._callback_map.get(sock)._map.size, "Stream map").to.equal(1);
+    //             return new Promise(res => {
+    //                 for ( const vec of s._callback_map.get(sock)._map.values() ) {
+    //                     vec[0].once("end", res);
+    //                 }
+    //             });
+    //         }).then(()=>{
+    //             expect(s._callback_map.get(sock)._map.size, "Stream map").to.equal(0);
+    //         });
+    //     });
+    //
+    //     it("Streams clean up on data through (server)",async function(){
+    //         let sock;
+    //         await new Promise(res => {
+    //             s.once("connect", (_sock) => {
+    //                 sock=_sock;
+    //                 res();
+    //             });
+    //             c1.connect();
+    //         }).then(()=>{
+    //             c1.once("request", (req,res) => {
+    //                 res.send("yep");
+    //             });
+    //             return s.request(sock,"Can I have some data?");
+    //         }).then((stream)=>{
+    //             expect(s._callback_map.get(sock)._map.size, "Stream map").to.equal(1);
+    //             return stream.next();
+    //         }).then(()=>{
+    //             expect(s._callback_map.get(sock)._map.size, "Stream map").to.equal(0);
+    //         });
+    //     });
 
     after("close server",()=>{
         s.close();

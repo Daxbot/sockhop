@@ -35,7 +35,7 @@ describe("Client-server", function(){
                     assert.equal(c.connected, false);
                     done();
                 });
-        })
+        });
     });
     it("client.send return error when not connected to server",function(done){
         c.send("data").catch(()=>{
@@ -80,7 +80,7 @@ describe("Client-server", function(){
                     assert.equal(res.data, "and goes out");
                     done();
                 });
-        });
+            });
 
     });
 

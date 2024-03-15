@@ -198,6 +198,14 @@ describe("client.auto_reconnect", function(){
 
     });
 
+    it("Setting the auto_reconnect to false cleans up the internal interval", function(done){
+
+        c.auto_reconnect=false;
+        assert.equal(c._auto_reconnect_timer, null, "Timer is still active");
+
+        done();
+
+    });
 
     after(("closeup"),()=>{
 

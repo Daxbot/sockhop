@@ -21,6 +21,8 @@ describe("Clean ups", function(){
             c2.disconnect()
         ]).then(() => {
             return c1.connect();
+        }).then(() => {
+            return new Promise(res => setTimeout(res, 10)); // wait for the callbacks to trigger
         }).then(()=>{
             expect(s.sockets.length).to.equal(1);
             expect(s.sessions.length).to.equal(1);
@@ -43,6 +45,8 @@ describe("Clean ups", function(){
                 c1.connect(),
                 c2.connect()
             ]);
+        }).then(() => {
+            return new Promise(res => setTimeout(res, 10)); // wait for the callbacks to trigger
         }).then(()=>{
             expect(s.sockets.length, "Socket length").to.equal(2);
             expect(s.sessions.length, "Session length").to.equal(2);

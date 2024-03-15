@@ -9,6 +9,7 @@ describe("Client-server", function(){
     c=new Sockhop.client({port: 50002, response_timeout:50});
 
     before(async() => { await s.listen(); });
+    beforeEach(async() => { await c.disconnect(); });
 
     it("client.connected transitions from false to true on connect",function(done){
 
@@ -26,13 +27,15 @@ describe("Client-server", function(){
     });
     it("client.connected transitions from true to false on disconnect",function(done){
 
-        assert.equal(c.connected,true);
-        c.disconnect()
-            .then(()=>{
+        c.connect().then(() => {
+            assert.equal(c.connected,true);
+            c.disconnect()
+                .then(()=>{
 
-                assert.equal(c.connected, false);
-                done();
-            });
+                    assert.equal(c.connected, false);
+                    done();
+                });
+        })
     });
     it("client.send return error when not connected to server",function(done){
         c.send("data").catch(()=>{
@@ -63,19 +66,21 @@ describe("Client-server", function(){
 
     it("client.request()", function(done){
 
+        s.once("request", (req)=>{
+            assert.equal(req.data, "data goes in");
+            req.respond("and goes out");
+        });
+
         c.connect()
             .then(()=>{
-
-                s.once("request", (req)=>{
-                    assert.equal(req.data, "data goes in");
-                    req.respond("and goes out");
-                });
-
+                // Let the server attach all their handler
+                return new Promise(res => setTimeout(res, 10));
+            }).then(()=>{
                 c.request("data goes in").then(res => {
                     assert.equal(res.data, "and goes out");
                     done();
                 });
-            });
+        });
 
     });
 
@@ -89,6 +94,9 @@ describe("Client-server", function(){
         });
         c.connect()
             .then(()=>{
+                // Let the server attach all their handler
+                return new Promise(res => setTimeout(res, 10));
+            }).then(()=>{
                 c.request("data goes in").then(res => {
                     assert.equal(res.data, "and goes out");
                     done();
@@ -157,7 +165,7 @@ describe("Client-server", function(){
             done();
         });
 
-        s.sendall("data goeth in");
+        c.connect().then(() => s.sendall("data goeth in"));
 
     });
 
@@ -174,10 +182,7 @@ describe("Client-server", function(){
                 done();
             });
         });
-        // Force the disconnection so that the above triggers
-        c.disconnect().then(() => {
-            c.connect();
-        });
+        c.connect();
     });
 
     it("session.send()", function(done){
@@ -190,10 +195,8 @@ describe("Client-server", function(){
 
             sess.send("data goes in");
         });
-        // Force the disconnection so that the above triggers
-        c.disconnect().then(() => {
-            c.connect();
-        });
+
+        c.connect();
     });
 
     it("session.request()", function(done){
@@ -209,10 +212,7 @@ describe("Client-server", function(){
                 done();
             });
         });
-        // Force the disconnection so that the above triggers
-        c.disconnect().then(() => {
-            c.connect();
-        });
+        c.connect();
     });
 
 
@@ -223,11 +223,17 @@ describe("Client-server", function(){
             meta.callback("I got it!");
         });
 
-        c.send("Promise to call when you get this", (reply)=>{
+        c.connect()
+            .then(()=>{
+                // Let the server attach all their handler
+                return new Promise(res => setTimeout(res, 10));
+            }).then(() => {
+                c.send("Promise to call when you get this", (reply)=>{
 
-            assert.equal(reply, "I got it!");
-            done();
-        });
+                    assert.equal(reply, "I got it!");
+                    done();
+                });
+            });
 
     });
 
@@ -238,11 +244,17 @@ describe("Client-server", function(){
             meta.callback("RSVP");
         });
 
-        s.send(s.sockets[0], "Please RSVP to the server", (reply)=>{
+        c.connect()
+            .then(()=>{
+                // Let the server attach all their handler
+                return new Promise(res => setTimeout(res, 10));
+            }).then(() => {
+                s.send(s.sockets[0], "Please RSVP to the server", (reply)=>{
 
-            assert.equal(reply, "RSVP");
-            done();
-        });
+                    assert.equal(reply, "RSVP");
+                    done();
+                });
+            });
 
     });
     after("close server",()=>{

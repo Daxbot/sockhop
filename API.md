@@ -806,13 +806,16 @@ clients connection from the server. Rather, users should call `session.kill()`.
 
 * [SockhopSession](#SockhopSession) ⇐ <code>EventEmitter</code>
     * [new SockhopSession(sock, server)](#new_SockhopSession_new)
-    * [.sock](#SockhopSession+sock) : <code>net.Socket</code>
+    * ~~[.sock](#SockhopSession+sock) : <code>net.Socket</code>~~
+    * [.socket](#SockhopSession+socket) : <code>net.Socket</code>
     * [.server](#SockhopSession+server) : [<code>SockhopServer</code>](#SockhopServer)
     * [.send(obj)](#SockhopSession+send) ⇒ <code>Promise</code>
     * [.request(obj, config)](#SockhopSession+request) ⇒ [<code>Promise.&lt;SockhopResponse&gt;</code>](#SockhopResponse)
     * [.kill()](#SockhopSession+kill) ⇒ <code>Promise</code>
     * *[.start()](#SockhopSession+start) ⇒ <code>Promise</code>*
     * *[.end()](#SockhopSession+end) ⇒ <code>Promise</code>*
+    * ["request" (req)](#SockhopSession+event_request)
+    * ["receive" (object, meta)](#SockhopSession+event_receive)
 
 <a name="new_SockhopSession_new"></a>
 
@@ -829,7 +832,15 @@ By default, I just save references to the socket and the server
 
 <a name="SockhopSession+sock"></a>
 
-### sockhopSession.sock : <code>net.Socket</code>
+### ~~sockhopSession.sock : <code>net.Socket</code>~~
+***Deprecated***
+
+Getter for the underlying session socket
+
+**Kind**: instance property of [<code>SockhopSession</code>](#SockhopSession)  
+<a name="SockhopSession+socket"></a>
+
+### sockhopSession.socket : <code>net.Socket</code>
 Getter for the underlying session socket
 
 **Kind**: instance property of [<code>SockhopSession</code>](#SockhopSession)  
@@ -906,6 +917,35 @@ then trigger the server to emit the 'disconnect' event.
 
 **Kind**: instance abstract method of [<code>SockhopSession</code>](#SockhopSession)  
 **Returns**: <code>Promise</code> - resolves when teardown is complete  
+<a name="SockhopSession+event_request"></a>
+
+### "request" (req)
+receive request event
+
+We have successfully received a request object from the client
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type |
+| --- | --- |
+| req | [<code>SockhopRequest</code>](#SockhopRequest) | 
+
+<a name="SockhopSession+event_receive"></a>
+
+### "receive" (object, meta)
+receive object event
+
+We have successfully received an object from the client
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the received object |
+| meta | <code>object</code> | metadata |
+| meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
+| [meta.callback] | <code>function</code> | the callback function, if the client is requesting a callback. Pass an object you want returned to the client |
+
 <a name="TimedMap"></a>
 
 ## TimedMap

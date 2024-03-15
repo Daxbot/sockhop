@@ -246,6 +246,9 @@ client.request("Can I have some data?", { timeout: 100 /*Or `null` to disable*/ 
   .catch(err => { /* timeouts and send error appear here */ })
 
 ```
+### Renaming of variables
+The following have been renamed for consistency:
+- `Session#sock` -> `Session#socket`
 
 ### TODO
 - [ ] Create sockhop streams to replace the old request style, but make them full-duplex and more flexible

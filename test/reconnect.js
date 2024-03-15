@@ -5,30 +5,16 @@ var spawn=require("child_process").spawn;
 
 var c,s;
 
-describe("client.auto_reconnect", function(){
+describe("Reconnections", function(){
 
 
     s=new Sockhop.server({port: 50007});
     c=new Sockhop.client({port: 50007, auto_reconnect_interval: 200});
 
-    it("Will cause connect when set", function(done){
-
-        // We are done once we connect and pass data
-        c.once("connect",()=>{
-
-            s.once("receive", (msg)=>{
-                assert.equal(msg, "Here, have some data");
-                done();
-            });
-
-            c.send("Here, have some data");
-        });
-
-        s.listen()
-            .then(()=>c.auto_reconnect=true);
-
-    });
-
+    before(async() => s.listen());
+    after(async() => s.close());
+    beforeEach(async() => c.start());
+    afterEach(async() => c.disconnect());
 
     it("Reconnects automatically when client disconnects due to ping (slow)", function(done){
 
@@ -39,7 +25,6 @@ describe("client.auto_reconnect", function(){
 
             s.once("receive", (msg)=>{
                 assert.equal(msg, "data goes in");
-                c.ping(0);
                 done();
             });
 
@@ -67,24 +52,17 @@ describe("client.auto_reconnect", function(){
         c.once("connect",()=>{
 
             assert.equal(disconnect_event_counter,1);
-            c.disconnect();
-            s.close();
-            delete c; // eslint-disable-line no-delete-var
-            delete s; // eslint-disable-line no-delete-var
             done();
         });
 
         Promise.resolve()
             .then(()=>s.close())
             .then(()=>{
-                delete s; // eslint-disable-line no-delete-var
-            })
-            .then(()=>{
             // 1s later, create a new server
                 setTimeout(()=>{
                     s=new Sockhop.server({port: 50007});
                     s.listen();
-                },1000);
+                },500);
             });
 
     });
@@ -95,6 +73,8 @@ describe("client.auto_reconnect", function(){
         this.slow(4000);
         this.timeout(3000);
 
+
+        c.disconnect();
         c=new Sockhop.client({port: 50009, auto_reconnect_interval: 200});
 
         // Count connect events
@@ -124,7 +104,7 @@ describe("client.auto_reconnect", function(){
         });
 
         // Start trying to connect
-        c.auto_reconnect=true;
+        c.start();
 
         Promise.resolve()
             .then(()=>{
@@ -148,6 +128,7 @@ describe("client.auto_reconnect", function(){
         this.timeout(9000);
 
         // Create a fresh client
+        c.disconnect();
         c=new Sockhop.client({port: 50010, auto_reconnect_interval: 200});
 
         // Count connect events, start recording connect events
@@ -194,25 +175,10 @@ describe("client.auto_reconnect", function(){
         });
 
         // Connect the client
-        c.auto_reconnect=true;
+        c.start();
 
     });
 
-    it("Setting the auto_reconnect to false cleans up the internal interval", function(done){
-
-        c.auto_reconnect=false;
-        assert.equal(c._auto_reconnect_timer, null, "Timer is still active");
-
-        done();
-
-    });
-
-    after(("closeup"),()=>{
-
-        if(c.auto_reconnect) c.auto_reconnect=false;
-        s.close();
-
-    });
 });
 
 

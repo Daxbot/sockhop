@@ -176,12 +176,11 @@ Wrapped TCP client
 
 * [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
     * [new SockhopClient([opts])](#new_SockhopClient_new)
-    * [.connected](#SockhopClient+connected) ⇒ <code>boolean</code>
-    * [.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>
-    * [.auto_reconnect](#SockhopClient+auto_reconnect)
-    * [.socket](#SockhopClient+socket) : <code>net.socket</code>
-    * [._perform_auto_reconnect()](#SockhopClient+_perform_auto_reconnect)
-    * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
+    * [.connected](#SockhopClient+connected) : <code>boolean</code>
+    * [.auto_reconnect_active](#SockhopClient+auto_reconnect_active) : <code>boolean</code>
+    * ~~[.auto_reconnect](#SockhopClient+auto_reconnect)~~
+    * [.start()](#SockhopClient+start) ⇒ <code>Promise.&lt;this&gt;</code>
+    * [.connect(config)](#SockhopClient+connect) ⇒ <code>Promise.&lt;this&gt;</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
     * [.send(object, [rcallback])](#SockhopClient+send) ⇒ <code>Promise</code>
     * [.request(object, config)](#SockhopClient+request) ⇒ [<code>Promise.&lt;SockhopResponseReadableStream&gt;</code>](#SockhopResponseReadableStream)
@@ -211,58 +210,65 @@ Constructs a new SockhopClient
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor. |
 | [opts.response_timeout] | <code>number</code> |  | the length of time in ms that this map should hold values by default |
+| [opts.connect_timeout] | <code>number</code> | <code>5000</code> | the length of time in ms to try to connect before timing out |
 
 <a name="SockhopClient+connected"></a>
 
-### sockhopClient.connected ⇒ <code>boolean</code>
-connected
+### sockhopClient.connected : <code>boolean</code>
+Is the socket connected?
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
-**Returns**: <code>boolean</code> - connected whether or not we are currently connected  
-<a name="SockhopClient+auto_reconnect"></a>
+<a name="SockhopClient+auto_reconnect_active"></a>
 
-### sockhopClient.auto\_reconnect ⇒ <code>boolean</code>
-auto_reconnect getter
+### sockhopClient.auto\_reconnect\_active : <code>boolean</code>
+Is auto-reconnection active?
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
-**Returns**: <code>boolean</code> - auto_reconnect the current auto_reconnect setting  
 <a name="SockhopClient+auto_reconnect"></a>
 
-### sockhopClient.auto\_reconnect
+### ~~sockhopClient.auto\_reconnect~~
+***Deprecated***
+
 auto_reconnect setter
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+**Throws**:
+
+- <code>Error</code> 'The .auto_reconnect setter has been deprecated in v2'
+
 
 | Param | Type | Description |
 | --- | --- | --- |
 | auto_reconnect | <code>boolean</code> | the desired auto_reconnect setting |
 
-<a name="SockhopClient+socket"></a>
+<a name="SockhopClient+start"></a>
 
-### sockhopClient.socket : <code>net.socket</code>
-Underlying net.socket
+### sockhopClient.start() ⇒ <code>Promise.&lt;this&gt;</code>
+Start a persistant connection to the server
 
-**Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
-<a name="SockhopClient+_perform_auto_reconnect"></a>
-
-### sockhopClient.\_perform\_auto\_reconnect()
-Perform an auto reconnet (internal)
-
-We have determined that an auto reconnect is necessary.
-We will initiate it, and manage the fallout.
+Note, this method will only return once a valid connection has been achieved (and so could hang indefinitely).
+This will also start an auto-reconnection timer which will attempt to keep this connection live. Use `.disconnect()`
+to stop.
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>Promise.&lt;this&gt;</code> - The socket is connected  
 <a name="SockhopClient+connect"></a>
 
-### sockhopClient.connect() ⇒ <code>Promise</code>
-Connect
-
+### sockhopClient.connect(config) ⇒ <code>Promise.&lt;this&gt;</code>
 Connect to the server
-If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.
-Calling this directly will get you a Promise rejection if you are not able to connect the first time.
-N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>Promise.&lt;this&gt;</code> - if connection is successful  
+**Throws**:
+
+- <code>Error</code> if connection fails or times out
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| config | <code>object</code> |  |  |
+| [config.auto_reconnect] | <code>boolean</code> | <code>false</code> | should the connection attempt to reconnect after the initial connection succeeds? |
+
 <a name="SockhopClient+get_bound_address"></a>
 
 ### sockhopClient.get\_bound\_address() ⇒ <code>string</code>

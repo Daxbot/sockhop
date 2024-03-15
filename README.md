@@ -181,7 +181,32 @@ npm run test
 ## Notes
 Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes auto ping functionality.
 
-If you ```server.listen()```, make sure you ```server.close()``` when you are done so Node won't hang forever on program exit.  Similarly, if you turn on ```client.ping()``` or set ```client.auto_reconnect=true```, make sure you finish up by ```client.ping(0)``` (to disable pings) and ```client.auto_reconnect=false```.  Alternately you can ```client.disconnect()``` and it will turn off pings/auto_reconnect for you.
+If you ```server.listen()```, make sure you ```server.close()``` when you are done so Node won't hang forever on program exit.
+Similarly, if you turn on ```client.ping()```, make sure to use ```client.ping(0)``` (or ```client.disconnect()```)
+Finally, if you set ```client.connect({auto_reconnect=true})```/```client.start()```, make sure you finish up by using ```client.disconnect()``` and it will turn off pings/auto_reconnect for you.
 
 ## License
 MIT
+
+
+## Migrating from v1 to v2
+### ```client.auto_reconnect = true```
+Version 2 clients no longer use the `.auto_reconnect` setter to trigger the reconnection interval, instead clients should use either the ```.connect({ auto_reconnect:true })``` or ```.start()``` methods. For example:
+
+```js
+// V1
+client.auto_reconnect = true;
+client.once("connected", () => { /* do start things */ });
+client.disconnect();
+
+// V2 (using connect)
+client.connect({ auto_reconnect:true }).then(() => { /* do start things */ });
+client.disconnect();
+
+// V2 (using start)
+client.start().then(() => { /* do start things */ });
+client.disconnect();
+```
+
+The difference between the two new methods is that `connect` will throw if the first connection attempt fails (and then will *not* attempt to reconnect),
+while the `start` method will not resolve until the connection has succeded.

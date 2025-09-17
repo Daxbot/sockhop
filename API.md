@@ -179,6 +179,7 @@ Wrapped TCP client
     * [.connected](#SockhopClient+connected) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect)
+    * [.debug](#SockhopClient+debug) ⇒ <code>boolean</code>
     * [.socket](#SockhopClient+socket) : <code>net.socket</code>
     * [._perform_auto_reconnect()](#SockhopClient+_perform_auto_reconnect)
     * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
@@ -191,6 +192,8 @@ Wrapped TCP client
     * ["receive" (object, meta)](#SockhopClient+event_receive)
     * ["request" (req, res)](#SockhopClient+event_request)
     * ["disconnect" (sock)](#SockhopClient+event_disconnect)
+    * ["sending" (object, buffer)](#SockhopClient+event_sending)
+    * ["received" (object, buffer)](#SockhopClient+event_received)
 
 <a name="new_SockhopClient_new"></a>
 
@@ -211,6 +214,8 @@ Constructs a new SockhopClient
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor. |
 | [opts.response_timeout] | <code>number</code> |  | the length of time in ms that this map should hold values by default |
+| [opts.connect_timeout] | <code>number</code> | <code>5000</code> | the length of time in ms to try to connect before timing out |
+| [opts.debug] | <code>boolean</code> | <code>false</code> | run in debug mode -- which adds additional emits |
 
 <a name="SockhopClient+connected"></a>
 
@@ -237,6 +242,13 @@ auto_reconnect setter
 | --- | --- | --- |
 | auto_reconnect | <code>boolean</code> | the desired auto_reconnect setting |
 
+<a name="SockhopClient+debug"></a>
+
+### sockhopClient.debug ⇒ <code>boolean</code>
+debug mode getter
+
+**Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>boolean</code> - debug whether or not we are in debug mode  
 <a name="SockhopClient+socket"></a>
 
 ### sockhopClient.socket : <code>net.socket</code>
@@ -380,6 +392,34 @@ disconnect event
 | Param | Type | Description |
 | --- | --- | --- |
 | sock | <code>net.Socket</code> | the socket that just disconnected |
+
+<a name="SockhopClient+event_sending"></a>
+
+### "sending" (object, buffer)
+sending event
+
+NOTE : This event is only emitted if the SockhopClient is in debug mode
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we are sending |
+| buffer | <code>Buffer</code> | the buffer we are sending |
+
+<a name="SockhopClient+event_received"></a>
+
+### "received" (object, buffer)
+received event
+
+NOTE : This event is only emitted if the SockhopClient is in debug mode
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we just received |
+| buffer | <code>Buffer</code> | the buffer we just received |
 
 <a name="SockhopError"></a>
 

@@ -1,0 +1,14 @@
+node_modules
+._*
+
+.eslintrc.json
+.jshintrc
+.mocharc.yaml
+
+.vscode
+
+
+slambang.js
+test/
+build-tools
+tags

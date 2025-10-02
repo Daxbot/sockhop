@@ -1,13 +1,13 @@
-var ObjectBuffer=require("../lib/ObjectBuffer.js");
+var JSONObjectBuffer=require("../lib/JSONObjectBuffer.js");
 var assert=require("assert");
 
-describe("ObjectBuffer", function(){
+describe("JSONObjectBuffer", function(){
 
 
     describe("Newline terminator", function(){
 
-        // Create an ObjectBuffer
-        var ob=new ObjectBuffer();
+        // Create an JSONObjectBuffer
+        var ob=new JSONObjectBuffer();
 
         // Create some objects
         var objects=[];
@@ -64,8 +64,8 @@ describe("ObjectBuffer", function(){
 
     describe("String terminator", function(){
 
-        // Create an ObjectBuffer
-        var ob=new ObjectBuffer({terminator:"\n.\n"});
+        // Create an JSONObjectBuffer
+        var ob=new JSONObjectBuffer({terminator:"\n.\n"});
 
         // Create some objects
         var objects=[];
@@ -122,9 +122,9 @@ describe("ObjectBuffer", function(){
 
     describe("Split terminators (constuctor passed an array of terminators)", function(){
 
-        // Create ObjectBuffers
-        var ob_a=new ObjectBuffer({terminator:["Weasel","Fish"]});
-        var ob_b=new ObjectBuffer({terminator:["Fish","Weasel"]});            // Notice they are swapped here, since a receives what b transmits and vice versa
+        // Create JSONObjectBuffers
+        var ob_a=new JSONObjectBuffer({terminator:["Weasel","Fish"]});
+        var ob_b=new JSONObjectBuffer({terminator:["Fish","Weasel"]});            // Notice they are swapped here, since a receives what b transmits and vice versa
 
         // Create some objects
         var objects=[];
@@ -185,8 +185,8 @@ describe("ObjectBuffer", function(){
 
         it("obj2buf rejects string", function(done){
 
-            // Create an ObjectBuffer
-            let ob=new ObjectBuffer({allow_non_objects: false});
+            // Create an JSONObjectBuffer
+            let ob=new JSONObjectBuffer({allow_non_objects: false});
 
             ob.once("error",(e)=>{
 
@@ -199,8 +199,8 @@ describe("ObjectBuffer", function(){
 
         it("buf2obj rejects non JSON string", function(done){
 
-            // Create an ObjectBuffer
-            let ob=new ObjectBuffer({allow_non_objects: false});
+            // Create an JSONObjectBuffer
+            let ob=new JSONObjectBuffer({allow_non_objects: false});
 
             ob.once("error",(e)=>{
 
@@ -214,8 +214,8 @@ describe("ObjectBuffer", function(){
 
         it("obj2buf accepts string with allow_non_objects===true", function(){
 
-            // Create an ObjectBuffer
-            let ob=new ObjectBuffer({allow_non_objects: true});
+            // Create an JSONObjectBuffer
+            let ob=new JSONObjectBuffer({allow_non_objects: true});
 
             let buffer=ob.obj2buf("This is a string");
             assert.equal(buffer.toString(), "\"This is a string\"\n");        // It was converted to a JSON string
@@ -223,8 +223,8 @@ describe("ObjectBuffer", function(){
 
         it("buf2obj accepts buffer from string with allow_non_objects===true", function(){
 
-            // Create an ObjectBuffer
-            let ob=new ObjectBuffer({allow_non_objects: true});
+            // Create an JSONObjectBuffer
+            let ob=new JSONObjectBuffer({allow_non_objects: true});
 
             ob.buf2obj(Buffer.from("This is a buffer from a string\n"));
         });
@@ -232,8 +232,8 @@ describe("ObjectBuffer", function(){
     });
     // describe("Allow non JSON objects", function(){
 
-    //     // Create an ObjectBuffer
-    //     var ob=new ObjectBuffer({allow_non_objects: false});
+    //     // Create an JSONObjectBuffer
+    //     var ob=new JSONObjectBuffer({allow_non_objects: false});
 
     //     // Create some objects
     //     var objects=[];

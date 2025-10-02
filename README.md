@@ -13,7 +13,7 @@
 - Ping with auto disconnect/reconnect
 - Promise-based request/responses bi-directionally between server and clients
 - Remote callbacks across socket
-- Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/ObjectBuffer.js)
+- Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/JSONObjectBuffer.js)
 - Server options for talking to (non Sockhop) other clients
 
 ## Example

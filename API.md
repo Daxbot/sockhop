@@ -1,8 +1,14 @@
 ## Classes
 
 <dl>
-<dt><a href="#ObjectBuffer">ObjectBuffer</a> ⇐ <code>EventEmitter</code></dt>
-<dd><p>Object Buffer</p>
+<dt><a href="#JSONObjectBuffer">JSONObjectBuffer</a> ⇐ <code>EventEmitter</code></dt>
+<dd><p>Object Buffer for JSON encoding</p>
+<p>de/serialize objects to/from a Buffer</p>
+<p>Automatically reassembles fragmented buffers (useful when the buffer passes through
+a socket, for example, and is received in pieces) and gives you your object back</p>
+</dd>
+<dt><a href="#JSONObjectBuffer">JSONObjectBuffer</a> ⇐ <code>EventEmitter</code></dt>
+<dd><p>Object Buffer for JSON encoding</p>
 <p>de/serialize objects to/from a Buffer</p>
 <p>Automatically reassembles fragmented buffers (useful when the buffer passes through
 a socket, for example, and is received in pieces) and gives you your object back</p>
@@ -107,10 +113,10 @@ remove values that have been present for too long.</p>
 <dd></dd>
 </dl>
 
-<a name="ObjectBuffer"></a>
+<a name="JSONObjectBuffer"></a>
 
-## ObjectBuffer ⇐ <code>EventEmitter</code>
-Object Buffer
+## JSONObjectBuffer ⇐ <code>EventEmitter</code>
+Object Buffer for JSON encoding
 
 de/serialize objects to/from a Buffer
 
@@ -120,15 +126,18 @@ a socket, for example, and is received in pieces) and gives you your object back
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
 
-* [ObjectBuffer](#ObjectBuffer) ⇐ <code>EventEmitter</code>
-    * [new ObjectBuffer(opts)](#new_ObjectBuffer_new)
-    * [.buf2obj(buffer)](#ObjectBuffer+buf2obj) ⇒ <code>Array</code>
-    * [.obj2buf(object, buffer)](#ObjectBuffer+obj2buf)
+* [JSONObjectBuffer](#JSONObjectBuffer) ⇐ <code>EventEmitter</code>
+    * [new JSONObjectBuffer(opts)](#new_JSONObjectBuffer_new)
+    * [new JSONObjectBuffer(opts)](#new_JSONObjectBuffer_new)
+    * [.buf2obj(buffer)](#JSONObjectBuffer+buf2obj) ⇒ <code>Array</code>
+    * [.obj2buf(object, buffer)](#JSONObjectBuffer+obj2buf)
+    * [.buf2obj(buffer)](#JSONObjectBuffer+buf2obj) ⇒ <code>Array</code>
+    * [.obj2buf(object, buffer)](#JSONObjectBuffer+obj2buf)
 
-<a name="new_ObjectBuffer_new"></a>
+<a name="new_JSONObjectBuffer_new"></a>
 
-### new ObjectBuffer(opts)
-Constructs a new ObjectBuffer
+### new JSONObjectBuffer(opts)
+Constructs a new JSONObjectBuffer
 
 
 | Param | Type | Default | Description |
@@ -137,28 +146,169 @@ Constructs a new ObjectBuffer
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
 
-<a name="ObjectBuffer+buf2obj"></a>
+<a name="new_JSONObjectBuffer_new"></a>
 
-### objectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
+### new JSONObjectBuffer(opts)
+Constructs a new JSONObjectBuffer
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| opts | <code>object</code> |  | the options |
+| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
+| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
+
+<a name="JSONObjectBuffer+buf2obj"></a>
+
+### jsonObjectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
 buf2obj
 
 Convert a Buffer into one or more objects
 
-**Kind**: instance method of [<code>ObjectBuffer</code>](#ObjectBuffer)  
+**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
 **Returns**: <code>Array</code> - found the objects we found  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
 
-<a name="ObjectBuffer+obj2buf"></a>
+<a name="JSONObjectBuffer+obj2buf"></a>
 
-### objectBuffer.obj2buf(object, buffer)
+### jsonObjectBuffer.obj2buf(object, buffer)
 obj2buf
 
 Convert an Object to a Buffer
 
-**Kind**: instance method of [<code>ObjectBuffer</code>](#ObjectBuffer)  
+**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>Object</code> | the object to convert |
+| buffer | <code>Buffer</code> | the buffer representing that object |
+
+<a name="JSONObjectBuffer+buf2obj"></a>
+
+### jsonObjectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
+buf2obj
+
+Convert a Buffer into one or more objects
+
+**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
+**Returns**: <code>Array</code> - found the objects we found  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
+
+<a name="JSONObjectBuffer+obj2buf"></a>
+
+### jsonObjectBuffer.obj2buf(object, buffer)
+obj2buf
+
+Convert an Object to a Buffer
+
+**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>Object</code> | the object to convert |
+| buffer | <code>Buffer</code> | the buffer representing that object |
+
+<a name="JSONObjectBuffer"></a>
+
+## JSONObjectBuffer ⇐ <code>EventEmitter</code>
+Object Buffer for JSON encoding
+
+de/serialize objects to/from a Buffer
+
+Automatically reassembles fragmented buffers (useful when the buffer passes through
+a socket, for example, and is received in pieces) and gives you your object back
+
+**Kind**: global class  
+**Extends**: <code>EventEmitter</code>  
+
+* [JSONObjectBuffer](#JSONObjectBuffer) ⇐ <code>EventEmitter</code>
+    * [new JSONObjectBuffer(opts)](#new_JSONObjectBuffer_new)
+    * [new JSONObjectBuffer(opts)](#new_JSONObjectBuffer_new)
+    * [.buf2obj(buffer)](#JSONObjectBuffer+buf2obj) ⇒ <code>Array</code>
+    * [.obj2buf(object, buffer)](#JSONObjectBuffer+obj2buf)
+    * [.buf2obj(buffer)](#JSONObjectBuffer+buf2obj) ⇒ <code>Array</code>
+    * [.obj2buf(object, buffer)](#JSONObjectBuffer+obj2buf)
+
+<a name="new_JSONObjectBuffer_new"></a>
+
+### new JSONObjectBuffer(opts)
+Constructs a new JSONObjectBuffer
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| opts | <code>object</code> |  | the options |
+| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
+| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
+
+<a name="new_JSONObjectBuffer_new"></a>
+
+### new JSONObjectBuffer(opts)
+Constructs a new JSONObjectBuffer
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| opts | <code>object</code> |  | the options |
+| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
+| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
+
+<a name="JSONObjectBuffer+buf2obj"></a>
+
+### jsonObjectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
+buf2obj
+
+Convert a Buffer into one or more objects
+
+**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
+**Returns**: <code>Array</code> - found the objects we found  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
+
+<a name="JSONObjectBuffer+obj2buf"></a>
+
+### jsonObjectBuffer.obj2buf(object, buffer)
+obj2buf
+
+Convert an Object to a Buffer
+
+**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>Object</code> | the object to convert |
+| buffer | <code>Buffer</code> | the buffer representing that object |
+
+<a name="JSONObjectBuffer+buf2obj"></a>
+
+### jsonObjectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
+buf2obj
+
+Convert a Buffer into one or more objects
+
+**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
+**Returns**: <code>Array</code> - found the objects we found  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
+
+<a name="JSONObjectBuffer+obj2buf"></a>
+
+### jsonObjectBuffer.obj2buf(object, buffer)
+obj2buf
+
+Convert an Object to a Buffer
+
+**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -211,8 +361,8 @@ Constructs a new SockhopClient
 | [opts.ssl_options] | <code>object</code> | <code>{}</code> | options to pass to the tls socket constructor, see `tls.connect` for details, note, if any options are provided, the `opts.ssl` flag is overriden as true |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
 | opts.peer_type | <code>string</code> |  | the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
-| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
-| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor. |
+| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the JSONObjectBuffer constructor. |
+| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
 | [opts.response_timeout] | <code>number</code> |  | the length of time in ms that this map should hold values by default |
 | [opts.connect_timeout] | <code>number</code> | <code>5000</code> | the length of time in ms to try to connect before timing out |
 | [opts.debug] | <code>boolean</code> | <code>false</code> | run in debug mode -- which adds additional emits |
@@ -853,8 +1003,8 @@ Constructs a new SockhopServer
 | [opts.address] | <code>string</code> | <code>&quot;\&quot;127.0.0.1\&quot;&quot;</code> | the IP address to bind to |
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
-| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the ObjectBuffer constructor. |
-| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the ObjectBuffer constructor. |
+| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the JSONObjectBuffer constructor. |
+| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
 | [opts.peer_type] | <code>string</code> | <code>&quot;\&quot;SockhopClient\&quot;&quot;</code> | the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 | [opts.session_type] | <code>Object</code> | <code>SockhopSession</code> | the identifier for a SockhopSession class (or inhereted class) |
 | [opts.response_timeout] | <code>number</code> |  | the length of time in ms that this map should hold values by default |

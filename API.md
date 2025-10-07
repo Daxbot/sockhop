@@ -170,10 +170,10 @@ Constructs a new SockhopClient
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
 | [opts.ssl] | <code>boolean</code> | <code>false</code> | use tls |
 | [opts.ssl_options] | <code>object</code> | <code>{}</code> | options to pass to the tls socket constructor, see `tls.connect` for details, note, if any options are provided, the `opts.ssl` flag is overriden as true |
+| [opts.auto_reconnect] | <code>number</code> | <code>false</code> | automatically try to reconnect if the connection is lost |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the JSONObjectBuffer constructor. |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
-| [opts.response_timeout] | <code>number</code> |  | the length of time in ms that this map should hold values by default |
 | [opts.connect_timeout] | <code>number</code> | <code>5000</code> | the length of time in ms to try to connect before timing out |
 | [opts.debug] | <code>boolean</code> | <code>false</code> | run in debug mode -- which adds additional emits |
 
@@ -498,11 +498,9 @@ Constructs a new SockhopServer
 | [opts.path] | <code>string</code> |  | the path for a Unix domain socket.  If used, this will override the address and port values. |
 | [opts.address] | <code>string</code> | <code>&quot;\&quot;127.0.0.1\&quot;&quot;</code> | the IP address to bind to |
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
-| [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the JSONObjectBuffer constructor. |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
 | [opts.session_type] | <code>Object</code> | <code>SockhopSession</code> | the identifier for a SockhopSession class (or inhereted class) |
-| [opts.response_timeout] | <code>number</code> |  | the length of time in ms that this map should hold values by default |
 
 <a name="SockhopServer+sockets"></a>
 

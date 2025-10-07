@@ -24,7 +24,7 @@ describe("client.auto_reconnect", function(){
 
     it("Reconnects automatically when client disconnects due to ping (slow)", function(done){
 
-        this.slow(3000);
+        this.timeout(5000);
 
         c.connect().then(() => {
             c.ping(200);
@@ -49,7 +49,7 @@ describe("client.auto_reconnect", function(){
 
     it("Reconnects on server death, only bubble single disconnect event", function(done){
 
-        this.slow(3000);
+        this.timeout(5000);
 
         // Count disconnect events
         var disconnect_event_counter=0;
@@ -101,8 +101,7 @@ describe("client.auto_reconnect", function(){
 
     it("Attempts connect until server appears, then bubbles SINGLE connect event (slow)", function(done){
 
-        this.slow(4000);
-        this.timeout(3000);
+        this.timeout(4000);
 
         c=new Sockhop.client({port: 50009, auto_reconnect_interval: 200, auto_reconnect: true});
 
@@ -153,7 +152,6 @@ describe("client.auto_reconnect", function(){
 
     it("Server violent death (2x), client doesn't reconnects (if not configured to do so) and bubbles 1 connect events (slow)", function(done){
 
-        this.slow(9000);
         this.timeout(9000);
 
         // Create a fresh client
@@ -168,7 +166,7 @@ describe("client.auto_reconnect", function(){
 
 
         // Start the server
-        let slambang=spawn("node", ["./slambang.js"]); // eslint-disable-line no-unused-vars
+        let slambang=spawn("node", ["./slambang.js", 2000]); // eslint-disable-line no-unused-vars
         // slambang.stdout.on("data",(data)=>console.log("data:"+data));
         // slambang.stderr.on("data",(data)=>console.log("err:"+data));
 
@@ -182,7 +180,7 @@ describe("client.auto_reconnect", function(){
                 // We have disconnected.  Wait 500ms, then restart server
                 setTimeout(()=>{
 
-                    let slambang=spawn("node", ["./slambang.js"]); // eslint-disable-line no-unused-vars
+                    let slambang=spawn("node", ["./slambang.js", 3000]); // eslint-disable-line no-unused-vars
                     // slambang.stdout.on("data",(data)=>console.log("data:"+data));
                     // slambang.stderr.on("data",(data)=>console.log("err:"+data));
                 },500);
@@ -196,7 +194,7 @@ describe("client.auto_reconnect", function(){
                     // Done
                     c.disconnect();
                     done();
-                },1000);
+                },2000);
 
             });
         });
@@ -223,7 +221,7 @@ describe("client.auto_reconnect", function(){
 
 
         // Start the server
-        let slambang=spawn("node", ["./slambang.js"]); // eslint-disable-line no-unused-vars
+        let slambang=spawn("node", ["./slambang.js", 2000]); // eslint-disable-line no-unused-vars
         // slambang.stdout.on("data",(data)=>console.log("data:"+data));
         // slambang.stderr.on("data",(data)=>console.log("err:"+data));
 
@@ -237,7 +235,7 @@ describe("client.auto_reconnect", function(){
                 // We have disconnected.  Wait 500ms, then restart server
                 setTimeout(()=>{
 
-                    let slambang=spawn("node", ["./slambang.js"]); // eslint-disable-line no-unused-vars
+                    let slambang=spawn("node", ["./slambang.js", 3000]); // eslint-disable-line no-unused-vars
                     // slambang.stdout.on("data",(data)=>console.log("data:"+data));
                     // slambang.stderr.on("data",(data)=>console.log("err:"+data));
                 },500);

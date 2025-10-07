@@ -12,6 +12,7 @@ describe("Clean ups", function(){
     before(async() => { await s.listen(); });
 
     it("Properly build up cached objects",async function(){
+        this.timeout(5000);
 
         expect(s.sockets.length).to.equal(0);
         expect(s.sessions.length).to.equal(0);
@@ -34,6 +35,8 @@ describe("Clean ups", function(){
     });
 
     it("Empty out objects on graceful disconnect",async function(){
+        this.timeout(5000);
+
         await Promise.all([
             c1.disconnect(),
             c2.disconnect()

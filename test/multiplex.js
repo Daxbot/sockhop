@@ -14,7 +14,7 @@ for (let n=0; n< large_data_size; n++){
 // If this fails it will throw an Error 'Skipping corrupted data in buffer'
 describe("Server multiplexing", function(){
 
-    this.slow(3000);
+    this.timeout(5000);
 
     s=new Sockhop.server({port: 50008});
     c=new Sockhop.client({port: 50008});

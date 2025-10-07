@@ -19,4 +19,4 @@ setTimeout(()=>{
 
     process.exit();
 
-},1000);
+}, parseInt(process.argv[2] || 1000));

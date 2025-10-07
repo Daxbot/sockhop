@@ -7,12 +7,6 @@
 <p>Automatically reassembles fragmented buffers (useful when the buffer passes through
 a socket, for example, and is received in pieces) and gives you your object back</p>
 </dd>
-<dt><a href="#JSONObjectBuffer">JSONObjectBuffer</a> ⇐ <code>EventEmitter</code></dt>
-<dd><p>Object Buffer for JSON encoding</p>
-<p>de/serialize objects to/from a Buffer</p>
-<p>Automatically reassembles fragmented buffers (useful when the buffer passes through
-a socket, for example, and is received in pieces) and gives you your object back</p>
-</dd>
 <dt><a href="#SockhopClient">SockhopClient</a> ⇐ <code>EventEmitter</code></dt>
 <dd><p>Wrapped TCP client</p>
 </dd>
@@ -128,9 +122,6 @@ a socket, for example, and is received in pieces) and gives you your object back
 
 * [JSONObjectBuffer](#JSONObjectBuffer) ⇐ <code>EventEmitter</code>
     * [new JSONObjectBuffer(opts)](#new_JSONObjectBuffer_new)
-    * [new JSONObjectBuffer(opts)](#new_JSONObjectBuffer_new)
-    * [.buf2obj(buffer)](#JSONObjectBuffer+buf2obj) ⇒ <code>Array</code>
-    * [.obj2buf(object, buffer)](#JSONObjectBuffer+obj2buf)
     * [.buf2obj(buffer)](#JSONObjectBuffer+buf2obj) ⇒ <code>Array</code>
     * [.obj2buf(object, buffer)](#JSONObjectBuffer+obj2buf)
 
@@ -145,147 +136,6 @@ Constructs a new JSONObjectBuffer
 | opts | <code>object</code> |  | the options |
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
-
-<a name="new_JSONObjectBuffer_new"></a>
-
-### new JSONObjectBuffer(opts)
-Constructs a new JSONObjectBuffer
-
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| opts | <code>object</code> |  | the options |
-| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
-| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
-
-<a name="JSONObjectBuffer+buf2obj"></a>
-
-### jsonObjectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
-buf2obj
-
-Convert a Buffer into one or more objects
-
-**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
-**Returns**: <code>Array</code> - found the objects we found  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
-
-<a name="JSONObjectBuffer+obj2buf"></a>
-
-### jsonObjectBuffer.obj2buf(object, buffer)
-obj2buf
-
-Convert an Object to a Buffer
-
-**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| object | <code>Object</code> | the object to convert |
-| buffer | <code>Buffer</code> | the buffer representing that object |
-
-<a name="JSONObjectBuffer+buf2obj"></a>
-
-### jsonObjectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
-buf2obj
-
-Convert a Buffer into one or more objects
-
-**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
-**Returns**: <code>Array</code> - found the objects we found  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
-
-<a name="JSONObjectBuffer+obj2buf"></a>
-
-### jsonObjectBuffer.obj2buf(object, buffer)
-obj2buf
-
-Convert an Object to a Buffer
-
-**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| object | <code>Object</code> | the object to convert |
-| buffer | <code>Buffer</code> | the buffer representing that object |
-
-<a name="JSONObjectBuffer"></a>
-
-## JSONObjectBuffer ⇐ <code>EventEmitter</code>
-Object Buffer for JSON encoding
-
-de/serialize objects to/from a Buffer
-
-Automatically reassembles fragmented buffers (useful when the buffer passes through
-a socket, for example, and is received in pieces) and gives you your object back
-
-**Kind**: global class  
-**Extends**: <code>EventEmitter</code>  
-
-* [JSONObjectBuffer](#JSONObjectBuffer) ⇐ <code>EventEmitter</code>
-    * [new JSONObjectBuffer(opts)](#new_JSONObjectBuffer_new)
-    * [new JSONObjectBuffer(opts)](#new_JSONObjectBuffer_new)
-    * [.buf2obj(buffer)](#JSONObjectBuffer+buf2obj) ⇒ <code>Array</code>
-    * [.obj2buf(object, buffer)](#JSONObjectBuffer+obj2buf)
-    * [.buf2obj(buffer)](#JSONObjectBuffer+buf2obj) ⇒ <code>Array</code>
-    * [.obj2buf(object, buffer)](#JSONObjectBuffer+obj2buf)
-
-<a name="new_JSONObjectBuffer_new"></a>
-
-### new JSONObjectBuffer(opts)
-Constructs a new JSONObjectBuffer
-
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| opts | <code>object</code> |  | the options |
-| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
-| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
-
-<a name="new_JSONObjectBuffer_new"></a>
-
-### new JSONObjectBuffer(opts)
-Constructs a new JSONObjectBuffer
-
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| opts | <code>object</code> |  | the options |
-| [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the terminator to signal the end of a JSON object. If an array is given, the first element is a receive (buf2obj) terminator and the second is the transmit (obj2buf) element |
-| [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects in buf2obj (will be passed through as Strings) |
-
-<a name="JSONObjectBuffer+buf2obj"></a>
-
-### jsonObjectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
-buf2obj
-
-Convert a Buffer into one or more objects
-
-**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
-**Returns**: <code>Array</code> - found the objects we found  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
-
-<a name="JSONObjectBuffer+obj2buf"></a>
-
-### jsonObjectBuffer.obj2buf(object, buffer)
-obj2buf
-
-Convert an Object to a Buffer
-
-**Kind**: instance method of [<code>JSONObjectBuffer</code>](#JSONObjectBuffer)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| object | <code>Object</code> | the object to convert |
-| buffer | <code>Buffer</code> | the buffer representing that object |
 
 <a name="JSONObjectBuffer+buf2obj"></a>
 
@@ -332,6 +182,7 @@ Wrapped TCP client
     * [.debug](#SockhopClient+debug) ⇒ <code>boolean</code>
     * [.socket](#SockhopClient+socket) : <code>net.socket</code>
     * [._perform_auto_reconnect()](#SockhopClient+_perform_auto_reconnect)
+    * [.resolve_on_connect([opts])](#SockhopClient+resolve_on_connect) ⇒ <code>Promise</code>
     * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
     * [.send(object, [rcallback])](#SockhopClient+send) ⇒ <code>Promise</code>
@@ -414,17 +265,44 @@ We have determined that an auto reconnect is necessary.
 We will initiate it, and manage the fallout.
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
+<a name="SockhopClient+resolve_on_connect"></a>
+
+### sockhopClient.resolve\_on\_connect([opts]) ⇒ <code>Promise</code>
+Wait until successfully connected
+
+If the client is already connected, this returns immediately.
+If the client is already trying to connect, this throws an error.
+If the `timeout` option is provided, this will reject if we are not connected within that time.
+
+**Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>Promise</code> - resolves once connected  
+**Throws**:
+
+- [<code>SockhopError</code>](#SockhopError) 
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [opts] | <code>object</code> |  |
+| [opts.timeout] | <code>number</code> | the length of time in ms to wait before rejecting |
+
 <a name="SockhopClient+connect"></a>
 
 ### sockhopClient.connect() ⇒ <code>Promise</code>
 Connect
 
-Connect to the server
-If you want to quietly start an auto_reconnect sequence to an unavailable server, just set .auto_reconnect=true.
-Calling this directly will get you a Promise rejection if you are not able to connect the first time.
-N.B.: The internals of net.socket add their own "connect" listener, so we can't rely on things like sock.removeAllListeners("connect") or sock.listenerCount("connect") here
+Attempt to connect to the server. If we are already connected, this returns immediately.
+If we are already trying to connect, this throws an error.
+If this client has been configured for auto_reconnect, it will start a reconnection timer only once connected.
+
+If you want to keep trying to conect, you should use `.resolve_on_connect()` instead, which will return a promise that resolves once connected, and will keep trying to connect if necessary.
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>Promise</code> - resolves once connected  
+**Throws**:
+
+- [<code>SockhopError</code>](#SockhopError) 
+
 <a name="SockhopClient+get_bound_address"></a>
 
 ### sockhopClient.get\_bound\_address() ⇒ <code>string</code>

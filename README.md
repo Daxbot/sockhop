@@ -181,7 +181,7 @@ npm run test
 ## Notes
 Sockhop easily passes objects across the wire.  If you pack/transcode JS in a way that mutates class names, this functionality will be broken!  This includes auto ping functionality.
 
-If you ```server.listen()```, make sure you ```server.close()``` when you are done so Node won't hang forever on program exit.  Similarly, if you turn on ```client.ping()``` or set ```client.auto_reconnect=true```, make sure you finish up by ```client.ping(0)``` (to disable pings) and ```client.auto_reconnect=false```.  Alternately you can ```client.disconnect()``` and it will turn off pings/auto_reconnect for you.
+If you ```server.listen()```, make sure you ```server.close()``` when you are done so Node won't hang forever on program exit.  Similarly, if you turn on ```client.ping()``` or set ```client({auto_reconnect:true})```, make sure you finish up by ```client.ping(0)``` (to disable pings) and ```client.disconnect()``` (note this will also stop pinging).
 
 ## License
 MIT

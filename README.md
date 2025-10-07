@@ -11,7 +11,6 @@
 - Easy wrappers over the tricky parts of net.socket
 - Auto reconnect  
 - Ping with auto disconnect/reconnect
-- Promise-based request/responses bi-directionally between server and clients
 - Remote callbacks across socket
 - Manages binary buffers across the wire, reconstructs fragmented JSON buffers (see lib/JSONObjectBuffer.js)
 - Server options for talking to (non Sockhop) other clients
@@ -46,64 +45,6 @@ c.on("receive", (obj, metadata)=>{
 
 });  
 
-```
-
-Promise-based Request/Response example with client-initiated request
-```javascript
-s.on("request", (request, response, meta)=>{
-
-  // request.type=="String"
-  // request.data=="Can I have some data?"
-  response.send("Sure!");
-});
-
-c.request("Can I have some data?")
-  .then(stream => stream.next())
-  .then((response)=>{
-    // response.type == "String"
-    // response.data == "Sure!"
-  });
-```
-
-Promise-based Request/Response example with server-initiated request
-```javascript
-c.on("request", (request, response)=>{
-  // request.type=="String"
-  // request.data=="Now I want data"
-  response.send("You can have it too");
-});
-
-s.once("connect", (sock, sess) => {
-  // OR : sess.request("Now I want data")
-  s.request(sock, "Now I want data")
-    .then(stream => stream.next())
-    .then((response)=>{
-
-    // response.type == "String"
-    // response.data == "You can have it too"
-  });
-});
-
-// Trigger connect event on server to get session reference
-c.disconnect().then(() => c.connect());
-```
-
-Promise-based Request/Response example with client-initiated request, and streamed data
-```javascript
-s.on("request", (request, response, meta)=>{
-
-  // request.type=="String"
-  // request.data=="Can I have some data?"
-  response.write("Sure!");
-  response.write("Sure again!");
-  response.end(); // Don't forget me, or the client will timeout!
-});
-
-c.request("Can I have some data?")
-  .then(stream => {
-    stream.on("data", (data, type) => { /* data will show up here */ });
-    stream.on("end", () => { /* the stream is over */ });
-  })
 ```
 
 

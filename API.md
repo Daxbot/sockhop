@@ -171,7 +171,6 @@ Constructs a new SockhopClient
 | [opts.ssl] | <code>boolean</code> | <code>false</code> | use tls |
 | [opts.ssl_options] | <code>object</code> | <code>{}</code> | options to pass to the tls socket constructor, see `tls.connect` for details, note, if any options are provided, the `opts.ssl` flag is overriden as true |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
-| opts.peer_type | <code>string</code> |  | the type of client to expect.  Defaults to "Sockhop" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the JSONObjectBuffer constructor. |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
 | [opts.response_timeout] | <code>number</code> |  | the length of time in ms that this map should hold values by default |
@@ -502,7 +501,6 @@ Constructs a new SockhopServer
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the JSONObjectBuffer constructor. |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
-| [opts.peer_type] | <code>string</code> | <code>&quot;\&quot;SockhopClient\&quot;&quot;</code> | the type of client to expect.  Defaults to "SockhopClient" and expects wrapped JSON objects.  Set to "json" to expect and deliver raw JSON objects |
 | [opts.session_type] | <code>Object</code> | <code>SockhopSession</code> | the identifier for a SockhopSession class (or inhereted class) |
 | [opts.response_timeout] | <code>number</code> |  | the length of time in ms that this map should hold values by default |
 

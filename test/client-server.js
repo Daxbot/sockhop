@@ -5,8 +5,8 @@ var c,s;
 
 describe("Client-server", function(){
 
-    s=new Sockhop.server({port: 50002, response_timeout:50});
-    c=new Sockhop.client({port: 50002, response_timeout:50});
+    s=new Sockhop.server({port: 51002, response_timeout:50});
+    c=new Sockhop.client({port: 51002, response_timeout:50});
 
     before(async() => { await s.listen(); });
 
@@ -75,16 +75,18 @@ describe("Client-server", function(){
 
     it("session.send()", function(done){
 
-        s.once("connect", (sock, sess) => {
-            c.once("receive", (data)=>{
-                assert.equal(data, "data goes in");
-                done();
-            });
-
-            sess.send("data goes in");
-        });
         // Force the disconnection so that the above triggers
         c.disconnect().then(() => {
+            return new Promise((res)=>setTimeout(res,100));
+        }).then(() => {
+            s.once("connect", (sock, sess) => {
+                c.once("receive", (data)=>{
+                    assert.equal(data, "data goes in");
+                    done();
+                });
+
+                sess.send("data goes in");
+            });
             c.connect();
         });
     });

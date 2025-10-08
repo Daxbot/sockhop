@@ -24,7 +24,7 @@ describe("Session", function(){
     afterEach(async() => {
         // add a little bit of buffer time to make sure the sockets get
         // cleaned up in between
-        await new Promise(res => setTimeout(res, 10));
+        await new Promise(res => setTimeout(res, 100));
     });
 
     it("session is started successfully on connect",function(done){

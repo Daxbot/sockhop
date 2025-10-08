@@ -17,26 +17,48 @@ describe("Handshake", function(){
 
             const promises = [
                 new Promise(async (done,rej) => {
-                    try {
-                        let start=Date.now();
-                        c.once('connect', () => {
+                    let start=Date.now();
+                    c.once('connect', () => {
+                        try {
                             let duration=Date.now()-start;
-                            assert(duration<200, `Client connect duration was ${duration}ms`);
-                            assert(c._handshake_resolved, "Client handshake did not resolve");
+                            expect(duration, "Client connect duration was too long").to.be.lessThan(200);
                             done();
-                        });
-                    } catch(err) { rej(err); }
+                        } catch(err) { rej(err); }
+                    });
                 }),
                 new Promise(async (done,rej) => {
-                    try {
-                        let start=Date.now();
-                        s.once('connect', (sock, sess) => {
+                    let start=Date.now();
+                    s.once('connect', (sock, sess) => {
+                        try {
                             let duration=Date.now()-start;
-                            assert(duration<200, `Server connect duration was ${duration}ms`);
-                            assert(sock._handshake_resolved, "Server handshake did not resolve");
+                            expect(duration, "Server connect duration was too long").to.be.lessThan(200);
                             done();
-                        });
-                    } catch(err) { rej(err); }
+                        } catch(err) { rej(err); }
+                    });
+                }),
+                new Promise(async (done,rej) => {
+                    let start=Date.now();
+                    c.once('handshake', (success, error) => {
+                        try {
+                            let duration=Date.now()-start;
+                            expect(duration, "Client handshake duration was too long").to.be.lessThan(200);
+                            expect(success, "Client handshake did not resolve").to.be.true;
+                            expect(error, "Client handshake returned an error").to.be.undefined;
+                            done();
+                        } catch(err) { rej(err); }
+                    });
+                }),
+                new Promise(async (done,rej) => {
+                    let start=Date.now();
+                    s.once('handshake', (_, __, success, error) => {
+                        try {
+                            let duration=Date.now()-start;
+                            expect(duration, "Server handshake duration was too long").to.be.lessThan(200);
+                            expect(success, "Server handshake did not resolve").to.be.true;
+                            expect(error, "Server handshake returned an error").to.be.undefined;
+                            done();
+                        } catch(err) { rej(err); }
+                    });
                 })
             ];
 
@@ -57,13 +79,12 @@ describe("Handshake", function(){
             await s.listen();
 
             const promises = [
-                new Promise(async (done, rej) => {
+                new Promise(async (done,rej) => {
                     let start=Date.now();
                     c.once('connect', () => {
                         try {
                             let duration=Date.now()-start;
                             expect(duration, "Client connect duration was too long").to.be.lessThan(200);
-                            expect(c._handshake_resolved, "Client handshake resoved when it should not have").to.be.false;
                             done();
                         } catch(err) { rej(err); }
                     });
@@ -73,8 +94,32 @@ describe("Handshake", function(){
                     s.once('connect', (sock, sess) => {
                         try {
                             let duration=Date.now()-start;
-                            expect(duration, "Server connect duration was too short").to.be.greaterThan(300);
-                            expect(sock._handshake_resolved, "Client handshake resoved when it should not have").to.be.false;
+                            expect(duration, "Server connect duration was too long").to.be.lessThan(200);
+                            done();
+                        } catch(err) { rej(err); }
+                    });
+                }),
+                new Promise(async (done, rej) => {
+                    let failed = false;
+                    c.once('handshake', () => {
+                        failed = true;
+                    });
+                    setTimeout(() => {
+                        try {
+                            expect(failed, "Client handshake event fired when it shouldn't have").to.be.false;
+                            done();
+                        } catch(err) { rej(err); }
+                    }, HANDSHAKE_TIMEOUT + 100);
+                }),
+                new Promise(async (done,rej) => {
+                    let start=Date.now();
+                    s.once('handshake', (_,__,success,error) => {
+                        try {
+                            let duration=Date.now()-start;
+                            expect(duration, "Server handshake duration was too short").to.be.greaterThan(300);
+                            expect(success, "Server handshake resovled but shouldn't've").to.be.false;
+                            expect(error, "Server handshake didn't return an error").to.not.be.undefined;
+                            expect(error.message, "Server handshake error message incorrect").to.equal("Timeout exceeded waiting for handshake()");
                             done();
                         } catch(err) { rej(err); }
                     });
@@ -90,7 +135,7 @@ describe("Handshake", function(){
         }
     });
 
-    it("Server handshake returns slowly in server compatibility mode (slow)",async function(){
+    it("Client handshake returns slowly in server compatibility mode (slow)",async function(){
         const PORT=BASE_PORT++;
         const s = new Sockhop.server({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
         const c = new Sockhop.client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
@@ -98,13 +143,12 @@ describe("Handshake", function(){
             await s.listen();
 
             const promises = [
-                new Promise(async (done, rej) => {
+                new Promise(async (done,rej) => {
                     let start=Date.now();
                     c.once('connect', () => {
                         try {
                             let duration=Date.now()-start;
-                            expect(duration, "Client connect duration was too short").to.be.greaterThan(300);
-                            expect(c._handshake_resolved, "Client handshake resoved when it should not have").to.be.false;
+                            expect(duration, "Client connect duration was too long").to.be.lessThan(200);
                             done();
                         } catch(err) { rej(err); }
                     });
@@ -115,11 +159,35 @@ describe("Handshake", function(){
                         try {
                             let duration=Date.now()-start;
                             expect(duration, "Server connect duration was too long").to.be.lessThan(200);
-                            expect(sock._handshake_resolved, "Client handshake resoved when it should not have").to.be.false;
                             done();
                         } catch(err) { rej(err); }
                     });
-                })
+                }),
+                new Promise(async (done,rej) => {
+                    let start=Date.now();
+                    c.once('handshake', (success,error) => {
+                        try {
+                            let duration=Date.now()-start;
+                            expect(duration, "Client handshake duration was too short").to.be.greaterThan(300);
+                            expect(success, "Client handshake resovled but shouldn't've").to.be.false;
+                            expect(error, "Client handshake didn't return an error").to.not.be.undefined;
+                            expect(error.message, "Client handshake error message incorrect").to.equal("Timeout exceeded waiting for handshake()");
+                            done();
+                        } catch(err) { rej(err); }
+                    });
+                }),
+                new Promise(async (done, rej) => {
+                    let failed = false;
+                    s.once('handshake', () => {
+                        failed = true;
+                    });
+                    setTimeout(() => {
+                        try {
+                            expect(failed, "Server handshake event fired when it shouldn't have").to.be.false;
+                            done();
+                        } catch(err) { rej(err); }
+                    }, HANDSHAKE_TIMEOUT + 100);
+                }),
             ];
 
             c.connect();
@@ -139,13 +207,12 @@ describe("Handshake", function(){
             await s.listen();
 
             const promises = [
-                new Promise(async (done, rej) => {
+                new Promise(async (done,rej) => {
                     let start=Date.now();
                     c.once('connect', () => {
                         try {
                             let duration=Date.now()-start;
                             expect(duration, "Client connect duration was too long").to.be.lessThan(200);
-                            expect(c._handshake_resolved, "Client handshake resoved when it should not have").to.be.false;
                             done();
                         } catch(err) { rej(err); }
                     });
@@ -156,11 +223,34 @@ describe("Handshake", function(){
                         try {
                             let duration=Date.now()-start;
                             expect(duration, "Server connect duration was too long").to.be.lessThan(200);
-                            expect(sock._handshake_resolved, "Client handshake resoved when it should not have").to.be.false;
                             done();
                         } catch(err) { rej(err); }
                     });
-                })
+                }),
+                new Promise(async (done, rej) => {
+                    let failed = false;
+                    c.once('handshake', () => {
+                        failed = true;
+                    });
+                    setTimeout(() => {
+                        try {
+                            expect(failed, "Client handshake event fired when it shouldn't have").to.be.false;
+                            done();
+                        } catch(err) { rej(err); }
+                    }, HANDSHAKE_TIMEOUT + 100);
+                }),
+                new Promise(async (done, rej) => {
+                    let failed = false;
+                    s.once('handshake', () => {
+                        failed = true;
+                    });
+                    setTimeout(() => {
+                        try {
+                            expect(failed, "Server handshake event fired when it shouldn't have").to.be.false;
+                            done();
+                        } catch(err) { rej(err); }
+                    }, HANDSHAKE_TIMEOUT + 100);
+                }),
             ];
 
             c.connect();

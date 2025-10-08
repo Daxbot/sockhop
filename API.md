@@ -142,6 +142,9 @@ Wrapped TCP client
     * [.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect)
     * [.debug](#SockhopClient+debug) ⇒ <code>boolean</code>
+    * [.compatibility_mode](#SockhopClient+compatibility_mode) ⇒ <code>boolean</code>
+    * [.handshake_successful](#SockhopClient+handshake_successful) ⇒ <code>boolean</code>
+    * [.init_complete](#SockhopClient+init_complete) ⇒ <code>boolean</code>
     * [.socket](#SockhopClient+socket) : <code>net.socket</code>
     * [._perform_auto_reconnect()](#SockhopClient+_perform_auto_reconnect)
     * [.resolve_on_connect([opts])](#SockhopClient+resolve_on_connect) ⇒ <code>Promise</code>
@@ -151,6 +154,7 @@ Wrapped TCP client
     * [.ping(delay)](#SockhopClient+ping)
     * [.disconnect()](#SockhopClient+disconnect) ⇒ <code>Promise</code>
     * ["connect" (sock)](#SockhopClient+event_connect)
+    * ["handshake" (success, error)](#SockhopClient+event_handshake)
     * ["receive" (object, meta)](#SockhopClient+event_receive)
     * ["disconnect" (sock)](#SockhopClient+event_disconnect)
     * ["sending" (object, buffer)](#SockhopClient+event_sending)
@@ -160,6 +164,10 @@ Wrapped TCP client
 
 ### new SockhopClient([opts])
 Constructs a new SockhopClient
+
+**Throws**:
+
+- [<code>SockhopError</code>](#SockhopError) 
 
 
 | Param | Type | Default | Description |
@@ -176,6 +184,8 @@ Constructs a new SockhopClient
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
 | [opts.connect_timeout] | <code>number</code> | <code>5000</code> | the length of time in ms to try to connect before timing out |
 | [opts.debug] | <code>boolean</code> | <code>false</code> | run in debug mode -- which adds additional emits |
+| [opts.handshake_timeout] | <code>number</code> | <code>3000</code> | the length of time in ms to wait for a handshake response before timing out |
+| [opts.compatibility_mode] | <code>boolean</code> | <code>false</code> | enable compatibility mode, which will disable handshakes for simulating 1.x behavior |
 
 <a name="SockhopClient+connected"></a>
 
@@ -183,7 +193,7 @@ Constructs a new SockhopClient
 connected
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
-**Returns**: <code>boolean</code> - connected whether or not we are currently connected  
+**Returns**: <code>boolean</code> - connected whether or not we are currently connected (e.g. can data be sent)  
 <a name="SockhopClient+auto_reconnect"></a>
 
 ### sockhopClient.auto\_reconnect ⇒ <code>boolean</code>
@@ -209,6 +219,31 @@ debug mode getter
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
 **Returns**: <code>boolean</code> - debug whether or not we are in debug mode  
+<a name="SockhopClient+compatibility_mode"></a>
+
+### sockhopClient.compatibility\_mode ⇒ <code>boolean</code>
+compatibility_mode getter
+
+**Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>boolean</code> - compatibility_mode whether or not we are in compatibility mode  
+<a name="SockhopClient+handshake_successful"></a>
+
+### sockhopClient.handshake\_successful ⇒ <code>boolean</code>
+handshake_successful getter
+
+NOTE : this will be false if the handshake has not yet completed, or if the client is in compatibility mode
+
+**Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>boolean</code> - handshake_successful whether or not the last handshake was successful  
+<a name="SockhopClient+init_complete"></a>
+
+### sockhopClient.init\_complete ⇒ <code>boolean</code>
+init_complete getter
+
+NOTE : this will be true if the client is in compatibility mode and connected, since no handshake is expected
+
+**Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>boolean</code> - init_complete is the client still expecting to run more initialization steps (e.g. handshake)  
 <a name="SockhopClient+socket"></a>
 
 ### sockhopClient.socket : <code>net.socket</code>
@@ -255,6 +290,10 @@ If we are already trying to connect, this throws an error.
 If this client has been configured for auto_reconnect, it will start a reconnection timer only once connected.
 
 If you want to keep trying to conect, you should use `.resolve_on_connect()` instead, which will return a promise that resolves once connected, and will keep trying to connect if necessary.
+
+NOTE : this method does not wait for the handshake to complete.  You should listen for the 'handshake' event
+       to determine if the handshake was successful, or use the `.resolve_on_handshake()` method to get a
+       promise that resolves once the handshake completes.
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
 **Returns**: <code>Promise</code> - resolves once connected  
@@ -315,11 +354,35 @@ Pinging will also be turned off... if you want to keep pinging, you will need to
 ### "connect" (sock)
 connect event
 
+this fires when we have successfully connected to the server, but before the handshake completes/times-out
+
 **Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | sock | <code>net.Socket</code> | the socket that just connected |
+
+<a name="SockhopClient+event_handshake"></a>
+
+### "handshake" (success, error)
+handshake event
+
+This fires when the handshake completes or times out
+
+WARNING: if the other side of the connection get's a connect event, they can begin sending data immediately.
+         regardless of whether or not the handshake completes or times out, or is simply ignored (compatibility mode
+         or 1.x library version). This means data can be sent before the handshake completes, unless both sides
+         have agreed to wait for the handshake event before sending any data. It is recommnded that in situations
+         where you cannot gaurantee that both sides are using Sockhop 2.x with handshakes, that you should listen
+         for the connection event for the purpose of adding event handlers, but wait for the handshake event
+         to proactively send any data, so that the send logic can depending on a know handshake state.
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| success | <code>boolean</code> | true if the handshake was successful, false if it timed out or failed |
+| error | <code>Error</code> | if the handshake failed, this will contain the error, otherwise undefined |
 
 <a name="SockhopClient+event_receive"></a>
 
@@ -473,6 +536,7 @@ constructor options.
     * [new SockhopServer([opts])](#new_SockhopServer_new)
     * [.sockets](#SockhopServer+sockets) : <code>Array.&lt;net.Socket&gt;</code>
     * [.sessions](#SockhopServer+sessions) : [<code>Array.&lt;SockhopSession&gt;</code>](#SockhopSession)
+    * [.compatibility_mode](#SockhopServer+compatibility_mode) ⇒ <code>boolean</code>
     * [.emit_async()](#SockhopServer+emit_async)
     * [.ping(delay)](#SockhopServer+ping)
     * [.listen()](#SockhopServer+listen) ⇒ <code>Promise.&lt;net.server&gt;</code>
@@ -483,6 +547,7 @@ constructor options.
     * [.disconnect()](#SockhopServer+disconnect) ⇒ <code>Promise</code>
     * [.close()](#SockhopServer+close) ⇒ <code>Promise</code>
     * ["connect" (sock, session)](#SockhopServer+event_connect)
+    * ["handshake" (sock, session, success, error)](#SockhopServer+event_handshake)
     * ["receive" (object, meta)](#SockhopServer+event_receive)
     * ["disconnect" (sock, session)](#SockhopServer+event_disconnect)
 
@@ -501,6 +566,8 @@ Constructs a new SockhopServer
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the JSONObjectBuffer constructor. |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
 | [opts.session_type] | <code>Object</code> | <code>SockhopSession</code> | the identifier for a SockhopSession class (or inhereted class) |
+| [opts.handshake_timeout] | <code>number</code> | <code>3000</code> | the length of time in ms to wait for a handshake response before timing out |
+| [opts.compatibility_mode] | <code>boolean</code> | <code>false</code> | enable compatibility mode, which will disable handshakes for simulating 1.x behavior |
 
 <a name="SockhopServer+sockets"></a>
 
@@ -514,6 +581,13 @@ Socket getter
 Session getter
 
 **Kind**: instance property of [<code>SockhopServer</code>](#SockhopServer)  
+<a name="SockhopServer+compatibility_mode"></a>
+
+### sockhopServer.compatibility\_mode ⇒ <code>boolean</code>
+compatibility_mode getter
+
+**Kind**: instance property of [<code>SockhopServer</code>](#SockhopServer)  
+**Returns**: <code>boolean</code> - compatibility_mode whether or not we are in compatibility mode  
 <a name="SockhopServer+emit_async"></a>
 
 ### sockhopServer.emit\_async()
@@ -619,12 +693,38 @@ Disconnects any clients and closes the server
 ### "connect" (sock, session)
 connect event
 
+this fires when we have successfully connected to the client, but before the handshake completes/times-out
+
 **Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | sock | <code>net.Socket</code> | the socket that just connected |
 | session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
+
+<a name="SockhopServer+event_handshake"></a>
+
+### "handshake" (sock, session, success, error)
+handshake event
+
+This fires when the handshake completes or times out
+
+WARNING: if the other side of the connection get's a connect event, they can begin sending data immediately.
+         regardless of whether or not the handshake completes or times out, or is simply ignored (compatibility mode
+         or 1.x library version). This means data can be sent before the handshake completes, unless both sides
+         have agreed to wait for the handshake event before sending any data. It is recommnded that in situations
+         where you cannot gaurantee that both sides are using Sockhop 2.x with handshakes, that you should listen
+         for the connection event for the purpose of adding event handlers, but wait for the handshake event
+         to proactively send any data, so that the send logic can depending on a know handshake state.
+
+**Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sock | <code>net.Socket</code> | the socket that just connected |
+| session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
+| success | <code>boolean</code> | true if the handshake was successful, false if it timed out or failed |
+| error | <code>Error</code> | if the handshake failed, this will contain the error, otherwise undefined |
 
 <a name="SockhopServer+event_receive"></a>
 

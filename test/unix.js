@@ -15,6 +15,8 @@ describe("Unix domain sockets", function(){
 
 
     it("client.send()", function(done){
+        s.on("error", (err)=>{/*ignore*/});
+        c.on("error", (err)=>{/*ignore*/});
 
         s.listen()
             .then(()=>c.connect())

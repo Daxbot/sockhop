@@ -29,5 +29,8 @@
     "nodemon": "^2.0.15",
     "sinon": "^15.0.3",
     "why-is-node-running": "^2.2.0"
+  },
+  "dependencies": {
+    "obj2buf": "^1.4.0"
   }
 }

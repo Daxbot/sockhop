@@ -75,8 +75,8 @@ describe(`Client Debug Mode`, function(){
         try {
             await s.listen();
 
-            c.connect();
-            await new Promise(res=>c.once("handshake", res)); // Wait for handshake to complete, so that we don't have any other messages in flight
+            c.start();
+            await new Promise(res => setTimeout(res, 10)); // Wait for handshake to complete, so that we don't have any other messages in flight
 
             let fired = false;
             let msg, buffer;
@@ -117,8 +117,8 @@ describe(`Client Debug Mode`, function(){
         try {
             await s.listen();
 
-            c.connect();
-            await new Promise(res=>c.once("handshake", res)); // Wait for handshake to complete, so that we don't have any other messages in flight
+            c.start();
+            await new Promise(res => setTimeout(res, 10)); // Wait for handshake to complete, so that we don't have any other messages in flight
 
             let fired = false;
             let msg, buffer;
@@ -158,8 +158,8 @@ describe(`Client Debug Mode`, function(){
                 sock = sock_;
             });
 
-            c.connect();
-            await new Promise(res=>c.once("handshake", res)); // Wait for handshake to complete, so that we don't have any other messages in flight
+            c.start();
+            await new Promise(res => setTimeout(res, 10)); // Wait for handshake to complete, so that we don't have any other messages in flight
 
             let fired = false;
             let msg, buffer;

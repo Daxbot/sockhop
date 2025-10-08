@@ -273,6 +273,9 @@ describe("Handshake", function(){
                 new Promise(async (done,rej) => {
                     let start=Date.now();
                     s.once('connect', (_, sess) => {
+                        if ( sess.init_complete ) {
+                            return rej(new Error("Session init_complete was already true on connect -- you have a nasty timing bug, good luck, bro."));
+                        }
                         sess.once('handshake', (success, error) => {
                             try {
                                 let duration=Date.now()-start;

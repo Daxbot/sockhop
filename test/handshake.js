@@ -261,5 +261,40 @@ describe("Handshake", function(){
             await new Promise(res => setTimeout(res, 200));
         }
     });
+
+    it("Handshake is passed to session",async function(){
+        const PORT=BASE_PORT++;
+        const s = new Sockhop.server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const c = new Sockhop.client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        try {
+            await s.listen();
+
+            const promises = [
+                new Promise(async (done,rej) => {
+                    let start=Date.now();
+                    s.once('connect', (_, sess) => {
+                        sess.once('handshake', (success, error) => {
+                            try {
+                                let duration=Date.now()-start;
+                                expect(duration, "Session handshake duration was too long").to.be.lessThan(200);
+                                expect(success, "Session handshake did not resolve").to.be.true;
+                                expect(error, "Session handshake returned an error").to.be.undefined;
+                                done();
+                            } catch(err) { rej(err); }
+                        });
+                    });
+                })
+            ];
+
+            await new Promise(res => setTimeout(res, 50)); // let the event handlers bind
+
+            c.connect();
+            await Promise.all(promises);
+        } finally {
+            await c.disconnect();
+            await s.close();
+            await new Promise(res => setTimeout(res, 200));
+        }
+    });
 });
 

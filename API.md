@@ -157,8 +157,8 @@ Wrapped TCP client
     * ["handshake" (success, error)](#SockhopClient+event_handshake)
     * ["receive" (object, meta)](#SockhopClient+event_receive)
     * ["disconnect" (sock)](#SockhopClient+event_disconnect)
-    * ["sending" (object, buffer)](#SockhopClient+event_sending)
-    * ["received" (object, buffer)](#SockhopClient+event_received)
+    * ["debug:sending" (object, buffer)](#SockhopClient+debug_sending)
+    * ["debug:received" (object, buffer)](#SockhopClient+debug_received)
 
 <a name="new_SockhopClient_new"></a>
 
@@ -398,6 +398,7 @@ We have successfully received an object from the server
 | object | <code>object</code> | the received object |
 | meta | <code>object</code> | metadata |
 | meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
+| meta.callback | <code>function</code> | if the received object was sent with a callback, this is the function to call to respond |
 
 <a name="SockhopClient+event_disconnect"></a>
 
@@ -410,9 +411,9 @@ disconnect event
 | --- | --- | --- |
 | sock | <code>net.Socket</code> | the socket that just disconnected |
 
-<a name="SockhopClient+event_sending"></a>
+<a name="SockhopClient+debug_sending"></a>
 
-### "sending" (object, buffer)
+### "debug:sending" (object, buffer)
 sending event
 
 NOTE : This event is only emitted if the SockhopClient is in debug mode
@@ -424,9 +425,9 @@ NOTE : This event is only emitted if the SockhopClient is in debug mode
 | object | <code>object</code> | the object we are sending |
 | buffer | <code>Buffer</code> | the buffer we are sending |
 
-<a name="SockhopClient+event_received"></a>
+<a name="SockhopClient+debug_received"></a>
 
-### "received" (object, buffer)
+### "debug:received" (object, buffer)
 received event
 
 NOTE : This event is only emitted if the SockhopClient is in debug mode
@@ -787,10 +788,14 @@ clients connection from the server. Rather, users should call `session.kill()`.
     * [new SockhopSession(sock, server)](#new_SockhopSession_new)
     * [.sock](#SockhopSession+sock) : <code>net.Socket</code>
     * [.server](#SockhopSession+server) : [<code>SockhopServer</code>](#SockhopServer)
+    * [.init_complete](#SockhopSession+init_complete) ⇒ <code>boolean</code>
+    * [.handshake_successful](#SockhopSession+handshake_successful) ⇒ <code>boolean</code>
     * [.send(obj)](#SockhopSession+send) ⇒ <code>Promise</code>
     * [.kill()](#SockhopSession+kill) ⇒ <code>Promise</code>
     * *[.start()](#SockhopSession+start) ⇒ <code>Promise</code>*
     * *[.end()](#SockhopSession+end) ⇒ <code>Promise</code>*
+    * ["handshake" (success, error)](#SockhopSession+event_handshake)
+    * ["receive" (object, meta)](#SockhopSession+event_receive)
 
 <a name="new_SockhopSession_new"></a>
 
@@ -817,6 +822,24 @@ Getter for the underlying session socket
 Getter for the server
 
 **Kind**: instance property of [<code>SockhopSession</code>](#SockhopSession)  
+<a name="SockhopSession+init_complete"></a>
+
+### sockhopSession.init\_complete ⇒ <code>boolean</code>
+init_complete getter
+
+NOTE : this will be true if the client is in compatibility mode and connected, since no handshake is expected
+
+**Kind**: instance property of [<code>SockhopSession</code>](#SockhopSession)  
+**Returns**: <code>boolean</code> - init_complete is the client still expecting to run more initialization steps (e.g. handshake)  
+<a name="SockhopSession+handshake_successful"></a>
+
+### sockhopSession.handshake\_successful ⇒ <code>boolean</code>
+handshake_successful getter
+
+NOTE : this will be false if the handshake has not yet completed, or if the client is in compatibility mode
+
+**Kind**: instance property of [<code>SockhopSession</code>](#SockhopSession)  
+**Returns**: <code>boolean</code> - handshake_successful whether or not the last handshake was successful  
 <a name="SockhopSession+send"></a>
 
 ### sockhopSession.send(obj) ⇒ <code>Promise</code>
@@ -867,3 +890,41 @@ then trigger the server to emit the 'disconnect' event.
 
 **Kind**: instance abstract method of [<code>SockhopSession</code>](#SockhopSession)  
 **Returns**: <code>Promise</code> - resolves when teardown is complete  
+<a name="SockhopSession+event_handshake"></a>
+
+### "handshake" (success, error)
+handshake event
+
+This fires when the handshake completes or times out
+
+WARNING: if the other side of the connection get's a connect event, they can begin sending data immediately.
+         regardless of whether or not the handshake completes or times out, or is simply ignored (compatibility mode
+         or 1.x library version). This means data can be sent before the handshake completes, unless both sides
+         have agreed to wait for the handshake event before sending any data. It is recommnded that in situations
+         where you cannot gaurantee that both sides are using Sockhop 2.x with handshakes, that you should listen
+         for the connection event for the purpose of adding event handlers, but wait for the handshake event
+         to proactively send any data, so that the send logic can depending on a know handshake state.
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| success | <code>boolean</code> | true if the handshake was successful, false if it timed out or failed |
+| error | <code>Error</code> | if the handshake failed, this will contain the error, otherwise undefined |
+
+<a name="SockhopSession+event_receive"></a>
+
+### "receive" (object, meta)
+receive object event
+
+We have successfully received an object from the server
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the received object |
+| meta | <code>object</code> | metadata |
+| meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
+| meta.callback | <code>function</code> | if the received object was sent with a callback, this is the function to call to respond |
+

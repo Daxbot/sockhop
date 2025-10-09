@@ -197,12 +197,13 @@ Wrapped TCP client
 
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
-**Emits**: [<code>connect</code>](#SockhopClient+event_connect), [<code>disconnect</code>](#SockhopClient+event_disconnect), [<code>receive</code>](#SockhopClient+event_receive), <code>event:SockhopError</code>  
+**Emits**: [<code>connect</code>](#SockhopClient+event_connect), [<code>disconnect</code>](#SockhopClient+event_disconnect), [<code>handshake</code>](#SockhopClient+event_handshake), [<code>unhandshake</code>](#SockhopClient+event_unhandshake), [<code>debug:sending</code>](#SockhopClient+debug_sending), [<code>debug:received</code>](#SockhopClient+debug_received), [<code>binary\_mode:rx</code>](#SockhopClient+event_binary_mode_rx), [<code>binary\_mode:tx</code>](#SockhopClient+event_binary_mode_tx), <code>SockhopClient#event:error</code>, [<code>receive</code>](#SockhopClient+event_receive), <code>event:SockhopError</code>  
 
 * [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
     * [new SockhopClient([opts])](#new_SockhopClient_new)
     * [.connected](#SockhopClient+connected) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect) ⇒ <code>boolean</code>
+    * [.auto_rehandshake](#SockhopClient+auto_rehandshake) ⇒ <code>boolean</code>
     * [.auto_reconnect](#SockhopClient+auto_reconnect)
     * [.debug](#SockhopClient+debug) ⇒ <code>boolean</code>
     * [.compatibility_mode](#SockhopClient+compatibility_mode) ⇒ <code>boolean</code>
@@ -211,6 +212,7 @@ Wrapped TCP client
     * [.binary_mode](#SockhopClient+binary_mode) ⇒ <code>object</code> \| <code>boolean</code> \| <code>boolean</code>
     * [.socket](#SockhopClient+socket) : <code>net.socket</code>
     * [._perform_auto_reconnect()](#SockhopClient+_perform_auto_reconnect)
+    * [._perform_auto_rehandshake()](#SockhopClient+_perform_auto_rehandshake)
     * [.start()](#SockhopClient+start) ⇒ <code>Promise</code>
     * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
@@ -219,8 +221,9 @@ Wrapped TCP client
     * [.disconnect()](#SockhopClient+disconnect) ⇒ <code>Promise</code>
     * ["connect" (sock)](#SockhopClient+event_connect)
     * ["handshake" (success, error)](#SockhopClient+event_handshake)
+    * ["unhandshake"](#SockhopClient+event_unhandshake)
     * ["receive" (object, meta)](#SockhopClient+event_receive)
-    * ["disconnect" (sock)](#SockhopClient+event_disconnect)
+    * ["disconnect" (sock, handshaked)](#SockhopClient+event_disconnect)
     * ["debug:sending" (object, buffer, binary_mode)](#SockhopClient+debug_sending)
     * ["debug:received" (object, buffer, binary_mode)](#SockhopClient+debug_received)
     * ["binary_mode:rx" (enabled)](#SockhopClient+event_binary_mode_rx)
@@ -230,6 +233,94 @@ Wrapped TCP client
 
 ### new SockhopClient([opts])
 Constructs a new SockhopClient
+
+
+For the 2.x libarary version, it is strongly recommended that you use handshake-based connections and events for managing lifecycle:
+```js
+const client = new SockhopClient({ auto_rehandshake: true });
+await client.start(); // Waits for handshake to complete
+
+client.binary_mode.tx; // has a definite value, now that the handshake is complete
+
+client.on("handshake", (success, error) => {
+   // Can catch errors where, or handle re-connections
+});
+
+client.on("unhandshake", () => {
+  // Handle when a handshaked-connection is lost
+});
+
+await client.disconnect();
+```
+
+That being said, if you are trying to interoperate with a 1.x/compatibility mode remote, many of the above methods/events
+will mis-behave, since the handshake doesn't success with a 1.x/compatibility mode remote. In that case, you will need to
+handle both cases:
+
+```js
+const client = new SockhopClient({ auto_reconnect: true });
+
+client.on("receive", (obj, meta) => {
+  // Attach handlers *before* calling connect, since 1.x/compatibility mode remotes can start sending data immediately after the connect event
+
+  // If you want to differentiate, you can switch on client.handshake_successful or client.binary_mode.rx == true
+  if ( client.handshake_successful ) {
+     // 2.x+ client
+  } else {
+     // 1.x/compatibility mode client
+  }
+});
+
+// await client.start(); // This will throw an error if the remote is 1.x/compatibility mode
+await client.connect(); // Does not wait for handshake to complete
+
+client.on("handshake", (success, error) => {
+  // Use this for reconnctions, and to differentiate between 2.x+ and 1.x/compatibility mode remotes:
+  // Check for error.code=="ERR_HANDSHAKE_TIMEOUT"
+
+  if ( success ) {
+    // 2.x+ client
+  } else if (error.code=="ERR_HANDSHAKE_TIMEOUT") {
+    // 1.x/compatibility mode remote
+  } else {
+    // Handle error
+  }
+});
+
+
+// client.on("unhandshake", () => {}); // Only fires for 2.x+ handshaked-connection lost:
+client.on("disconnect", (sock, handshaked) => {
+  if ( handshaked ) {
+    // 2.x+ handshaked-connection lost, same as unhandshake event
+  } else {
+    // Handle 1.x/compatibility or 2.x+failed handshake disconnects
+  }
+});
+
+await client.disconnect(); // Disconnects cleanly
+```
+
+ If you would rather skip the complexity, and just have this library behave like 1.x, you can enable compatibility mode,
+ though, this will totally disable all handshake-related features.
+ ```js
+ const client = new SockhopClient({ compatibility_mode: true, auto_reconnect: true });
+
+ await client.connect(); // Does not even attempt a handshake, nor waits for one
+
+ client.binary_mode.tx; // will always be false, since we are not doing a handshake
+
+ // client.on("handshake", (success, error) => {}); // this will never fire
+ client.on("connect", () => {
+   // but this will!
+ });
+
+ // client.on("unhandshake", () => {}); // Also will never fire
+ client.on("disconnect", (sock, handshaked) => {
+   handshaked; // will always be false
+ });
+
+ await client.disconnect(); // Disconnects cleanly
+ ```
 
 **Throws**:
 
@@ -244,8 +335,11 @@ Constructs a new SockhopClient
 | [opts.port] | <code>number</code> | <code>50000</code> | the TCP port to use |
 | [opts.ssl] | <code>boolean</code> | <code>false</code> | use tls |
 | [opts.ssl_options] | <code>object</code> | <code>{}</code> | options to pass to the tls socket constructor, see `tls.connect` for details, note, if any options are provided, the `opts.ssl` flag is overriden as true |
+| [opts.auto_rehandshake] | <code>number</code> | <code>false</code> | automatically try to rehandshake if the connection is lost (overrides auto_reconnect if both are set) |
 | [opts.auto_reconnect] | <code>number</code> | <code>false</code> | automatically try to reconnect if the connection is lost |
 | [opts.auto_reconnect_interval] | <code>number</code> | <code>2000</code> | the auto reconnection interval, in ms. |
+| [opts.auto_rehandshake_interval] | <code>number</code> | <code>5000</code> | the auto reconnection interval, in ms. |
+| [opts.auto_reconnect_requires_handshake] | <code>boolean</code> | <code>true</code> | have reconnections fail unless the handshake completes successfully |
 | [opts.terminator] | <code>string</code> \| <code>array</code> | <code>&quot;\&quot;\\n\&quot;&quot;</code> | the JSON object delimiter.  Passed directly to the JSONObjectBuffer constructor. |
 | [opts.allow_non_objects] | <code>boolean</code> | <code>false</code> | allow non objects to be received and transmitted. Passed directly to the JSONObjectBuffer constructor. |
 | [opts.connect_timeout] | <code>number</code> | <code>5000</code> | the length of time in ms to try to connect before timing out |
@@ -265,6 +359,13 @@ connected
 
 ### sockhopClient.auto\_reconnect ⇒ <code>boolean</code>
 auto_reconnect getter
+
+**Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>boolean</code> - auto_reconnect the current auto_reconnect setting  
+<a name="SockhopClient+auto_rehandshake"></a>
+
+### sockhopClient.auto\_rehandshake ⇒ <code>boolean</code>
+auto_rehandshake getter
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
 **Returns**: <code>boolean</code> - auto_reconnect the current auto_reconnect setting  
@@ -333,6 +434,15 @@ We have determined that an auto reconnect is necessary.
 We will initiate it, and manage the fallout.
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
+<a name="SockhopClient+_perform_auto_rehandshake"></a>
+
+### sockhopClient.\_perform\_auto\_rehandshake()
+Perform an auto rehandshake (internal)
+
+We have determined that an auto rehandshake is necessary.
+We will initiate it, and manage the fallout.
+
+**Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
 <a name="SockhopClient+start"></a>
 
 ### sockhopClient.start() ⇒ <code>Promise</code>
@@ -352,7 +462,9 @@ instead you should use `.connect()` but add your own listener to the `handshake`
 See the `handshake` event docs for more information.
 
 NOTE : if auto_reconnect is enabled, it will only start trying to reconnect once the handshake completes successfully.
-       however, the reconnections *do not* guarentee that the handshake will succeed, so you should still listen for the 'handshake' event
+       however, the reconnections *do not* guarentee that the handshake will succeed, so you should still listen for the 'handshake' event.
+       Even better would be to set auto_rehandshake to true, which will try to rehandshake automatically if the connection is lost. However,
+       that workflow doesn't play nicely with interoperating with 1.x/compatibility mode remotes, since the handshake will never succeed.
 
 WARNING: if the other side of the connection get's a connect event, they can begin sending data immediately, so if there are issues
          with the handshake, you could end up in bad sitaution of the other side repeatedly sending data that you are ignoring.
@@ -375,6 +487,9 @@ WARNING: this does not wait for the handshake to complete. Unless you are in com
 Attempt to connect to the server. If we are already connected, this returns immediately.
 If we are already trying to connect, this throws an error.
 If this client has been configured for auto_reconnect, it will start a reconnection timer only once connected.
+
+if this client has been configured with auto_rehandshake, this method will throw an error, since you almost certainly want `.start()` instead.
+If you are *very* certian you want to use `.connect()` with auto_rehandshake, you can call the internal `._connect()` method instead.
 
 If you want to keep trying until you connect, you will want to set auto_reconnect to true, and then call this
 method in a loop with a try/catch block, since this method will throw if the connection fails.
@@ -479,6 +594,16 @@ WARNING: if the other side of the connection get's a connect event, they can beg
 | success | <code>boolean</code> | true if the handshake was successful, false if it timed out or failed |
 | error | <code>Error</code> | if the handshake failed, this will contain the error, otherwise undefined |
 
+<a name="SockhopClient+event_unhandshake"></a>
+
+### "unhandshake"
+unhandshake event
+
+This fires when we were previously handshaked, but the connection was lost. This is analogous
+to the `disconnect` event, but only fires if we were previously handshaked. If you are interoperating
+with a 1.x/compatibility mode remote, this event will not fire, since the handshake will never succeed.
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
 <a name="SockhopClient+event_receive"></a>
 
 ### "receive" (object, meta)
@@ -497,14 +622,19 @@ We have successfully received an object from the server
 
 <a name="SockhopClient+event_disconnect"></a>
 
-### "disconnect" (sock)
+### "disconnect" (sock, handshaked)
 disconnect event
+
+This fires when we have disconnected from the server, either because the server closed the connection,
+or because we called disconnect().  If we were previously handshaked, the `unhandshake` event will
+fire first, followed by this event.
 
 **Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | sock | <code>net.Socket</code> | the socket that just disconnected |
+| handshaked | <code>boolean</code> | true if we were previously handshaked, false otherwise |
 
 <a name="SockhopClient+debug_sending"></a>
 
@@ -676,7 +806,7 @@ constructor options.
 
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
-**Emits**: [<code>connect</code>](#SockhopServer+event_connect), [<code>disconnect</code>](#SockhopServer+event_disconnect), [<code>receive</code>](#SockhopServer+event_receive), <code>event:SockhopError</code>  
+**Emits**: [<code>connect</code>](#SockhopServer+event_connect), [<code>disconnect</code>](#SockhopServer+event_disconnect), [<code>unhandshake</code>](#SockhopServer+event_unhandshake), [<code>receive</code>](#SockhopServer+event_receive), <code>event:SockhopError</code>  
 
 * [SockhopServer](#SockhopServer) ⇐ <code>EventEmitter</code>
     * [new SockhopServer([opts])](#new_SockhopServer_new)
@@ -696,7 +826,8 @@ constructor options.
     * ["connect" (sock, session)](#SockhopServer+event_connect)
     * ["handshake" (sock, session, success, error)](#SockhopServer+event_handshake)
     * ["receive" (object, meta)](#SockhopServer+event_receive)
-    * ["disconnect" (sock, session)](#SockhopServer+event_disconnect)
+    * ["disconnect" (sock, session, handshaked)](#SockhopServer+event_disconnect)
+    * ["unhandshake" (sock, session)](#SockhopServer+event_unhandshake)
     * ["debug:sending" (object, buffer, binary_mode, sock, session)](#SockhopServer+debug_sending)
     * ["debug:received" (object, buffer, binary_mode, sock, session)](#SockhopServer+debug_received)
 
@@ -911,8 +1042,25 @@ We have successfully received an object from the client
 
 <a name="SockhopServer+event_disconnect"></a>
 
-### "disconnect" (sock, session)
+### "disconnect" (sock, session, handshaked)
 disconnect event
+
+**Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sock | <code>net.Socket</code> | the socket that just disconnected |
+| session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
+| handshaked | <code>boolean</code> | true if we were previously handshaked, false otherwise |
+
+<a name="SockhopServer+event_unhandshake"></a>
+
+### "unhandshake" (sock, session)
+unhandshake event
+
+This fires when we were previously handshaked, but the connection was lost. This is analogous
+to the `disconnect` event, but only fires if we were previously handshaked. If you are interoperating
+with a 1.x/compatibility mode remote, this event will not fire, since the handshake will never succeed.
 
 **Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
 
@@ -981,6 +1129,7 @@ clients connection from the server. Rather, users should call `session.kill()`.
 
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
+**Emits**: [<code>handshake</code>](#SockhopSession+event_handshake), [<code>unhandshake</code>](#SockhopSession+event_unhandshake), [<code>disconnect</code>](#SockhopSession+event_disconnect), [<code>receive</code>](#SockhopSession+event_receive), [<code>debug:sending</code>](#SockhopSession+debug_sending), [<code>debug:received</code>](#SockhopSession+debug_received), [<code>binary\_mode:rx</code>](#SockhopSession+event_binary_mode_rx), [<code>binary\_mode:tx</code>](#SockhopSession+event_binary_mode_tx)  
 
 * [SockhopSession](#SockhopSession) ⇐ <code>EventEmitter</code>
     * [new SockhopSession(sock, server)](#new_SockhopSession_new)
@@ -995,6 +1144,8 @@ clients connection from the server. Rather, users should call `session.kill()`.
     * *[.end()](#SockhopSession+end) ⇒ <code>Promise</code>*
     * ["handshake" (success, error)](#SockhopSession+event_handshake)
     * ["receive" (object, meta)](#SockhopSession+event_receive)
+    * ["unhandshake"](#SockhopSession+event_unhandshake)
+    * ["disconnect" (handshaked)](#SockhopSession+event_disconnect)
     * ["debug:sending" (object, buffer, binary_mode)](#SockhopSession+debug_sending)
     * ["debug:received" (object, buffer, binary_mode)](#SockhopSession+debug_received)
     * ["binary_mode:rx" (enabled)](#SockhopSession+event_binary_mode_rx)
@@ -1141,6 +1292,27 @@ We have successfully received an object from the server
 | meta | <code>object</code> | metadata |
 | meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
 | meta.callback | <code>function</code> | if the received object was sent with a callback, this is the function to call to respond |
+
+<a name="SockhopSession+event_unhandshake"></a>
+
+### "unhandshake"
+unhandshake event
+
+This fires when we were previously handshaked, but the connection was lost. This is analogous
+to the `disconnect` event, but only fires if we were previously handshaked. If you are interoperating
+with a 1.x/compatibility mode remote, this event will not fire, since the handshake will never succeed.
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+<a name="SockhopSession+event_disconnect"></a>
+
+### "disconnect" (handshaked)
+disconnect event
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| handshaked | <code>boolean</code> | true if we were previously handshaked, false otherwise |
 
 <a name="SockhopSession+debug_sending"></a>
 

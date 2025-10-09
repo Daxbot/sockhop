@@ -8,6 +8,60 @@ const HANDSHAKE_TIMEOUT=300;
 
 describe("Handshake", function(){
 
+    it("Handshake events all fire as expected",async function(){
+        const PORT=BASE_PORT++;
+        const s = new Sockhop.server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const c = new Sockhop.client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        try {
+            await s.listen();
+
+            let got_client_handshake=false;
+            c.once('handshake', (success, error) => {
+                if ( success ) got_client_handshake=true;
+            });
+            let got_client_unhandshake=false;
+            c.once('unhandshake', () => {
+                got_client_unhandshake=true;
+            });
+
+            let got_server_handshake=false;
+            s.once('handshake', (_,__,success, error) => {
+                if ( success ) got_server_handshake=true;
+            });
+            let got_server_unhandshake=false;
+            s.once('unhandshake', () => {
+                got_server_unhandshake=true;
+            });
+
+            let got_session_handshake=false;
+            let got_session_unhandshake=false;
+            s.on('connect', (_,s) => {
+                s.once("handshake",(success) => {
+                    got_session_handshake = success;
+                });
+                s.once("unhandshake",() => {
+                    got_session_unhandshake = true;
+                });
+            });
+
+            await c.start();
+            await c.disconnect();
+            await new Promise(res => setTimeout(res, 50)); // let events propagate
+
+            expect(got_client_handshake, "Client did not get handshake event").to.be.true;
+            expect(got_client_unhandshake, "Client did not get unhandshake event").to.be.true;
+            expect(got_server_handshake, "Server did not get handshake event").to.be.true;
+            expect(got_server_unhandshake, "Server did not get unhandshake event").to.be.true;
+            expect(got_session_handshake, "Session did not get handshake event").to.be.true;
+            expect(got_session_unhandshake, "Session did not get unhandshake event").to.be.true;
+
+        } finally {
+            await c.disconnect();
+            await s.close();
+            await new Promise(res => setTimeout(res, 200));
+        }
+    });
+
     it("Handshake returns fast in non-compatibility mode",async function(){
         const PORT=BASE_PORT++;
         const s = new Sockhop.server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});

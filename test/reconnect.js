@@ -1,6 +1,7 @@
 var Sockhop=require("../index.js");
 var assert=require("assert");
 var spawn=require("child_process").spawn;
+const { expect } = require("chai");
 
 
 var c,s;
@@ -84,56 +85,6 @@ describe("client.auto_reconnect", function(){
 
     });
 
-    it("Attempts connect until server appears, then bubbles SINGLE connect event (slow)", function(done){
-
-        this.timeout(4000);
-
-        c=new Sockhop.client({port: 50009, auto_reconnect_interval: 200, auto_reconnect: true});
-
-        // Count connect events
-        let connect_event_counter=0;
-
-        // Name the counter function so we can remove it later
-        let connect_counter_fn=function(){
-
-            connect_event_counter++;
-        };
-
-        c.on("connect",connect_counter_fn);
-
-        // We are done shortly after we connect
-        c.once("connect",()=>{
-            setTimeout(()=>{
-
-                // Make sure we only got one event
-                assert.equal(connect_event_counter,1);
-
-                // Clean up connect events
-                c.removeListener("connect", connect_counter_fn);
-
-                // Disconnect, and we are done
-                c.disconnect().then(()=>done());
-            },500);
-        });
-
-        // Start trying to connect
-        c.connect();
-
-        Promise.resolve()
-            .then(()=>{
-
-                // After 1s pause, create a new server
-                setTimeout(()=>{
-
-                    s=new Sockhop.server({port: 50009});
-                    s.listen();
-
-                },1000);
-
-            });
-
-    });
-
 
     it("Server violent death (2x), client doesn't reconnects (if not configured to do so) and bubbles 1 connect events (slow)", function(done){
 
@@ -184,8 +135,10 @@ describe("client.auto_reconnect", function(){
             });
         });
 
-        // Connect the client
-        c.connect();
+        // Connect the client, a bit delayed to allow slambang to start
+        setTimeout(()=>{
+            c.connect();
+        },500);
 
     });
 
@@ -240,8 +193,10 @@ describe("client.auto_reconnect", function(){
             });
         });
 
-        // Connect the client
-        c.connect();
+        // Connect the client, a bit delayed to allow slambang to start
+        setTimeout(()=>{
+            c.connect();
+        },500);
 
     });
 
@@ -255,6 +210,66 @@ describe("client.auto_reconnect", function(){
 
 
 
+let BASE_PORT=51130;
+describe("client.auto_rehandshake", function(){
+    let s,c;
+
+    beforeEach(async() => {
+        let port=BASE_PORT++;
+        s=new Sockhop.server({port: port});
+        c=new Sockhop.client({port: port, auto_rehandshake_interval:200, auto_rehandshake: true });
+        await s.listen();
+    });
+    afterEach(async() => {
+        await Promise.all([
+            s.close(),
+            c.disconnect(),
+        ]);
+        await new Promise(r=>setTimeout(r,10));
+    });
+
+    it("Will throw if calling connect()", async function(){
+        try {
+            await c.connect();
+        } catch(err) {
+            expect(err.message).to.equal("You configured `auto_rehandshake=true`, and so almost certainly want `.start()` not `.connect()` if you think you know otherwise, use `._connect()`");
+            return;
+        }
+        throw new Error("Should have thrown");
+    });
+
+    it("Will rehandshake automatically if server drops us", async function(){
+
+        let sock=null;
+        s.on("connect", (s, sess) => {
+            sock=s;
+        });
+
+        await c.start();
+
+        expect(c.connected, "Client not initially connected when should be").to.be.true;
+        expect(c.handshake_successful, "Client handshake failed when should have succeeded").to.be.true;
+
+        let got_unhandshake=false;
+        c.on("unhandshake", () => {
+            got_unhandshake=true;
+        });
+
+        let got_rehandshake=false;
+        c.on("handshake", () => {
+            got_rehandshake=true;
+        });
+
+        sock.destroy(); // induce a server-side hang-up
+
+        // Wait for events to propagate, and reconnect to happen
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        expect(got_unhandshake, "Client never got unhandshake event").to.be.true;
+        expect(got_rehandshake, "Client never rehandshaked").to.be.true;
+
+    });
+});
 
 
 

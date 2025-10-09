@@ -13,6 +13,9 @@
     "watch:test": "nodemon -w index.js -w test/ -x npm run test -s",
     "dev": "nodemon -w index.js -w test/ -x npm run lint:test -s"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DaxBot/sockhop"

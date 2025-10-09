@@ -347,6 +347,7 @@ await client.disconnect(); // Disconnects cleanly
 | [opts.handshake_timeout] | <code>number</code> | <code>3000</code> | the length of time in ms to wait for a handshake response before timing out |
 | [opts.compatibility_mode] | <code>boolean</code> | <code>false</code> | enable compatibility mode, which will disable handshakes for simulating 1.x behavior |
 | [opts.allow_binary_mode] | <code>boolean</code> | <code>true</code> | request binary mode during handshake (ignored in compatibility mode) |
+| [opts.allow_unsafe_encoding] | <code>boolean</code> | <code>false</code> | allow the binary_mode encodings to be 'unsafe' (i.e. not type checked), for faster preformance. Ingored if binary_mode is not enabled |
 
 <a name="SockhopClient+connected"></a>
 
@@ -850,6 +851,7 @@ Constructs a new SockhopServer
 | [opts.compatibility_mode] | <code>boolean</code> | <code>false</code> | enable compatibility mode, which will disable handshakes for simulating 1.x behavior |
 | [opts.debug] | <code>boolean</code> | <code>false</code> | run in debug mode -- which adds additional emits |
 | [opts.allow_binary_mode] | <code>boolean</code> | <code>true</code> | request binary mode during handshake (ignored in compatibility mode) |
+| [opts.allow_unsafe_encoding] | <code>boolean</code> | <code>false</code> | allow the binary_mode encodings to be 'unsafe' (i.e. not type checked), for faster preformance. Ingored if binary_mode is not enabled |
 
 <a name="SockhopServer+sockets"></a>
 

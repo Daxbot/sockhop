@@ -7,6 +7,12 @@
 <p>Automatically reassembles fragmented buffers (useful when the buffer passes through
 a socket, for example, and is received in pieces) and gives you your object back</p>
 </dd>
+<dt><a href="#ObjectBuffer">ObjectBuffer</a> ⇐ <code>EventEmitter</code></dt>
+<dd><p>Object Buffer for  encoding</p>
+<p>de/serialize objects to/from a Buffer</p>
+<p>Automatically reassembles fragmented buffers (useful when the buffer passes through
+a socket, for example, and is received in pieces) and gives you your object back</p>
+</dd>
 <dt><a href="#SockhopClient">SockhopClient</a> ⇐ <code>EventEmitter</code></dt>
 <dd><p>Wrapped TCP client</p>
 </dd>
@@ -127,6 +133,63 @@ Convert an Object to a Buffer
 | object | <code>Object</code> | the object to convert |
 | buffer | <code>Buffer</code> | the buffer representing that object |
 
+<a name="ObjectBuffer"></a>
+
+## ObjectBuffer ⇐ <code>EventEmitter</code>
+Object Buffer for  encoding
+
+de/serialize objects to/from a Buffer
+
+Automatically reassembles fragmented buffers (useful when the buffer passes through
+a socket, for example, and is received in pieces) and gives you your object back
+
+**Kind**: global class  
+**Extends**: <code>EventEmitter</code>  
+
+* [ObjectBuffer](#ObjectBuffer) ⇐ <code>EventEmitter</code>
+    * [new ObjectBuffer(opts)](#new_ObjectBuffer_new)
+    * [.buf2obj(buffer)](#ObjectBuffer+buf2obj) ⇒ <code>Array</code>
+    * [.obj2buf(name, object, buffer)](#ObjectBuffer+obj2buf)
+
+<a name="new_ObjectBuffer_new"></a>
+
+### new ObjectBuffer(opts)
+Constructs a new ObjectBuffer
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| opts | <code>object</code> | the options |
+
+<a name="ObjectBuffer+buf2obj"></a>
+
+### objectBuffer.buf2obj(buffer) ⇒ <code>Array</code>
+buf2obj
+
+Convert a Buffer into one or more objects
+
+**Kind**: instance method of [<code>ObjectBuffer</code>](#ObjectBuffer)  
+**Returns**: <code>Array</code> - found the objects we found  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buffer | <code>Buffer</code> | the buffer to read (we may modify or store it!) |
+
+<a name="ObjectBuffer+obj2buf"></a>
+
+### objectBuffer.obj2buf(name, object, buffer)
+obj2buf
+
+Convert an Object to a Buffer
+
+**Kind**: instance method of [<code>ObjectBuffer</code>](#ObjectBuffer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| name | <code>string</code> | the name of the schema to use |
+| object | <code>Object</code> | the object to convert |
+| buffer | <code>Buffer</code> | the buffer representing that object |
+
 <a name="SockhopClient"></a>
 
 ## SockhopClient ⇐ <code>EventEmitter</code>
@@ -145,9 +208,10 @@ Wrapped TCP client
     * [.compatibility_mode](#SockhopClient+compatibility_mode) ⇒ <code>boolean</code>
     * [.handshake_successful](#SockhopClient+handshake_successful) ⇒ <code>boolean</code>
     * [.init_complete](#SockhopClient+init_complete) ⇒ <code>boolean</code>
+    * [.binary_mode](#SockhopClient+binary_mode) ⇒ <code>object</code> \| <code>boolean</code> \| <code>boolean</code>
     * [.socket](#SockhopClient+socket) : <code>net.socket</code>
     * [._perform_auto_reconnect()](#SockhopClient+_perform_auto_reconnect)
-    * [.resolve_on_connect([opts])](#SockhopClient+resolve_on_connect) ⇒ <code>Promise</code>
+    * [.start()](#SockhopClient+start) ⇒ <code>Promise</code>
     * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
     * [.send(object, [rcallback])](#SockhopClient+send) ⇒ <code>Promise</code>
@@ -157,8 +221,10 @@ Wrapped TCP client
     * ["handshake" (success, error)](#SockhopClient+event_handshake)
     * ["receive" (object, meta)](#SockhopClient+event_receive)
     * ["disconnect" (sock)](#SockhopClient+event_disconnect)
-    * ["debug:sending" (object, buffer)](#SockhopClient+debug_sending)
-    * ["debug:received" (object, buffer)](#SockhopClient+debug_received)
+    * ["debug:sending" (object, buffer, binary_mode)](#SockhopClient+debug_sending)
+    * ["debug:received" (object, buffer, binary_mode)](#SockhopClient+debug_received)
+    * ["binary_mode:rx" (enabled)](#SockhopClient+event_binary_mode_rx)
+    * ["binary_mode:tx" (enabled)](#SockhopClient+event_binary_mode_tx)
 
 <a name="new_SockhopClient_new"></a>
 
@@ -186,6 +252,7 @@ Constructs a new SockhopClient
 | [opts.debug] | <code>boolean</code> | <code>false</code> | run in debug mode -- which adds additional emits |
 | [opts.handshake_timeout] | <code>number</code> | <code>3000</code> | the length of time in ms to wait for a handshake response before timing out |
 | [opts.compatibility_mode] | <code>boolean</code> | <code>false</code> | enable compatibility mode, which will disable handshakes for simulating 1.x behavior |
+| [opts.allow_binary_mode] | <code>boolean</code> | <code>true</code> | request binary mode during handshake (ignored in compatibility mode) |
 
 <a name="SockhopClient+connected"></a>
 
@@ -244,6 +311,13 @@ NOTE : this will be true if the client is in compatibility mode and connected, s
 
 **Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
 **Returns**: <code>boolean</code> - init_complete is the client still expecting to run more initialization steps (e.g. handshake)  
+<a name="SockhopClient+binary_mode"></a>
+
+### sockhopClient.binary\_mode ⇒ <code>object</code> \| <code>boolean</code> \| <code>boolean</code>
+binary_mode getter
+
+**Kind**: instance property of [<code>SockhopClient</code>](#SockhopClient)  
+**Returns**: <code>object</code> - binary_mode the current binary mode status<code>boolean</code> - binary_mode.rx true if we are receiving in binary mode<code>boolean</code> - binary_mode.tx true if we are transmitting in binary mode  
 <a name="SockhopClient+socket"></a>
 
 ### sockhopClient.socket : <code>net.socket</code>
@@ -259,37 +333,51 @@ We have determined that an auto reconnect is necessary.
 We will initiate it, and manage the fallout.
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
-<a name="SockhopClient+resolve_on_connect"></a>
+<a name="SockhopClient+start"></a>
 
-### sockhopClient.resolve\_on\_connect([opts]) ⇒ <code>Promise</code>
-Wait until successfully connected
+### sockhopClient.start() ⇒ <code>Promise</code>
+Start a connection to the server (including handshake)
 
-If the client is already connected, this returns immediately.
-If the client is already trying to connect, this throws an error.
-If the `timeout` option is provided, this will reject if we are not connected within that time.
+NOTE : this requires a "clean" start, meaning we are neither connected nor trying to connect.
+
+This method will only resolve if the handshake completes successfully, otherwise it will reject (similar to how
+connect() will throw if the connection fails). This also means that if the connection succeeds, but the handshake
+fails or times out, this will reject, and the connection will be closed.
+
+If you want to keep trying until you connect and handshake successfully, you will want to set auto_reconnect to true,
+and then call this method in a loop with a try/catch block, since this method will throw if the connection or handshake fails.
+
+If you are interoperating with a 1.x/compatibility mode remote, you should not use this method, since it will *always* throw,
+instead you should use `.connect()` but add your own listener to the `handshake` event and check handle success/failure there.
+See the `handshake` event docs for more information.
+
+NOTE : if auto_reconnect is enabled, it will only start trying to reconnect once the handshake completes successfully.
+       however, the reconnections *do not* guarentee that the handshake will succeed, so you should still listen for the 'handshake' event
+
+WARNING: if the other side of the connection get's a connect event, they can begin sending data immediately, so if there are issues
+         with the handshake, you could end up in bad sitaution of the other side repeatedly sending data that you are ignoring.
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
-**Returns**: <code>Promise</code> - resolves once connected  
+**Returns**: <code>Promise</code> - resolves once connected and handshake completes  
 **Throws**:
 
 - [<code>SockhopError</code>](#SockhopError) 
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| [opts] | <code>object</code> |  |
-| [opts.timeout] | <code>number</code> | the length of time in ms to wait before rejecting |
 
 <a name="SockhopClient+connect"></a>
 
 ### sockhopClient.connect() ⇒ <code>Promise</code>
 Connect
 
+WARNING: this does not wait for the handshake to complete. Unless you are in compatibility mode or trying to interoperate
+         with a 1.x remote, you should probably use `.start()` instead, which will wait for the handshake to complete.
+         See notes below and on the `handshake` event for more information.
+
 Attempt to connect to the server. If we are already connected, this returns immediately.
 If we are already trying to connect, this throws an error.
 If this client has been configured for auto_reconnect, it will start a reconnection timer only once connected.
 
-If you want to keep trying to conect, you should use `.resolve_on_connect()` instead, which will return a promise that resolves once connected, and will keep trying to connect if necessary.
+If you want to keep trying until you connect, you will want to set auto_reconnect to true, and then call this
+method in a loop with a try/catch block, since this method will throw if the connection fails.
 
 NOTE : this method does not wait for the handshake to complete.  You should listen for the 'handshake' event
        to determine if the handshake was successful, or use the `.resolve_on_handshake()` method to get a
@@ -354,7 +442,10 @@ Pinging will also be turned off... if you want to keep pinging, you will need to
 ### "connect" (sock)
 connect event
 
-this fires when we have successfully connected to the server, but before the handshake completes/times-out
+this fires when we have successfully connected to the server, but before the handshake completes/times-out.
+
+NOTE : unless you are in compatibility mode or trying to interoperate with a 1.x remote, you should probably
+       wait for the `handshake` event instead of `connect`. See discussion in the `handshake` event docs for more information
 
 **Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
 
@@ -375,7 +466,11 @@ WARNING: if the other side of the connection get's a connect event, they can beg
          have agreed to wait for the handshake event before sending any data. It is recommnded that in situations
          where you cannot gaurantee that both sides are using Sockhop 2.x with handshakes, that you should listen
          for the connection event for the purpose of adding event handlers, but wait for the handshake event
-         to proactively send any data, so that the send logic can depending on a know handshake state.
+         to proactively send any data, so that the send logic can depending on a know handshake state. This will
+         have the added benefit of ensuring that you will not try to tx until the binary mode negotiation is complete,
+         (which finish immediately before the handshake event fires). Finally, this will allow a smooth transition
+         when all 1.x/compoatibility mode clients are upgraded to 2.x with handshakes, since in that case, both
+         sides will already be waiting for the handshake event before sending any data.
 
 **Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
 
@@ -413,7 +508,7 @@ disconnect event
 
 <a name="SockhopClient+debug_sending"></a>
 
-### "debug:sending" (object, buffer)
+### "debug:sending" (object, buffer, binary_mode)
 sending event
 
 NOTE : This event is only emitted if the SockhopClient is in debug mode
@@ -424,10 +519,11 @@ NOTE : This event is only emitted if the SockhopClient is in debug mode
 | --- | --- | --- |
 | object | <code>object</code> | the object we are sending |
 | buffer | <code>Buffer</code> | the buffer we are sending |
+| binary_mode | <code>boolean</code> | true if we are sending in binary mode |
 
 <a name="SockhopClient+debug_received"></a>
 
-### "debug:received" (object, buffer)
+### "debug:received" (object, buffer, binary_mode)
 received event
 
 NOTE : This event is only emitted if the SockhopClient is in debug mode
@@ -438,6 +534,55 @@ NOTE : This event is only emitted if the SockhopClient is in debug mode
 | --- | --- | --- |
 | object | <code>object</code> | the object we just received |
 | buffer | <code>Buffer</code> | the buffer we just received |
+| binary_mode | <code>boolean</code> | true if we are receiving in binary mode |
+
+<a name="SockhopClient+event_binary_mode_rx"></a>
+
+### "binary_mode:rx" (enabled)
+binary_mode:rx object event
+
+If true, the other end of the connection will (from this packet onward) be sending us data in binary mode
+
+If false, the other end of the connection was reset, and so a renegotiation of binary mode may be necessary
+both the other side will be sending in binary mode again.
+
+NOTE : the `true` variant of this event has undetermined ordering with respect to the firing
+       of `handshake`, meaning it could fire before or after `handshake`, depending on network timing.
+       This is largely irrelevant, since the this event is related to how the library
+       internally handles parsing incoming data, and not how we send data. Think of this
+       event as informational only about the state of the other side of the connection.
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| enabled | <code>boolean</code> | true if we are now receiving in binary mode |
+
+<a name="SockhopClient+event_binary_mode_tx"></a>
+
+### "binary_mode:tx" (enabled)
+binary_mode:tx object event
+
+If true, we will (from this packet onward) be sending data in binary mode.
+
+If false, the connection was reset, and so a renegotiation of binary mode may be necessary before
+we can send data in binary mode again.
+
+NOTE : if the handshake fails or times out, this event *will not* fire with `false`, since
+       we are already not in binary mode. However, you can always check the state of binary mode
+       using the `.binary_mode.tx` property. The `false` event will fire on any disconnect if the
+       system was in binary mode to begih with
+
+NOTE : the `true` variant of this event will always fire *before* the `handshake` event,
+       which means that you don't need to wait for both this event and `handshake`
+       to know that your tx-ing data encoding has settled. As a result, you can probably
+       ignore this event entirely, unless you are doing something really low-level.
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| enabled | <code>boolean</code> | true if we are now receiving in binary mode |
 
 <a name="SockhopError"></a>
 
@@ -538,6 +683,7 @@ constructor options.
     * [.sockets](#SockhopServer+sockets) : <code>Array.&lt;net.Socket&gt;</code>
     * [.sessions](#SockhopServer+sessions) : [<code>Array.&lt;SockhopSession&gt;</code>](#SockhopSession)
     * [.compatibility_mode](#SockhopServer+compatibility_mode) ⇒ <code>boolean</code>
+    * [.debug](#SockhopServer+debug) ⇒ <code>boolean</code>
     * [.emit_async()](#SockhopServer+emit_async)
     * [.ping(delay)](#SockhopServer+ping)
     * [.listen()](#SockhopServer+listen) ⇒ <code>Promise.&lt;net.server&gt;</code>
@@ -551,6 +697,8 @@ constructor options.
     * ["handshake" (sock, session, success, error)](#SockhopServer+event_handshake)
     * ["receive" (object, meta)](#SockhopServer+event_receive)
     * ["disconnect" (sock, session)](#SockhopServer+event_disconnect)
+    * ["debug:sending" (object, buffer, binary_mode, sock, session)](#SockhopServer+debug_sending)
+    * ["debug:received" (object, buffer, binary_mode, sock, session)](#SockhopServer+debug_received)
 
 <a name="new_SockhopServer_new"></a>
 
@@ -569,6 +717,8 @@ Constructs a new SockhopServer
 | [opts.session_type] | <code>Object</code> | <code>SockhopSession</code> | the identifier for a SockhopSession class (or inhereted class) |
 | [opts.handshake_timeout] | <code>number</code> | <code>3000</code> | the length of time in ms to wait for a handshake response before timing out |
 | [opts.compatibility_mode] | <code>boolean</code> | <code>false</code> | enable compatibility mode, which will disable handshakes for simulating 1.x behavior |
+| [opts.debug] | <code>boolean</code> | <code>false</code> | run in debug mode -- which adds additional emits |
+| [opts.allow_binary_mode] | <code>boolean</code> | <code>true</code> | request binary mode during handshake (ignored in compatibility mode) |
 
 <a name="SockhopServer+sockets"></a>
 
@@ -589,6 +739,13 @@ compatibility_mode getter
 
 **Kind**: instance property of [<code>SockhopServer</code>](#SockhopServer)  
 **Returns**: <code>boolean</code> - compatibility_mode whether or not we are in compatibility mode  
+<a name="SockhopServer+debug"></a>
+
+### sockhopServer.debug ⇒ <code>boolean</code>
+debug mode getter
+
+**Kind**: instance property of [<code>SockhopServer</code>](#SockhopServer)  
+**Returns**: <code>boolean</code> - debug whether or not we are in debug mode  
 <a name="SockhopServer+emit_async"></a>
 
 ### sockhopServer.emit\_async()
@@ -696,6 +853,9 @@ connect event
 
 this fires when we have successfully connected to the client, but before the handshake completes/times-out
 
+NOTE : unless you are in compatibility mode or trying to interoperate with a 1.x remote, you should probably
+       wait for the `handshake` event instead of `connect`. See discussion in the `handshake` event docs for more information
+
 **Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
 
 | Param | Type | Description |
@@ -716,7 +876,11 @@ WARNING: if the other side of the connection get's a connect event, they can beg
          have agreed to wait for the handshake event before sending any data. It is recommnded that in situations
          where you cannot gaurantee that both sides are using Sockhop 2.x with handshakes, that you should listen
          for the connection event for the purpose of adding event handlers, but wait for the handshake event
-         to proactively send any data, so that the send logic can depending on a know handshake state.
+         to proactively send any data, so that the send logic can depending on a know handshake state. This will
+         have the added benefit of ensuring that you will not try to tx until the binary mode negotiation is complete,
+         (which finish immediately before the handshake event fires). Finally, this will allow a smooth transition
+         when all 1.x/compoatibility mode clients are upgraded to 2.x with handshakes, since in that case, both
+         sides will already be waiting for the handshake event before sending any data.
 
 **Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
 
@@ -757,6 +921,40 @@ disconnect event
 | sock | <code>net.Socket</code> | the socket that just disconnected |
 | session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
 
+<a name="SockhopServer+debug_sending"></a>
+
+### "debug:sending" (object, buffer, binary_mode, sock, session)
+sending event
+
+NOTE : This event is only emitted if the SockhopServer is in debug mode
+
+**Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we are sending |
+| buffer | <code>Buffer</code> | the buffer we are sending |
+| binary_mode | <code>boolean</code> | true if we are sending in binary mode |
+| sock | <code>net.Socket</code> | the socket we are sending on |
+| session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
+
+<a name="SockhopServer+debug_received"></a>
+
+### "debug:received" (object, buffer, binary_mode, sock, session)
+received event
+
+NOTE : This event is only emitted if the SockhopServer is in debug mode
+
+**Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we just received |
+| buffer | <code>Buffer</code> | the buffer we just received |
+| binary_mode | <code>boolean</code> | true if we are receiving in binary mode |
+| sock | <code>net.Socket</code> | the socket we are receiving on |
+| session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
+
 <a name="SockhopSession"></a>
 
 ## SockhopSession ⇐ <code>EventEmitter</code>
@@ -789,6 +987,7 @@ clients connection from the server. Rather, users should call `session.kill()`.
     * [.sock](#SockhopSession+sock) : <code>net.Socket</code>
     * [.server](#SockhopSession+server) : [<code>SockhopServer</code>](#SockhopServer)
     * [.init_complete](#SockhopSession+init_complete) ⇒ <code>boolean</code>
+    * [.binary_mode](#SockhopSession+binary_mode) ⇒ <code>object</code> \| <code>boolean</code> \| <code>boolean</code>
     * [.handshake_successful](#SockhopSession+handshake_successful) ⇒ <code>boolean</code>
     * [.send(obj)](#SockhopSession+send) ⇒ <code>Promise</code>
     * [.kill()](#SockhopSession+kill) ⇒ <code>Promise</code>
@@ -796,6 +995,10 @@ clients connection from the server. Rather, users should call `session.kill()`.
     * *[.end()](#SockhopSession+end) ⇒ <code>Promise</code>*
     * ["handshake" (success, error)](#SockhopSession+event_handshake)
     * ["receive" (object, meta)](#SockhopSession+event_receive)
+    * ["debug:sending" (object, buffer, binary_mode)](#SockhopSession+debug_sending)
+    * ["debug:received" (object, buffer, binary_mode)](#SockhopSession+debug_received)
+    * ["binary_mode:rx" (enabled)](#SockhopSession+event_binary_mode_rx)
+    * ["binary_mode:tx" (enabled)](#SockhopSession+event_binary_mode_tx)
 
 <a name="new_SockhopSession_new"></a>
 
@@ -831,6 +1034,13 @@ NOTE : this will be true if the client is in compatibility mode and connected, s
 
 **Kind**: instance property of [<code>SockhopSession</code>](#SockhopSession)  
 **Returns**: <code>boolean</code> - init_complete is the client still expecting to run more initialization steps (e.g. handshake)  
+<a name="SockhopSession+binary_mode"></a>
+
+### sockhopSession.binary\_mode ⇒ <code>object</code> \| <code>boolean</code> \| <code>boolean</code>
+binary_mode getter
+
+**Kind**: instance property of [<code>SockhopSession</code>](#SockhopSession)  
+**Returns**: <code>object</code> - binary_mode the current binary mode status<code>boolean</code> - binary_mode.rx true if we are receiving in binary mode<code>boolean</code> - binary_mode.tx true if we are transmitting in binary mode  
 <a name="SockhopSession+handshake_successful"></a>
 
 ### sockhopSession.handshake\_successful ⇒ <code>boolean</code>
@@ -903,7 +1113,11 @@ WARNING: if the other side of the connection get's a connect event, they can beg
          have agreed to wait for the handshake event before sending any data. It is recommnded that in situations
          where you cannot gaurantee that both sides are using Sockhop 2.x with handshakes, that you should listen
          for the connection event for the purpose of adding event handlers, but wait for the handshake event
-         to proactively send any data, so that the send logic can depending on a know handshake state.
+         to proactively send any data, so that the send logic can depending on a know handshake state. This will
+         have the added benefit of ensuring that you will not try to tx until the binary mode negotiation is complete,
+         (which finish immediately before the handshake event fires). Finally, this will allow a smooth transition
+         when all 1.x/compoatibility mode clients are upgraded to 2.x with handshakes, since in that case, both
+         sides will already be waiting for the handshake event before sending any data.
 
 **Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
 
@@ -927,4 +1141,83 @@ We have successfully received an object from the server
 | meta | <code>object</code> | metadata |
 | meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
 | meta.callback | <code>function</code> | if the received object was sent with a callback, this is the function to call to respond |
+
+<a name="SockhopSession+debug_sending"></a>
+
+### "debug:sending" (object, buffer, binary_mode)
+sending event
+
+NOTE : This event is only emitted if the SockhopSession is in debug mode
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we are sending |
+| buffer | <code>Buffer</code> | the buffer we are sending |
+| binary_mode | <code>boolean</code> | true if we are sending in binary mode |
+
+<a name="SockhopSession+debug_received"></a>
+
+### "debug:received" (object, buffer, binary_mode)
+received event
+
+NOTE : This event is only emitted if the SockhopSession is in debug mode
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we just received |
+| buffer | <code>Buffer</code> | the buffer we just received |
+| binary_mode | <code>boolean</code> | true if we are receiving in binary mode |
+
+<a name="SockhopSession+event_binary_mode_rx"></a>
+
+### "binary_mode:rx" (enabled)
+binary_mode:rx object event
+
+The other end of the connection will (from this packet onward) be sending us data in binary mode
+
+NOTE : for the session, this event will never fire with `false`, since we don't
+       support reconnects on the server side. So in a socket lifecycle, this event
+       *might* fire exactly once with `true` in the vacinity of the `handshake` event.
+
+NOTE : this event is has undetermined ordering with respect to the firing of `handshake`,
+       meaning it could fire before or after `handshake`, depending on network timing.
+       This is largely irrelevant, since the this event is related to how the library
+       internally handles parsing incoming data, and not how we send data. Think of this
+       event as informational only about the state of the other side of the connection.
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| enabled | <code>boolean</code> | true if we are now receiving in binary mode |
+
+<a name="SockhopSession+event_binary_mode_tx"></a>
+
+### "binary_mode:tx" (enabled)
+binary_mode:tx object event
+
+We will (from this packet onward) be sending data in binary mode.
+
+NOTE : if the handshake fails or times out, this event *will not* fire with `false`, since
+       we are already not in binary mode. However, you can always check the state of binary mode
+       using the `.binary_mode.tx` property.
+
+NOTE : More importantly, for the session, this event will *never* fire with `false`, since we don't
+       support reconnects on the server side. So in a socket lifecycle, this event
+       *might* fire exactly once with `true` just prior to the `handshake` event.
+
+NOTE : the `true` variant of this event will always fire *before* the `handshake` event,
+       which means that you don't need to wait for both this event and `handshake`
+       to know that your tx-ing data encoding has settled. As a result, you can probably
+       ignore this event entirely, unless you are doing something really low-level.
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| enabled | <code>boolean</code> | true if we are now receiving in binary mode |
 

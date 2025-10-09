@@ -84,21 +84,6 @@ describe("client.auto_reconnect", function(){
 
     });
 
-    it("Attempts connect, but error on timeout (slow)", function(done){
-
-        this.slow(4000);
-        this.timeout(3000);
-
-        c=new Sockhop.client({port: 50009, auto_reconnect_interval: 200, auto_reconnect: true});
-
-        // Start trying to connect
-        c.resolve_on_connect({ timeout: 1000 }).catch((err)=>{
-            assert.equal(err.message, "Timeout exceeded waiting for connect()");
-            c.disconnect().then(()=>done());
-        });
-    });
-
-
     it("Attempts connect until server appears, then bubbles SINGLE connect event (slow)", function(done){
 
         this.timeout(4000);
@@ -132,7 +117,7 @@ describe("client.auto_reconnect", function(){
         });
 
         // Start trying to connect
-        c.resolve_on_connect();
+        c.connect();
 
         Promise.resolve()
             .then(()=>{
@@ -200,7 +185,7 @@ describe("client.auto_reconnect", function(){
         });
 
         // Connect the client
-        c.resolve_on_connect();
+        c.connect();
 
     });
 
@@ -256,7 +241,7 @@ describe("client.auto_reconnect", function(){
         });
 
         // Connect the client
-        c.resolve_on_connect();
+        c.connect();
 
     });
 

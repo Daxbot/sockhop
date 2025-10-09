@@ -1138,7 +1138,7 @@ clients connection from the server. Rather, users should call `session.kill()`.
     * [.init_complete](#SockhopSession+init_complete) ⇒ <code>boolean</code>
     * [.binary_mode](#SockhopSession+binary_mode) ⇒ <code>object</code> \| <code>boolean</code> \| <code>boolean</code>
     * [.handshake_successful](#SockhopSession+handshake_successful) ⇒ <code>boolean</code>
-    * [.send(obj)](#SockhopSession+send) ⇒ <code>Promise</code>
+    * [.send(obj, [callback])](#SockhopSession+send) ⇒ <code>Promise</code>
     * [.kill()](#SockhopSession+kill) ⇒ <code>Promise</code>
     * *[.start()](#SockhopSession+start) ⇒ <code>Promise</code>*
     * *[.end()](#SockhopSession+end) ⇒ <code>Promise</code>*
@@ -1203,7 +1203,7 @@ NOTE : this will be false if the handshake has not yet completed, or if the clie
 **Returns**: <code>boolean</code> - handshake_successful whether or not the last handshake was successful  
 <a name="SockhopSession+send"></a>
 
-### sockhopSession.send(obj) ⇒ <code>Promise</code>
+### sockhopSession.send(obj, [callback]) ⇒ <code>Promise</code>
 Send a message over this session
 
 **Kind**: instance method of [<code>SockhopSession</code>](#SockhopSession)  
@@ -1213,9 +1213,10 @@ Send a message over this session
 - [<code>SockhopError</code>](#SockhopError) 
 
 
-| Param | Type |
-| --- | --- |
-| obj | <code>object</code> | 
+| Param | Type | Description |
+| --- | --- | --- |
+| obj | <code>object</code> |  |
+| [callback] | <code>function</code> | Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise |
 
 <a name="SockhopSession+kill"></a>
 

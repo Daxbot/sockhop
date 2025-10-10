@@ -12,8 +12,8 @@ describe("Typed Buffers", function(){
 
         beforeEach(async function(){
             const PORT=BASE_PORT++;
-            s = new Sockhop.server({port: PORT, allow_binary_mode: false, debug: true, });
-            c = new Sockhop.client({port: PORT, allow_binary_mode: false, debug: true });
+            s = new Sockhop.Server({port: PORT, allow_binary_mode: false, debug: true, });
+            c = new Sockhop.Client({port: PORT, allow_binary_mode: false, debug: true });
             const sess_promise = new Promise(res => s.once("connect", (_,s) => res(s)));
             await s.listen();
             await c.start();
@@ -66,8 +66,8 @@ describe("Typed Buffers", function(){
 
         beforeEach(async function(){
             const PORT=BASE_PORT++;
-            s = new Sockhop.server({port: PORT, allow_binary_mode: true, debug: true, });
-            c = new Sockhop.client({port: PORT, allow_binary_mode: true, debug: true });
+            s = new Sockhop.Server({port: PORT, allow_binary_mode: true, debug: true, });
+            c = new Sockhop.Client({port: PORT, allow_binary_mode: true, debug: true });
             const sess_promise = new Promise(res => s.once("connect", (_,s) => res(s)));
             await s.listen();
             await c.start();

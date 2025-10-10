@@ -5,9 +5,9 @@ var c1,c2,s;
 
 describe("Clean ups", function(){
 
-    s=new Sockhop.server({port: 50002, response_timeout:10});
-    c1=new Sockhop.client({port: 50002, response_timeout:10});
-    c2=new Sockhop.client({port: 50002, response_timeout:10});
+    s=new Sockhop.Server({port: 50002, response_timeout:10});
+    c1=new Sockhop.Client({port: 50002, response_timeout:10});
+    c2=new Sockhop.Client({port: 50002, response_timeout:10});
 
     before(async() => { await s.listen(); });
 

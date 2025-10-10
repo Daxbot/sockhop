@@ -16,9 +16,9 @@ for (let n=0; n< large_data_size; n++){
 describe("Server multiplexing", function(){
 
     it("Sibling client data doesn't collide in server (compatibility mode)", function(done){
-        const s=new Sockhop.server({port: 50008, compatibility_mode: true});
-        const c=new Sockhop.client({port: 50008, compatibility_mode: true});
-        const c2=new Sockhop.client({port: 50008, compatibility_mode: true});
+        const s=new Sockhop.Server({port: 50008, compatibility_mode: true});
+        const c=new Sockhop.Client({port: 50008, compatibility_mode: true});
+        const c2=new Sockhop.Client({port: 50008, compatibility_mode: true});
 
         s.listen()
             .then(()=>c.connect())
@@ -61,9 +61,9 @@ describe("Server multiplexing", function(){
     });
 
     it("Sibling client data doesn't collide in server", async function(){
-        const s=new Sockhop.server({port: 50308});
-        const c=new Sockhop.client({port: 50308});
-        const c2=new Sockhop.client({port: 50308});
+        const s=new Sockhop.Server({port: 50308});
+        const c=new Sockhop.Client({port: 50308});
+        const c2=new Sockhop.Client({port: 50308});
 
         await s.listen();
         await Promise.all([c.connect(), c2.connect()]);

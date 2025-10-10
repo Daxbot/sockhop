@@ -7,7 +7,7 @@ var c,s,sock,sock_connect;
 describe("Client Socket Hangups",function () {
 
 
-    c=new Sockhop.client({port: 50000});
+    c=new Sockhop.Client({port: 50000});
     sock = new net.Socket(); // create a mock socket
 
     this.slow(1000);

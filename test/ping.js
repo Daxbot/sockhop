@@ -18,8 +18,8 @@ for ( const { server_compatibility_mode, client_compatibility_mode } of [
 
         it("Client pings server successfully for 1000ms", async function(){
             let port=BASE_PORT++;
-            const s=new Sockhop.server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
-            const c=new Sockhop.client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const s=new Sockhop.Server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const c=new Sockhop.Client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
 
             try {
                 await s.listen();
@@ -48,8 +48,8 @@ for ( const { server_compatibility_mode, client_compatibility_mode } of [
         it("Simultaneous ping client<-->server for 1000ms", async function(){
 
             let port=BASE_PORT++;
-            const s=new Sockhop.server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
-            const c=new Sockhop.client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const s=new Sockhop.Server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const c=new Sockhop.Client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
 
             try {
                 await s.listen();
@@ -84,8 +84,8 @@ for ( const { server_compatibility_mode, client_compatibility_mode } of [
         it("Server disconnects paused client from ping-out", async function(){
 
             let port=BASE_PORT++;
-            const s=new Sockhop.server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
-            const c=new Sockhop.client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const s=new Sockhop.Server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const c=new Sockhop.Client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
 
             try {
                 await s.listen();
@@ -115,8 +115,8 @@ for ( const { server_compatibility_mode, client_compatibility_mode } of [
             this.timeout(10000);
 
             let port=BASE_PORT++;
-            const s=new Sockhop.server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
-            const c=new Sockhop.client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const s=new Sockhop.Server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const c=new Sockhop.Client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
 
             try {
                 await s.listen();
@@ -147,9 +147,9 @@ for ( const { server_compatibility_mode, client_compatibility_mode } of [
 
             let port=BASE_PORT++;
             let port2=BASE_PORT++;
-            const s=new Sockhop.server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
-            const s2=new Sockhop.server({port: port2, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
-            const c=new Sockhop.client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const s=new Sockhop.Server({port: port, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const s2=new Sockhop.Server({port: port2, compatibility_mode: server_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
+            const c=new Sockhop.Client({port: port, compatibility_mode: client_compatibility_mode, handshake_timeout: HANDSHAKE_TIMEOUT});
 
             try {
                 await s.listen();

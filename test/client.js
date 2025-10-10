@@ -5,8 +5,8 @@ var c,s;
 
 describe("Client",()=>{
 
-    s=new Sockhop.server({port: 50000});
-    c=new Sockhop.client({port: 50000});
+    s=new Sockhop.Server({port: 50000});
+    c=new Sockhop.Client({port: 50000});
 
     it("connect()", function(){
 
@@ -21,7 +21,7 @@ describe("Client",()=>{
 
     it("Handle ECONNREFUSED",(done)=>{
 
-        let cc=new Sockhop.client({port: 49999});
+        let cc=new Sockhop.Client({port: 49999});
         cc.connect().catch((e)=>{
 
             assert(e.message.match(/ECONNREFUSED/));

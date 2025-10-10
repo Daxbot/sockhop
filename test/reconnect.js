@@ -9,8 +9,8 @@ var c,s;
 describe("client.auto_reconnect", function(){
 
 
-    s=new Sockhop.server({port: 50007});
-    c=new Sockhop.client({port: 50007, auto_reconnect_interval: 200, auto_reconnect: true });
+    s=new Sockhop.Server({port: 50007});
+    c=new Sockhop.Client({port: 50007, auto_reconnect_interval: 200, auto_reconnect: true });
 
     it("Will throw to prevent deprecated use", function(done){
         s.listen()
@@ -78,7 +78,7 @@ describe("client.auto_reconnect", function(){
             .then(()=>{
             // 1s later, create a new server
                 setTimeout(()=>{
-                    s=new Sockhop.server({port: 50007});
+                    s=new Sockhop.Server({port: 50007});
                     s.listen();
                 },500);
             });
@@ -91,7 +91,7 @@ describe("client.auto_reconnect", function(){
         this.timeout(9000);
 
         // Create a fresh client
-        c=new Sockhop.client({port: 50010, auto_reconnect_interval: 200});
+        c=new Sockhop.Client({port: 50010, auto_reconnect_interval: 200});
 
         // Count connect events, start recording connect events
         let connect_event_counter=0;
@@ -148,7 +148,7 @@ describe("client.auto_reconnect", function(){
         this.timeout(9000);
 
         // Create a fresh client
-        c=new Sockhop.client({port: 50010, auto_reconnect_interval: 200, auto_reconnect: true });
+        c=new Sockhop.Client({port: 50010, auto_reconnect_interval: 200, auto_reconnect: true });
 
         // Count connect events, start recording connect events
         let connect_event_counter=0;
@@ -216,8 +216,8 @@ describe("client.auto_rehandshake", function(){
 
     beforeEach(async() => {
         let port=BASE_PORT++;
-        s=new Sockhop.server({port: port});
-        c=new Sockhop.client({port: port, auto_rehandshake_interval:200, auto_rehandshake: true });
+        s=new Sockhop.Server({port: port});
+        c=new Sockhop.Client({port: port, auto_rehandshake_interval:200, auto_rehandshake: true });
         await s.listen();
     });
     afterEach(async() => {

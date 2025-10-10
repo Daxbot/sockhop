@@ -10,8 +10,8 @@ describe(`Binary mode`, function(){
     let c,s;
     beforeEach(async function(){
         let port=BASE_PORT++;
-        s=new Sockhop.server({port: port, handshake_timeout: HANDSHAKE_TIMEOUT, debug: true});
-        c=new Sockhop.client({port: port, handshake_timeout: HANDSHAKE_TIMEOUT, debug: true});
+        s=new Sockhop.Server({port: port, handshake_timeout: HANDSHAKE_TIMEOUT, debug: true});
+        c=new Sockhop.Client({port: port, handshake_timeout: HANDSHAKE_TIMEOUT, debug: true});
         await s.listen();
     });
 

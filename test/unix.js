@@ -9,8 +9,8 @@ describe("Unix domain sockets", function(){
     let socket_name=`/tmp/sockhop${Math.random()*100000}`;
 
     // Unix path setting overrides IP address and port.  When we connect, we set a port number so this test will fail if the unix socket does not work.  Otherwise defaults may prevail and the test passes.
-    s=new Sockhop.server({path: socket_name, port: 4999});
-    c=new Sockhop.client({path: socket_name, port: 4888});
+    s=new Sockhop.Server({path: socket_name, port: 4999});
+    c=new Sockhop.Client({path: socket_name, port: 4888});
 
 
 

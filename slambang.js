@@ -2,7 +2,7 @@ var Sockhop=require("./index.js");
 
 // We exist to test violent, unclean disconnects.  We hang up once someone connects.
 
-s=new Sockhop.server({port: 50010});
+s=new Sockhop.Server({port: 50010});
 
 console.log("server starting!!");
 

@@ -1,7 +1,7 @@
 
 module.exports = exports = {
-    "server" : require("./lib/SockhopServer"),
-    "client" : require("./lib/SockhopClient"),
-    "session" : require("./lib/SockhopSession"),
-    "error" : require("./lib/SockhopError")
+    "Server" : require("./lib/SockhopServer"),
+    "Client" : require("./lib/SockhopClient"),
+    "Session" : require("./lib/SockhopSession"),
+    "Error" : require("./lib/SockhopError")
 };

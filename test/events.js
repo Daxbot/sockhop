@@ -4,8 +4,8 @@ var c,s;
 
 describe("Events", function(){
 
-    s=new Sockhop.server({port: 50003});
-    c=new Sockhop.client({port: 50003});
+    s=new Sockhop.Server({port: 50003});
+    c=new Sockhop.Client({port: 50003});
 
     it("server.on('connect')", function(done){
 

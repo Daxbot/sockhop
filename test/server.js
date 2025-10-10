@@ -6,7 +6,7 @@ var s;
 describe("Server",()=>{
 
     // Spawn server
-    s=new Sockhop.server({port: 50001});
+    s=new Sockhop.Server({port: 50001});
     it("listen()",()=>{
 
         return s.listen();
@@ -34,7 +34,7 @@ describe("Server",()=>{
 
     it("Server slam open/close does not throw uncaught errors", function(done){
 
-        let x=new Sockhop.server({port: 50008});
+        let x=new Sockhop.Server({port: 50008});
 
         x.listen().then(()=>x.close()).then(()=>done());
     });

@@ -10,8 +10,8 @@ describe("Handshake", function(){
 
     it("Handshake events all fire as expected",async function(){
         const PORT=BASE_PORT++;
-        const s = new Sockhop.server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
-        const c = new Sockhop.client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const s = new Sockhop.Server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const c = new Sockhop.Client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
         try {
             await s.listen();
 
@@ -64,8 +64,8 @@ describe("Handshake", function(){
 
     it("Handshake returns fast in non-compatibility mode",async function(){
         const PORT=BASE_PORT++;
-        const s = new Sockhop.server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
-        const c = new Sockhop.client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const s = new Sockhop.Server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const c = new Sockhop.Client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
         try {
             await s.listen();
 
@@ -127,8 +127,8 @@ describe("Handshake", function(){
 
     it("Server handshake returns slowly in client compatibility mode (slow)",async function(){
         const PORT=BASE_PORT++;
-        const s = new Sockhop.server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
-        const c = new Sockhop.client({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const s = new Sockhop.Server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const c = new Sockhop.Client({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
         try {
             await s.listen();
 
@@ -191,8 +191,8 @@ describe("Handshake", function(){
 
     it("Client handshake returns slowly in server compatibility mode (slow)",async function(){
         const PORT=BASE_PORT++;
-        const s = new Sockhop.server({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
-        const c = new Sockhop.client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const s = new Sockhop.Server({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const c = new Sockhop.Client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
         try {
             await s.listen();
 
@@ -255,8 +255,8 @@ describe("Handshake", function(){
 
     it("Handshake totally skipped if both in compatibility mode",async function(){
         const PORT=BASE_PORT++;
-        const s = new Sockhop.server({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
-        const c = new Sockhop.client({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const s = new Sockhop.Server({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const c = new Sockhop.Client({port: PORT, compatibility_mode: true, handshake_timeout: HANDSHAKE_TIMEOUT});
         try {
             await s.listen();
 
@@ -318,8 +318,8 @@ describe("Handshake", function(){
 
     it("Handshake is passed to session",async function(){
         const PORT=BASE_PORT++;
-        const s = new Sockhop.server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
-        const c = new Sockhop.client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const s = new Sockhop.Server({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
+        const c = new Sockhop.Client({port: PORT, compatibility_mode: false, handshake_timeout: HANDSHAKE_TIMEOUT});
         try {
             await s.listen();
 

@@ -10,8 +10,8 @@ describe("Client-server", function(){
 
     beforeEach(async() => {
         let port=BASE_PORT++;
-        s=new Sockhop.server({port: port, response_timeout:50});
-        c=new Sockhop.client({port: port, response_timeout:50});
+        s=new Sockhop.Server({port: port, response_timeout:50});
+        c=new Sockhop.Client({port: port, response_timeout:50});
         await s.listen();
     });
     afterEach(async() => {
@@ -65,8 +65,8 @@ describe("Client-server", function(){
 
         // Force compatibility mode, so that no other data is sent on connect
         let port=BASE_PORT++;
-        let s2=new Sockhop.server({port: port, response_timeout:50, compatibility_mode: true});
-        let c2=new Sockhop.client({port: port, response_timeout:50, compatibility_mode: true});
+        let s2=new Sockhop.Server({port: port, response_timeout:50, compatibility_mode: true});
+        let c2=new Sockhop.Client({port: port, response_timeout:50, compatibility_mode: true});
         try {
             await s2.listen();
 
@@ -99,8 +99,8 @@ describe("Client-server", function(){
 
         // Force compatibility mode, so that no other data is sent on connect
         let port=BASE_PORT++;
-        let s2=new Sockhop.server({port: port, response_timeout:50, compatibility_mode: true});
-        let c2=new Sockhop.client({port: port, response_timeout:50, compatibility_mode: true});
+        let s2=new Sockhop.Server({port: port, response_timeout:50, compatibility_mode: true});
+        let c2=new Sockhop.Client({port: port, response_timeout:50, compatibility_mode: true});
         try {
             await s2.listen();
 
@@ -133,8 +133,8 @@ describe("Client-server", function(){
 
         // Force compatibility mode, so that no other data is sent on connect
         let port=BASE_PORT++;
-        let s2=new Sockhop.server({port: port, response_timeout:50, compatibility_mode: true});
-        let c2=new Sockhop.client({port: port, response_timeout:50, compatibility_mode: true});
+        let s2=new Sockhop.Server({port: port, response_timeout:50, compatibility_mode: true});
+        let c2=new Sockhop.Client({port: port, response_timeout:50, compatibility_mode: true});
         try {
             await s2.listen();
 
@@ -173,8 +173,8 @@ describe("Client-server", function(){
 
         // Force compatibility mode, so that no other data is sent on connect
         let port=BASE_PORT++;
-        let s2=new Sockhop.server({port: port, response_timeout:50, compatibility_mode: true});
-        let c2=new Sockhop.client({port: port, response_timeout:50, compatibility_mode: true});
+        let s2=new Sockhop.Server({port: port, response_timeout:50, compatibility_mode: true});
+        let c2=new Sockhop.Client({port: port, response_timeout:50, compatibility_mode: true});
         try {
             await s2.listen();
 
@@ -218,8 +218,8 @@ describe("Client-server", function(){
 
         // Force compatibility mode, so that no other data is sent on connect
         let port=BASE_PORT++;
-        let s2=new Sockhop.server({port: port, response_timeout:50, compatibility_mode: true});
-        let c2=new Sockhop.client({port: port, response_timeout:50, compatibility_mode: true});
+        let s2=new Sockhop.Server({port: port, response_timeout:50, compatibility_mode: true});
+        let c2=new Sockhop.Client({port: port, response_timeout:50, compatibility_mode: true});
         try {
             await s2.listen();
 

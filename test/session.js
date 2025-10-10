@@ -3,7 +3,7 @@ var assert=require("assert");
 
 var c,s;
 
-class Session extends Sockhop.session {
+class Session extends Sockhop.Session {
     a() { return 1; }
 
     async start() {
@@ -17,8 +17,8 @@ class Session extends Sockhop.session {
 
 describe("Session", function(){
 
-    s=new Sockhop.server({port: 50032, session_type: Session});
-    c=new Sockhop.client({port: 50032});
+    s=new Sockhop.Server({port: 50032, session_type: Session});
+    c=new Sockhop.Client({port: 50032});
 
     before(async() => { await s.listen(); });
     afterEach(async() => {

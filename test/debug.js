@@ -9,8 +9,8 @@ describe(`Client Debug Mode`, function(){
 
     it("No debug:received event fires outside of debug mode", async function(){
         let port=BASE_PORT++;
-        const s=new Sockhop.server({port: port});
-        const c=new Sockhop.client({port: port});
+        const s=new Sockhop.Server({port: port});
+        const c=new Sockhop.Client({port: port});
 
         try {
             await s.listen();
@@ -39,8 +39,8 @@ describe(`Client Debug Mode`, function(){
 
     it("No debug:sending event fires outside of debug mode", async function(){
         let port=BASE_PORT++;
-        const s=new Sockhop.server({port: port});
-        const c=new Sockhop.client({port: port});
+        const s=new Sockhop.Server({port: port});
+        const c=new Sockhop.Client({port: port});
 
         try {
             await s.listen();
@@ -69,8 +69,8 @@ describe(`Client Debug Mode`, function(){
 
     it("debug:received is fired in debug mode", async function(){
         let port=BASE_PORT++;
-        const s=new Sockhop.server({port: port});
-        const c=new Sockhop.client({port: port, debug: true});
+        const s=new Sockhop.Server({port: port});
+        const c=new Sockhop.Client({port: port, debug: true});
 
         try {
             await s.listen();
@@ -111,8 +111,8 @@ describe(`Client Debug Mode`, function(){
 
     it("debug:sending is fired in debug mode by .send()", async function(){
         let port=BASE_PORT++;
-        const s=new Sockhop.server({port: port});
-        const c=new Sockhop.client({port: port, debug: true});
+        const s=new Sockhop.Server({port: port});
+        const c=new Sockhop.Client({port: port, debug: true});
 
         try {
             await s.listen();
@@ -148,8 +148,8 @@ describe(`Client Debug Mode`, function(){
 
     it("debug:sending is fired in debug mode by callback response", async function(){
         let port=BASE_PORT++;
-        const s=new Sockhop.server({port: port});
-        const c=new Sockhop.client({port: port, debug: true});
+        const s=new Sockhop.Server({port: port});
+        const c=new Sockhop.Client({port: port, debug: true});
 
         try {
             await s.listen();

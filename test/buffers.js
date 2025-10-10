@@ -228,7 +228,7 @@ describe("Buffers", function(){
             await new Promise(res => setTimeout(res, 100));
         });
 
-        it("Client/Server are actually not in binary_mode",async function(){
+        it("Client/Server are actually in binary_mode",async function(){
 
             expect(c.binary_mode.rx, "Client rx not true").to.be.true;
             expect(c.binary_mode.tx, "Client tx not true").to.be.true;

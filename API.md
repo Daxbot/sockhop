@@ -197,7 +197,7 @@ Wrapped TCP client
 
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
-**Emits**: [<code>connect</code>](#SockhopClient+event_connect), [<code>disconnect</code>](#SockhopClient+event_disconnect), [<code>handshake</code>](#SockhopClient+event_handshake), [<code>unhandshake</code>](#SockhopClient+event_unhandshake), [<code>debug:sending</code>](#SockhopClient+debug_sending), [<code>debug:received</code>](#SockhopClient+debug_received), [<code>binary\_mode:rx</code>](#SockhopClient+event_binary_mode_rx), [<code>binary\_mode:tx</code>](#SockhopClient+event_binary_mode_tx), <code>SockhopClient#event:error</code>, [<code>receive</code>](#SockhopClient+event_receive), <code>event:SockhopError</code>  
+**Emits**: [<code>connect</code>](#SockhopClient+event_connect), [<code>disconnect</code>](#SockhopClient+event_disconnect), [<code>handshake</code>](#SockhopClient+event_handshake), [<code>unhandshake</code>](#SockhopClient+event_unhandshake), [<code>debug:sending</code>](#SockhopClient+debug_sending), [<code>debug:sending:buffer</code>](#SockhopClient+debug_sending_buffer), [<code>debug:received</code>](#SockhopClient+debug_received), [<code>debug:received:buffer</code>](#SockhopClient+debug_received_buffer), [<code>binary\_mode:rx</code>](#SockhopClient+event_binary_mode_rx), [<code>binary\_mode:tx</code>](#SockhopClient+event_binary_mode_tx), <code>SockhopClient#event:error</code>, [<code>receive</code>](#SockhopClient+event_receive), [<code>receive:buffer</code>](#SockhopClient+receive_buffer), <code>event:SockhopError</code>  
 
 * [SockhopClient](#SockhopClient) ⇐ <code>EventEmitter</code>
     * [new SockhopClient([opts])](#new_SockhopClient_new)
@@ -217,15 +217,19 @@ Wrapped TCP client
     * [.connect()](#SockhopClient+connect) ⇒ <code>Promise</code>
     * [.get_bound_address()](#SockhopClient+get_bound_address) ⇒ <code>string</code>
     * [.send(object, [rcallback])](#SockhopClient+send) ⇒ <code>Promise</code>
+    * [.send_typed_buffer(type, buff, [callback])](#SockhopClient+send_typed_buffer) ⇒ <code>Promise</code>
     * [.ping(delay)](#SockhopClient+ping)
     * [.disconnect()](#SockhopClient+disconnect) ⇒ <code>Promise</code>
     * ["connect" (sock)](#SockhopClient+event_connect)
     * ["handshake" (success, error)](#SockhopClient+event_handshake)
     * ["unhandshake"](#SockhopClient+event_unhandshake)
     * ["receive" (object, meta)](#SockhopClient+event_receive)
+    * ["receive:buffer" (buffer, meta)](#SockhopClient+receive_buffer)
     * ["disconnect" (sock, handshaked)](#SockhopClient+event_disconnect)
     * ["debug:sending" (object, buffer, binary_mode)](#SockhopClient+debug_sending)
     * ["debug:received" (object, buffer, binary_mode)](#SockhopClient+debug_received)
+    * ["debug:sending:buffer" (object, buffer, binary_mode)](#SockhopClient+debug_sending_buffer)
+    * ["debug:received:buffer" (object, buffer, binary_mode)](#SockhopClient+debug_received_buffer)
     * ["binary_mode:rx" (enabled)](#SockhopClient+event_binary_mode_rx)
     * ["binary_mode:tx" (enabled)](#SockhopClient+event_binary_mode_tx)
 
@@ -517,6 +521,8 @@ Get bound address
 ### sockhopClient.send(object, [rcallback]) ⇒ <code>Promise</code>
 Send
 
+This will appear on the remote side as a receive event
+
 Send an object to the server
 
 **Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
@@ -529,6 +535,25 @@ Send an object to the server
 | --- | --- | --- |
 | object | <code>object</code> | to be sent over the wire |
 | [rcallback] | <code>function</code> | Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise |
+
+<a name="SockhopClient+send_typed_buffer"></a>
+
+### sockhopClient.send\_typed\_buffer(type, buff, [callback]) ⇒ <code>Promise</code>
+Send a buffer with a type descriptor
+
+This will appaer on the remote side as a receive:buffer event
+
+**Kind**: instance method of [<code>SockhopClient</code>](#SockhopClient)  
+**Throws**:
+
+- [<code>SockhopError</code>](#SockhopError) 
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| type | <code>string</code> | a type name for what the buffer encodes |
+| buff | <code>Buffer</code> | the buffer to send |
+| [callback] | <code>function</code> | Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise |
 
 <a name="SockhopClient+ping"></a>
 
@@ -621,6 +646,26 @@ We have successfully received an object from the server
 | meta.type | <code>string</code> | the received object constructor ("Object", "String", "Widget", etc) |
 | meta.callback | <code>function</code> | if the received object was sent with a callback, this is the function to call to respond |
 
+<a name="SockhopClient+receive_buffer"></a>
+
+### "receive:buffer" (buffer, meta)
+receive a typed buffer event
+
+We have successfully received a buffer from the server
+
+NOTE : this will only fire in binary mode (rx) and if the remote end specifically called send_typed_buffer().
+      If instead the remote end called send() with a Buffer, you will get a normal 'receive' event with the
+      type set to "Buffer".
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buffer | <code>Buffer</code> | the received buffer |
+| meta | <code>object</code> | metadata |
+| meta.type | <code>string</code> | the received buffer type ("String", "Widget", etc) |
+| meta.callback | <code>function</code> | if the received object was sent with a callback, this is the function to call to respond |
+
 <a name="SockhopClient+event_disconnect"></a>
 
 ### "disconnect" (sock, handshaked)
@@ -666,6 +711,38 @@ NOTE : This event is only emitted if the SockhopClient is in debug mode
 | object | <code>object</code> | the object we just received |
 | buffer | <code>Buffer</code> | the buffer we just received |
 | binary_mode | <code>boolean</code> | true if we are receiving in binary mode |
+
+<a name="SockhopClient+debug_sending_buffer"></a>
+
+### "debug:sending:buffer" (object, buffer, binary_mode)
+sending typed buffer event
+
+NOTE : This event is only emitted if the SockhopClient is in debug mode
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we are sending |
+| object.data | <code>Buffer</code> | type typed buffer we are sending |
+| buffer | <code>Buffer</code> | the buffer we are sending |
+| binary_mode | <code>boolean</code> | true if we are sending in binary mode (should always be true) |
+
+<a name="SockhopClient+debug_received_buffer"></a>
+
+### "debug:received:buffer" (object, buffer, binary_mode)
+received typed buffer event
+
+NOTE : This event is only emitted if the SockhopClient is in debug mode
+
+**Kind**: event emitted by [<code>SockhopClient</code>](#SockhopClient)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we just received |
+| object.data | <code>object.data</code> | the typed buffer we just received |
+| buffer | <code>Buffer</code> | the (raw) buffer we just received over the wire |
+| binary_mode | <code>boolean</code> | true if we are receiving in binary mode (should always be true) |
 
 <a name="SockhopClient+event_binary_mode_rx"></a>
 
@@ -807,7 +884,7 @@ constructor options.
 
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
-**Emits**: [<code>connect</code>](#SockhopServer+event_connect), [<code>disconnect</code>](#SockhopServer+event_disconnect), [<code>unhandshake</code>](#SockhopServer+event_unhandshake), [<code>receive</code>](#SockhopServer+event_receive), <code>event:SockhopError</code>  
+**Emits**: [<code>connect</code>](#SockhopServer+event_connect), [<code>disconnect</code>](#SockhopServer+event_disconnect), [<code>unhandshake</code>](#SockhopServer+event_unhandshake), [<code>receive</code>](#SockhopServer+event_receive), [<code>receive:buffer</code>](#SockhopServer+receive_buffer), [<code>handshake</code>](#SockhopServer+event_handshake), [<code>debug:sending</code>](#SockhopServer+debug_sending), [<code>debug:sending:buffer</code>](#SockhopServer+debug_sending_buffer), [<code>debug:received</code>](#SockhopServer+debug_received), [<code>debug:received:buffer</code>](#SockhopServer+debug_received_buffer), <code>event:SockhopError</code>  
 
 * [SockhopServer](#SockhopServer) ⇐ <code>EventEmitter</code>
     * [new SockhopServer([opts])](#new_SockhopServer_new)
@@ -820,6 +897,7 @@ constructor options.
     * [.listen()](#SockhopServer+listen) ⇒ <code>Promise.&lt;net.server&gt;</code>
     * [.get_bound_address()](#SockhopServer+get_bound_address) ⇒ <code>string</code>
     * [.send(socket, object, [callback])](#SockhopServer+send) ⇒ <code>Promise</code>
+    * [.send_typed_buffer(socket, type, buff, [callback])](#SockhopServer+send_typed_buffer) ⇒ <code>Promise</code>
     * [.sendall(object)](#SockhopServer+sendall) ⇒ <code>Promise</code>
     * [.kill_socket(sock)](#SockhopServer+kill_socket) ⇒ <code>Promise</code>
     * [.disconnect()](#SockhopServer+disconnect) ⇒ <code>Promise</code>
@@ -827,10 +905,13 @@ constructor options.
     * ["connect" (sock, session)](#SockhopServer+event_connect)
     * ["handshake" (sock, session, success, error)](#SockhopServer+event_handshake)
     * ["receive" (object, meta)](#SockhopServer+event_receive)
+    * ["receive:buffer" (buffer, meta)](#SockhopServer+receive_buffer)
     * ["disconnect" (sock, session, handshaked)](#SockhopServer+event_disconnect)
     * ["unhandshake" (sock, session)](#SockhopServer+event_unhandshake)
     * ["debug:sending" (object, buffer, binary_mode, sock, session)](#SockhopServer+debug_sending)
     * ["debug:received" (object, buffer, binary_mode, sock, session)](#SockhopServer+debug_received)
+    * ["debug:sending:buffer" (object, buffer, binary_mode, sock, session)](#SockhopServer+debug_sending_buffer)
+    * ["debug:received:buffer" (object, buffer, binary_mode, sock, session)](#SockhopServer+debug_received_buffer)
 
 <a name="new_SockhopServer_new"></a>
 
@@ -922,6 +1003,8 @@ Get bound address
 ### sockhopServer.send(socket, object, [callback]) ⇒ <code>Promise</code>
 Send
 
+This will appear on the remote side as a receive event
+
 Send an object to one clients
 
 **Kind**: instance method of [<code>SockhopServer</code>](#SockhopServer)  
@@ -935,6 +1018,26 @@ Send an object to one clients
 | socket | <code>net.socket</code> | on which to send it |
 | object | <code>object</code> | that we want to send |
 | [callback] | <code>function</code> | Callback when remote side calls meta.done (see receive event) - this is basically a remote Promise |
+
+<a name="SockhopServer+send_typed_buffer"></a>
+
+### sockhopServer.send\_typed\_buffer(socket, type, buff, [callback]) ⇒ <code>Promise</code>
+Send a buffer with a type descriptor
+
+This will appaer on the remote side as a receive:buffer event
+
+**Kind**: instance method of [<code>SockhopServer</code>](#SockhopServer)  
+**Throws**:
+
+- [<code>SockhopError</code>](#SockhopError) 
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| socket | <code>net.socket</code> | on which to send it |
+| type | <code>string</code> | a type name for what the buffer encodes |
+| buff | <code>Buffer</code> | the buffer to send |
+| [callback] | <code>function</code> | Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise |
 
 <a name="SockhopServer+sendall"></a>
 
@@ -1042,6 +1145,28 @@ We have successfully received an object from the client
 | meta.session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
 | [meta.callback] | <code>function</code> | the callback function, if the client is requesting a callback. Pass an object you want returned to the client |
 
+<a name="SockhopServer+receive_buffer"></a>
+
+### "receive:buffer" (buffer, meta)
+receive buffer event
+
+We have successfully received a buffer from the server
+
+NOTE : this will only fire in binary mode (rx) and if the remote end specifically called send_typed_buffer().
+      If instead the remote end called send() with a Buffer, you will get a normal 'receive' event with the
+      type set to "Buffer".
+
+**Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buffer | <code>Buffer</code> | the received buffer |
+| meta | <code>object</code> | metadata |
+| meta.type | <code>string</code> | the received buffer type ("String", "Widget", etc) |
+| meta.socket | <code>net.Socket</code> | the socket that sent us this object |
+| meta.session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
+| meta.callback | <code>function</code> | if the received object was sent with a callback, this is the function to call to respond |
+
 <a name="SockhopServer+event_disconnect"></a>
 
 ### "disconnect" (sock, session, handshaked)
@@ -1105,6 +1230,42 @@ NOTE : This event is only emitted if the SockhopServer is in debug mode
 | sock | <code>net.Socket</code> | the socket we are receiving on |
 | session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
 
+<a name="SockhopServer+debug_sending_buffer"></a>
+
+### "debug:sending:buffer" (object, buffer, binary_mode, sock, session)
+sending typed buffer event
+
+NOTE : This event is only emitted if the SockhopServer is in debug mode
+
+**Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we are sending |
+| object.data | <code>Buffer</code> | type typed buffer we are sending |
+| buffer | <code>Buffer</code> | the buffer we are sending |
+| binary_mode | <code>boolean</code> | true if we are sending in binary mode (should always be true) |
+| sock | <code>net.Socket</code> | the socket we are sending on |
+| session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
+
+<a name="SockhopServer+debug_received_buffer"></a>
+
+### "debug:received:buffer" (object, buffer, binary_mode, sock, session)
+received typed buffer event
+
+NOTE : This event is only emitted if the SockhopServer is in debug mode
+
+**Kind**: event emitted by [<code>SockhopServer</code>](#SockhopServer)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we just received |
+| object.data | <code>object.data</code> | the typed buffer we just received |
+| buffer | <code>Buffer</code> | the (raw) buffer we just received over the wire |
+| binary_mode | <code>boolean</code> | true if we are receiving in binary mode (should always be true) |
+| sock | <code>net.Socket</code> | the socket we are receiving on |
+| session | [<code>SockhopSession</code>](#SockhopSession) | the session of the socket |
+
 <a name="SockhopSession"></a>
 
 ## SockhopSession ⇐ <code>EventEmitter</code>
@@ -1131,7 +1292,7 @@ clients connection from the server. Rather, users should call `session.kill()`.
 
 **Kind**: global class  
 **Extends**: <code>EventEmitter</code>  
-**Emits**: [<code>handshake</code>](#SockhopSession+event_handshake), [<code>unhandshake</code>](#SockhopSession+event_unhandshake), [<code>disconnect</code>](#SockhopSession+event_disconnect), [<code>receive</code>](#SockhopSession+event_receive), [<code>debug:sending</code>](#SockhopSession+debug_sending), [<code>debug:received</code>](#SockhopSession+debug_received), [<code>binary\_mode:rx</code>](#SockhopSession+event_binary_mode_rx), [<code>binary\_mode:tx</code>](#SockhopSession+event_binary_mode_tx)  
+**Emits**: [<code>handshake</code>](#SockhopSession+event_handshake), [<code>unhandshake</code>](#SockhopSession+event_unhandshake), [<code>disconnect</code>](#SockhopSession+event_disconnect), [<code>receive</code>](#SockhopSession+event_receive), [<code>receive:buffer</code>](#SockhopSession+receive_buffer), [<code>debug:sending</code>](#SockhopSession+debug_sending), [<code>debug:received</code>](#SockhopSession+debug_received), [<code>binary\_mode:rx</code>](#SockhopSession+event_binary_mode_rx), [<code>binary\_mode:tx</code>](#SockhopSession+event_binary_mode_tx)  
 
 * [SockhopSession](#SockhopSession) ⇐ <code>EventEmitter</code>
     * [new SockhopSession(sock, server)](#new_SockhopSession_new)
@@ -1140,6 +1301,7 @@ clients connection from the server. Rather, users should call `session.kill()`.
     * [.init_complete](#SockhopSession+init_complete) ⇒ <code>boolean</code>
     * [.binary_mode](#SockhopSession+binary_mode) ⇒ <code>object</code> \| <code>boolean</code> \| <code>boolean</code>
     * [.handshake_successful](#SockhopSession+handshake_successful) ⇒ <code>boolean</code>
+    * [.send_typed_buffer(type, buff, [callback])](#SockhopSession+send_typed_buffer) ⇒ <code>Promise</code>
     * [.send(obj, [callback])](#SockhopSession+send) ⇒ <code>Promise</code>
     * [.kill()](#SockhopSession+kill) ⇒ <code>Promise</code>
     * *[.start()](#SockhopSession+start) ⇒ <code>Promise</code>*
@@ -1150,6 +1312,9 @@ clients connection from the server. Rather, users should call `session.kill()`.
     * ["disconnect" (handshaked)](#SockhopSession+event_disconnect)
     * ["debug:sending" (object, buffer, binary_mode)](#SockhopSession+debug_sending)
     * ["debug:received" (object, buffer, binary_mode)](#SockhopSession+debug_received)
+    * ["debug:sending:buffer" (object, buffer, binary_mode)](#SockhopSession+debug_sending_buffer)
+    * ["debug:received:buffer" (object, buffer, binary_mode)](#SockhopSession+debug_received_buffer)
+    * ["receive:buffer" (buffer, meta)](#SockhopSession+receive_buffer)
     * ["binary_mode:rx" (enabled)](#SockhopSession+event_binary_mode_rx)
     * ["binary_mode:tx" (enabled)](#SockhopSession+event_binary_mode_tx)
 
@@ -1203,10 +1368,31 @@ NOTE : this will be false if the handshake has not yet completed, or if the clie
 
 **Kind**: instance property of [<code>SockhopSession</code>](#SockhopSession)  
 **Returns**: <code>boolean</code> - handshake_successful whether or not the last handshake was successful  
+<a name="SockhopSession+send_typed_buffer"></a>
+
+### sockhopSession.send\_typed\_buffer(type, buff, [callback]) ⇒ <code>Promise</code>
+Send a buffer with a type descriptor
+
+This will appaer on the remote side as a receive:buffer event
+
+**Kind**: instance method of [<code>SockhopSession</code>](#SockhopSession)  
+**Throws**:
+
+- [<code>SockhopError</code>](#SockhopError) 
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| type | <code>string</code> | a type name for what the buffer encodes |
+| buff | <code>Buffer</code> | the buffer to send |
+| [callback] | <code>function</code> | Callback when remote side calls meta.callback (see receive event) - this is basically a remote Promise |
+
 <a name="SockhopSession+send"></a>
 
 ### sockhopSession.send(obj, [callback]) ⇒ <code>Promise</code>
 Send a message over this session
+
+This will appear on the remote side as a receive event
 
 **Kind**: instance method of [<code>SockhopSession</code>](#SockhopSession)  
 **Returns**: <code>Promise</code> - resolves on send  
@@ -1346,6 +1532,58 @@ NOTE : This event is only emitted if the SockhopSession is in debug mode
 | object | <code>object</code> | the object we just received |
 | buffer | <code>Buffer</code> | the buffer we just received |
 | binary_mode | <code>boolean</code> | true if we are receiving in binary mode |
+
+<a name="SockhopSession+debug_sending_buffer"></a>
+
+### "debug:sending:buffer" (object, buffer, binary_mode)
+sending typed buffer event
+
+NOTE : This event is only emitted if the SockhopSession is in debug mode
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we are sending |
+| object.data | <code>Buffer</code> | type typed buffer we are sending |
+| buffer | <code>Buffer</code> | the buffer we are sending |
+| binary_mode | <code>boolean</code> | true if we are sending in binary mode (should always be true) |
+
+<a name="SockhopSession+debug_received_buffer"></a>
+
+### "debug:received:buffer" (object, buffer, binary_mode)
+received typed buffer event
+
+NOTE : This event is only emitted if the SockhopSession is in debug mode
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>object</code> | the object we just received |
+| object.data | <code>object.data</code> | the typed buffer we just received |
+| buffer | <code>Buffer</code> | the (raw) buffer we just received over the wire |
+| binary_mode | <code>boolean</code> | true if we are receiving in binary mode (should always be true) |
+
+<a name="SockhopSession+receive_buffer"></a>
+
+### "receive:buffer" (buffer, meta)
+receive buffer event
+
+We have successfully received a buffer from the server
+
+NOTE : this will only fire in binary mode (rx) and if the remote end specifically called send_typed_buffer().
+      If instead the remote end called send() with a Buffer, you will get a normal 'receive' event with the
+      type set to "Buffer".
+
+**Kind**: event emitted by [<code>SockhopSession</code>](#SockhopSession)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buffer | <code>Buffer</code> | the received buffer |
+| meta | <code>object</code> | metadata |
+| meta.type | <code>string</code> | the received buffer type ("String", "Widget", etc) |
+| meta.callback | <code>function</code> | if the received object was sent with a callback, this is the function to call to respond |
 
 <a name="SockhopSession+event_binary_mode_rx"></a>
 
